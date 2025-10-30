@@ -1,0 +1,24 @@
+# Node modules
+form-builder-frontend/node_modules/
+form-builder-backend/node_modules/
+
+# Build/dist outputs
+form-builder-frontend/build/
+form-builder-backend/dist/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+form-builder-frontend/.env
+form-builder-backend/.env
+
+# Logs
+*.log
+logs/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
