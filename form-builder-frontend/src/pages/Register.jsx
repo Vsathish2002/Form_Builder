@@ -1,30 +1,49 @@
 import React, { useState } from 'react';
 import { registerUser } from '../api/auth';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { UserIcon, EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
 
 export default function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async e => {
     e.preventDefault();
-    const data = await registerUser(name, email, password);
-    if (data.access_token) {
-      navigate('/login');
-    } else {
-      alert(data.message || 'Registration failed');
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      return alert('All fields are required!');
+    }
+
+    setLoading(true);
+    try {
+      const registerRes = await registerUser(name, email, password);
+      if (registerRes?.user?.id) {
+        setSuccessMessage('Registration Successful!');
+        setTimeout(() => navigate('/login'), 1500);
+      } else {
+        alert(registerRes.message || 'Registration failed');
+      }
+    } catch (err) {
+      console.error('Registration error:', err);
+      alert('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-200 flex items-center justify-center px-4 py-8">
-      <form
+      <motion.form
         onSubmit={handleSubmit}
         className="bg-white rounded-2xl shadow-xl p-10 max-w-md w-full space-y-6"
         aria-label="registration form"
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
       >
         <h2 className="text-3xl font-black text-blue-700 text-center">Create an Account</h2>
         <p className="text-center text-gray-500">Get started for free</p>
@@ -68,25 +87,37 @@ export default function Register() {
           />
         </div>
 
-        <button
+        <motion.button
           type="submit"
+          disabled={loading}
           className="w-full bg-blue-600 hover:bg-blue-700 rounded-md text-white font-semibold py-3 transition focus:outline-none focus:ring-4 focus:ring-blue-300 shadow"
+          whileHover={{ scale: 1.05 }}
         >
-          Register
-        </button>
+          {loading ? 'Registering...' : 'Register'}
+        </motion.button>
 
-        <div className="flex items-center justify-between text-sm">
+        {successMessage && (
+          <motion.p
+            className="text-green-600 font-semibold text-center mt-2"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            {successMessage}
+          </motion.p>
+        )}
+
+        <div className="flex items-center justify-between text-sm mt-2">
           <span className="text-gray-600">Already have an account?</span>
-          <Link to="/login" className="text-blue-600 hover:underline">
+          <button
+            type="button"
+            onClick={() => navigate('/login')}
+            className="text-blue-600 hover:underline"
+          >
             Login
-          </Link>
+          </button>
         </div>
-        <div className="text-center mt-2">
-          <Link to="/forgot-password" className="text-gray-500 hover:text-blue-500">
-            Forgot password?
-          </Link>
-        </div>
-      </form>
+      </motion.form>
     </div>
   );
 }

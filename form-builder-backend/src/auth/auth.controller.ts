@@ -12,8 +12,18 @@ export class AuthController {
   async register(
     @Body() body: { name: string; email: string; password: string; role?: string }
   ) {
+    // Register the user
     const user = await this.authService.register(body.name, body.email, body.password, body.role);
-    return { message: 'User registered successfully', user };
+
+    // Generate JWT token immediately
+    const loginResult = await this.authService.login(user);
+
+    // Return token and user info
+    return {
+      message: 'User registered successfully',
+      access_token: loginResult.access_token,
+      user: loginResult.user,
+    };
   }
 
   @Post('login')

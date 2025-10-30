@@ -3,6 +3,7 @@ import { loginUser } from '../api/auth';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
+import { motion } from 'framer-motion';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -18,7 +19,7 @@ export default function Login() {
     setLoading(false);
     if (data.access_token) {
       login(data.user, data.access_token);
-      navigate(data.user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard');
+      navigate('/'); // 🔹 Redirect to home page after login
     } else {
       alert(data.message || 'Login failed');
     }
@@ -26,10 +27,13 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 flex items-center justify-center px-4 py-12">
-      <form
+      <motion.form
         onSubmit={handleSubmit}
         className="bg-white shadow-2xl rounded-2xl px-10 py-12 w-full max-w-md space-y-6"
         aria-label="login form"
+        initial={{ opacity: 0, y: 50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
       >
         <h2 className="text-3xl font-extrabold text-green-700 text-center">Welcome Back</h2>
         <p className="text-center text-gray-500">Sign in to access your dashboard</p>
@@ -61,24 +65,23 @@ export default function Login() {
         </div>
 
         <div className="flex items-center justify-between">
-          <div>
-            <label className="flex items-center text-gray-600 text-sm">
-              <input type="checkbox" className="mr-2 accent-green-600" />
-              Remember me
-            </label>
-          </div>
+          <label className="flex items-center text-gray-600 text-sm">
+            <input type="checkbox" className="mr-2 accent-green-600" />
+            Remember me
+          </label>
           <Link to="/forgot-password" className="text-green-500 hover:text-green-600 text-sm">
             Forgot password?
           </Link>
         </div>
 
-        <button
+        <motion.button
           type="submit"
           disabled={loading}
           className="w-full bg-green-600 hover:bg-green-700 rounded-md text-white font-semibold py-3 transition focus:outline-none focus:ring-4 focus:ring-green-300 shadow"
+          whileHover={{ scale: 1.05 }}
         >
           {loading ? 'Logging in...' : 'Login'}
-        </button>
+        </motion.button>
 
         <p className="text-center text-gray-600 text-sm pt-1">
           Don&apos;t have an account?{' '}
@@ -86,7 +89,7 @@ export default function Login() {
             Register
           </Link>
         </p>
-      </form>
+      </motion.form>
     </div>
   );
 }

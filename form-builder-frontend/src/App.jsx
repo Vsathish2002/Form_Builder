@@ -1,17 +1,20 @@
-import React from 'react';
-import Navbar from './components/Navbar';
-import AppRoutes from './routes/AppRoutes';
-
+import React from "react";
+import Navbar from "./components/Navbar";
+import AppRoutes from "./routes/AppRoutes";
+import Footer from "./components/Footer";
 
 function App() {
   return (
-    <div>
+    <div className="w-full min-h-screen flex flex-col bg-gray-50 font-sans text-gray-800">
       <Navbar />
-      <div className=" pt-20 max-w-7xl mx-auto px-4">
+      <main className="flex-1 w-full pt-16 sm:pt-18"> 
         <AppRoutes />
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 }
-
 export default App;
+
+
+
