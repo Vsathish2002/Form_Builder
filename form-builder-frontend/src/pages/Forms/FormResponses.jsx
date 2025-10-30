@@ -1,4 +1,3 @@
-// src/pages/Forms/FormResponses.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { getFormById, getFormResponses } from "../../api/forms";
 import { useParams, useNavigate } from "react-router-dom";
@@ -12,8 +11,20 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
 } from "@tanstack/react-table";
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Legend } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Legend,
+} from "recharts";
 import { CSVLink } from "react-csv";
+import { motion } from "framer-motion";
 
 export default function FormResponses() {
   const { id } = useParams();
@@ -93,11 +104,20 @@ export default function FormResponses() {
   const chartFields = useMemo(() => {
     if (!responses.length) return [];
     const labels = responses[0].items.map((item) => item.field.label);
-    return labels.filter((label) => ["Age", "Rating", "Satisfaction"].includes(label));
+    return labels.filter((label) =>
+      ["Age", "Rating", "Satisfaction"].includes(label)
+    );
   }, [responses]);
 
   const chartData = useMemo(() => {
-    const COLORS = ["#3b82f6", "#f59e0b", "#10b981", "#ef4444", "#8b5cf6", "#ec4899"];
+    const COLORS = [
+      "#3b82f6",
+      "#f59e0b",
+      "#10b981",
+      "#ef4444",
+      "#8b5cf6",
+      "#ec4899",
+    ];
     const result = [];
     chartFields.forEach((fieldLabel) => {
       const counts = {};
@@ -107,7 +127,8 @@ export default function FormResponses() {
         let val = item.value;
         try {
           const parsed = JSON.parse(val);
-          if (Array.isArray(parsed)) parsed.forEach((v) => (counts[v] = (counts[v] || 0) + 1));
+          if (Array.isArray(parsed))
+            parsed.forEach((v) => (counts[v] = (counts[v] || 0) + 1));
           else counts[parsed] = (counts[parsed] || 0) + 1;
         } catch {
           counts[val] = (counts[val] || 0) + 1;
@@ -123,35 +144,82 @@ export default function FormResponses() {
   }, [responses, chartFields]);
 
   // ------------------- Render -------------------
-  if (loading) return <div className="p-6 text-center text-gray-600 animate-pulse">Loading responses...</div>;
-  if (!form) return <div className="p-6 text-center text-red-500">Form not found.</div>;
+  if (loading)
+    return (
+      <motion.div
+        className="p-6 text-center text-gray-600"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        Loading responses...
+      </motion.div>
+    );
+  if (!form)
+    return (
+      <motion.div
+        className="p-6 text-center text-red-500"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
+        Form not found.
+      </motion.div>
+    );
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-6">
+    <motion.div
+      className="p-6 max-w-7xl mx-auto space-y-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+    >
       {/* Back button */}
       <div className="flex justify-end">
-        <button
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => navigate(-1)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow transition transform hover:scale-105"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow transition"
         >
           &larr; Back
-        </button>
+        </motion.button>
       </div>
 
       {/* Summary cards */}
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="bg-white p-4 rounded-xl shadow">
-          <h2 className="text-lg font-semibold mb-1">Total Responses</h2>
-          <p className="text-gray-600">{totalResponses}</p>
-        </div>
-        <div className="bg-white p-4 rounded-xl shadow">
-          <h2 className="text-lg font-semibold mb-1">Latest Submission</h2>
-          <p className="text-gray-600">{latestResponseTime}</p>
-        </div>
-      </div>
+      <motion.div
+        className="grid md:grid-cols-2 gap-4"
+        initial="hidden"
+        animate="visible"
+        variants={{
+          hidden: {},
+          visible: {
+            transition: { staggerChildren: 0.2 },
+          },
+        }}
+      >
+        {[
+          { title: "Total Responses", value: totalResponses },
+          { title: "Latest Submission", value: latestResponseTime },
+        ].map((item, i) => (
+          <motion.div
+            key={i}
+            className="bg-white p-4 rounded-xl shadow"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="text-lg font-semibold mb-1">{item.title}</h2>
+            <p className="text-gray-600">{item.value}</p>
+          </motion.div>
+        ))}
+      </motion.div>
 
-      {/* Table with search + export CSV */}
-      <div className="bg-white rounded-lg shadow-lg overflow-x-auto animate-fadeIn">
+      {/* Table with search + export */}
+      <motion.div
+        className="bg-white rounded-lg shadow-lg overflow-x-auto"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <div className="flex flex-col md:flex-row justify-between items-center p-4 gap-2">
           <input
             value={globalFilter || ""}
@@ -159,13 +227,15 @@ export default function FormResponses() {
             placeholder="Search responses..."
             className="w-full md:w-1/3 px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
-          <CSVLink
-            data={data}
-            filename={`${form.title}-responses.csv`}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow transition transform hover:scale-105"
-          >
-            Export CSV
-          </CSVLink>
+          <motion.div whileHover={{ scale: 1.05 }}>
+            <CSVLink
+              data={data}
+              filename={`${form.title}-responses.csv`}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow transition"
+            >
+              Export CSV
+            </CSVLink>
+          </motion.div>
         </div>
 
         <table className="min-w-full">
@@ -178,7 +248,10 @@ export default function FormResponses() {
                     className="px-4 py-3 text-left font-semibold cursor-pointer select-none"
                     onClick={header.column.getToggleSortingHandler()}
                   >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
                     <span>
                       {header.column.getIsSorted() === "asc"
                         ? " 🔼"
@@ -193,13 +266,19 @@ export default function FormResponses() {
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="border-b hover:bg-gray-100 transition">
+              <motion.tr
+                key={row.id}
+                className="border-b hover:bg-gray-100 transition"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} className="px-4 py-3 text-gray-700">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
-              </tr>
+              </motion.tr>
             ))}
           </tbody>
         </table>
@@ -211,23 +290,26 @@ export default function FormResponses() {
         {/* Pagination */}
         <div className="flex flex-wrap items-center justify-between p-4 gap-2">
           <div className="flex gap-2">
-            <button
+            <motion.button
+              whileHover={{ scale: 1.05 }}
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
               className="px-3 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
             >
               Previous
-            </button>
-            <button
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
               className="px-3 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
             >
               Next
-            </button>
+            </motion.button>
           </div>
           <span>
-            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+            Page {table.getState().pagination.pageIndex + 1} of{" "}
+            {table.getPageCount()}
           </span>
           <select
             value={table.getState().pagination.pageSize}
@@ -241,21 +323,44 @@ export default function FormResponses() {
             ))}
           </select>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Charts for selected fields */}
+      {/* Charts */}
       {chartData.length > 0 && (
-        <div className="grid md:grid-cols-2 gap-4 mt-6">
+        <motion.div
+          className="grid md:grid-cols-2 gap-4 mt-6"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: {},
+            visible: { transition: { staggerChildren: 0.2 } },
+          }}
+        >
           {chartData.map((chart, idx) => (
-            <div key={idx} className="bg-white p-4 rounded-lg shadow animate-fadeIn">
+            <motion.div
+              key={idx}
+              className="bg-white p-4 rounded-lg shadow"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
               <h2 className="text-lg font-semibold mb-2">{chart.field}</h2>
               <div className="h-64">
                 {chart.data.length <= 6 ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie data={chart.data} dataKey="value" nameKey="name" outerRadius={80} label>
+                      <Pie
+                        data={chart.data}
+                        dataKey="value"
+                        nameKey="name"
+                        outerRadius={80}
+                        label
+                      >
                         {chart.data.map((entry, i) => (
-                          <Cell key={i} fill={chart.COLORS[i % chart.COLORS.length]} />
+                          <Cell
+                            key={i}
+                            fill={chart.COLORS[i % chart.COLORS.length]}
+                          />
                         ))}
                       </Pie>
                       <Tooltip />
@@ -273,10 +378,10 @@ export default function FormResponses() {
                   </ResponsiveContainer>
                 )}
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

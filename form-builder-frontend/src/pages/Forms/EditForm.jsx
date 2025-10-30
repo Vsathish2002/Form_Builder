@@ -1,12 +1,9 @@
-// src/pages/Forms/EditForm.jsx
 import React, { useEffect, useState } from 'react';
 import { getFormById, updateForm } from '../../api/forms';
 import { useNavigate, useParams } from 'react-router-dom';
 import FormEditor from '../../components/FormEditor';
 import FormBuilderWrapper from '../../components/FormBuilderWrapper';
 import { useAuth } from '../../context/AuthContext';
-import { motion } from 'framer-motion';
-import { ArrowLeftIcon } from '@heroicons/react/24/solid';
 
 export default function EditForm() {
   const { id } = useParams();
@@ -43,6 +40,7 @@ export default function EditForm() {
         setLoading(false);
       }
     };
+
     fetchForm();
   }, [id, token]);
 
@@ -81,9 +79,10 @@ export default function EditForm() {
           options: field.options || [],
           order: index,
           validation: field.validation || null,
-          className: field.className || '',
+          className: field.className || '', // include design
         })),
       };
+
       await updateForm(token, form.id, payload);
 
       alert('Form updated successfully!');
@@ -100,64 +99,20 @@ export default function EditForm() {
     return <div className="text-center p-10 text-gray-600">Loading form editor...</div>;
   }
 
-  const fadeUp = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6 } } };
-
   return (
-    <div className="min-h-screen bg-gradient-to-tr from-blue-50 via-purple-50 to-pink-50 py-12 px-4 md:px-8 flex flex-col items-center">
-      
-      {/* Back Button */}
-      <motion.button
-        onClick={() => navigate(-1)}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        className="flex items-center mb-6 text-indigo-600 font-semibold hover:text-indigo-800"
-      >
-        <ArrowLeftIcon className="w-5 h-5 mr-2" />
-        Back
-      </motion.button>
-
-      {/* Form Editor Container */}
-      <motion.div
-        initial="hidden"
-        animate="visible"
-        variants={fadeUp}
-        className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl p-8 md:p-12 relative z-10"
-      >
-        <motion.h2
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0, transition: { duration: 0.6 } }}
-          className="text-3xl md:text-4xl font-extrabold text-center text-blue-700 mb-6"
+    <div className="max-w-5xl mx-auto">
+      <h2 className="text-3xl font-bold mb-6 text-center">Edit Form</h2>
+      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-lg">
+        <FormEditor form={form} setForm={handleFormMetaChange} />
+        <FormBuilderWrapper fieldsJson={form.fields || []} onSave={handleFieldsUpdate} />
+        <button
+          type="submit"
+          disabled={saving}
+          className="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-md transition disabled:bg-blue-300"
         >
-          Edit Form
-        </motion.h2>
-
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: { delay: 0.2 } }}
-          className="text-center text-gray-500 mb-8"
-        >
-          Update your form title, description, and fields. Changes are saved immediately when you click "Save Changes".
-        </motion.p>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Form Meta */}
-          <FormEditor form={form} setForm={handleFormMetaChange} />
-
-          {/* Form Fields */}
-          <FormBuilderWrapper fieldsJson={form.fields || []} onSave={handleFieldsUpdate} />
-
-          {/* Save Button */}
-          <motion.button
-            type="submit"
-            disabled={saving}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full mt-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-2xl shadow-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:bg-gray-300"
-          >
-            {saving ? 'Saving...' : 'Save Changes'}
-          </motion.button>
-        </form>
-      </motion.div>
+          {saving ? 'Saving...' : 'Save Changes'}
+        </button>
+      </form>
     </div>
   );
 }

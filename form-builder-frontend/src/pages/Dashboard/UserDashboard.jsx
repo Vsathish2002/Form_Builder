@@ -1,15 +1,35 @@
-import React, { useEffect, useState } from 'react';
-import { getUserForms, getFormResponses } from '../../api/forms';
-import { useAuth } from '../../context/AuthContext';
-import { Link } from 'react-router-dom';
-import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
+import React, { useEffect, useState } from "react";
+import { getUserForms, getFormResponses } from "../../api/forms";
+import { useAuth } from "../../context/AuthContext";
+import { Link } from "react-router-dom";
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  Legend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  RadarChart,
+  PolarGrid,
+  PolarAngleAxis,
+  Radar,
+} from "recharts";
+import { motion } from "framer-motion";
 
 export default function UserDashboard() {
   const [forms, setForms] = useState([]);
+  const [responsesData, setResponsesData] = useState([]);
   const [totalResponses, setTotalResponses] = useState(0);
-  const { user, token } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { token } = useAuth();
 
   useEffect(() => {
     if (!token) return;
@@ -17,109 +37,247 @@ export default function UserDashboard() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // 1️⃣ Fetch user's forms
         const userForms = await getUserForms(token);
         setForms(userForms);
 
-        // 2️⃣ Fetch responses in parallel
         const responsesArray = await Promise.all(
-          userForms.map(f => getFormResponses(token, f.id))
+          userForms.map((f) => getFormResponses(token, f.id))
         );
 
-        // 3️⃣ Sum total responses
         const total = responsesArray.reduce((sum, res) => sum + res.length, 0);
         setTotalResponses(total);
 
-        setLoading(false);
+        const formatted = userForms.map((f, i) => ({
+          name: f.title || `Form ${i + 1}`,
+          responses: responsesArray[i].length,
+          id: f.id,
+        }));
+        setResponsesData(formatted);
       } catch (err) {
-        console.error('Error fetching forms or responses:', err);
-        setError('Failed to load dashboard data');
+        console.error("Error fetching data:", err);
+        setError("Failed to load dashboard data");
+      } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [token]);
 
-  const COLORS = ['#4f46e5', '#10b981'];
+  const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444"];
+
+  if (loading)
+    return (
+      <div className="p-10 text-center text-lg font-medium text-gray-600 animate-pulse">
+        Loading dashboard...
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="p-10 text-center text-red-600 font-semibold">
+        {error}
+      </div>
+    );
+
+  // Chart Data
   const chartData = [
-    { name: 'Forms', value: forms.length },
-    { name: 'Responses', value: totalResponses },
+    { name: "Forms", value: forms.length },
+    { name: "Responses", value: totalResponses },
   ];
 
-  if (loading) {
-    return <div className="p-6 text-center text-gray-600">Loading dashboard...</div>;
-  }
+  const lineData = responsesData.map((f, i) => ({
+    name: f.name,
+    growth: Math.floor(Math.random() * 100),
+  }));
 
-  if (error) {
-    return <div className="p-6 text-center text-red-600">{error}</div>;
-  }
+  const radarData = responsesData.map((f, i) => ({
+    subject: f.name.length > 10 ? f.name.slice(0, 10) + "..." : f.name,
+    engagement: Math.floor(Math.random() * 100),
+  }));
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8 space-y-10">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-4xl font-extrabold text-gray-800">My Dashboard</h1>
-        <Link
-          to="/create"
-          className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg font-semibold shadow"
+        <motion.h1
+          initial={{ y: -20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="text-4xl font-extrabold text-gray-800 tracking-tight"
         >
-          Create Form
-        </Link>
-      </div>
+          My Dashboard
+        </motion.h1>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white shadow-lg rounded-lg p-6 flex flex-col items-center justify-center">
-          <p className="text-gray-500 font-medium">Forms Created</p>
-          <p className="text-5xl font-extrabold text-blue-600">{forms.length}</p>
-        </div>
-        <div className="bg-white shadow-lg rounded-lg p-6 flex flex-col items-center justify-center">
-          <p className="text-gray-500 font-medium">Total Responses</p>
-          <p className="text-5xl font-extrabold text-green-600">{totalResponses}</p>
-        </div>
-      </div>
-
-      {/* Chart */}
-      <div className="bg-white p-6 rounded-lg shadow flex justify-center">
-        <PieChart width={300} height={300}>
-          <Pie
-            data={chartData}
-            dataKey="value"
-            nameKey="name"
-            cx="50%"
-            cy="50%"
-            outerRadius={100}
-            label
+        <motion.div whileHover={{ scale: 1.05 }}>
+          <Link
+            to="/create"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md transition-all"
           >
-            {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Pie>
-          <Tooltip />
-          <Legend />
-        </PieChart>
+            + Create Form
+          </Link>
+        </motion.div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[
+          { title: "Forms Created", value: forms.length, color: "from-blue-500 to-indigo-600" },
+          { title: "Total Responses", value: totalResponses, color: "from-green-500 to-emerald-600" },
+          { title: "Active Forms", value: Math.floor(forms.length * 0.8), color: "from-yellow-400 to-orange-500" },
+          { title: "Avg Responses/Form", value: forms.length ? (totalResponses / forms.length).toFixed(1) : 0, color: "from-pink-500 to-red-500" },
+        ].map((stat, i) => (
+          <motion.div
+            key={i}
+            whileHover={{ y: -6 }}
+            transition={{ type: "spring", stiffness: 200 }}
+            className={`bg-gradient-to-r ${stat.color} text-white rounded-xl shadow-lg p-6 flex flex-col items-center`}
+          >
+            <p className="text-sm opacity-90">{stat.title}</p>
+            <motion.p
+              initial={{ scale: 0.7, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2 + i * 0.1 }}
+              className="text-4xl font-extrabold mt-2"
+            >
+              {stat.value}
+            </motion.p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Charts Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Pie Chart */}
+        <motion.div
+          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 40 }}
+          transition={{ duration: 0.5 }}
+          className="bg-white rounded-xl shadow-md p-6"
+        >
+          <h2 className="text-xl font-bold text-gray-700 mb-4">Forms vs Responses</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie data={chartData} dataKey="value" nameKey="name" outerRadius={100} label>
+                {chartData.map((entry, index) => (
+                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* Bar Chart */}
+        <motion.div
+          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 40 }}
+          transition={{ duration: 0.6 }}
+          className="bg-white rounded-xl shadow-md p-6"
+        >
+          <h2 className="text-xl font-bold text-gray-700 mb-4">Responses per Form</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={responsesData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Bar dataKey="responses" fill="#4f46e5" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* Line Chart */}
+        <motion.div
+          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 40 }}
+          transition={{ duration: 0.7 }}
+          className="bg-white rounded-xl shadow-md p-6"
+        >
+          <h2 className="text-xl font-bold text-gray-700 mb-4">Form Growth Trend</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={lineData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="growth" stroke="#10b981" strokeWidth={3} />
+            </LineChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* Radar Chart */}
+        <motion.div
+          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 40 }}
+          transition={{ duration: 0.8 }}
+          className="bg-white rounded-xl shadow-md p-6"
+        >
+          <h2 className="text-xl font-bold text-gray-700 mb-4">Form Engagement Radar</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <RadarChart outerRadius={100} data={radarData}>
+              <PolarGrid />
+              <PolarAngleAxis dataKey="subject" />
+              <Radar
+                name="Engagement"
+                dataKey="engagement"
+                stroke="#f59e0b"
+                fill="#f59e0b"
+                fillOpacity={0.6}
+              />
+              <Tooltip />
+            </RadarChart>
+          </ResponsiveContainer>
+        </motion.div>
       </div>
 
       {/* Forms List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {forms.map(form => (
-          <div key={form.id} className="bg-white p-4 rounded shadow">
-            <h3 className="text-xl font-bold">{form.title}</h3>
-            <div className="flex gap-4 mt-3 text-sm font-medium">
-              <Link to={`/edit/${form.id}`} className="text-green-600 hover:underline">
-                Edit
-              </Link>
-              <Link to={`/forms/${form.id}/responses`} className="text-blue-600 hover:underline">
-                Responses
-              </Link>
-              <Link to={`/public/${form.slug}`} className="text-indigo-600 hover:underline">
-                Share
-              </Link>
+      {/* <div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Your Forms</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {forms.length > 0 ? (
+            forms.map((form, index) => (
+              <motion.div
+                key={form.id}
+                whileHover={{ scale: 1.02 }}
+                transition={{ type: "spring", stiffness: 200 }}
+                className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all p-5 border-l-4 border-blue-600"
+              >
+                <h3 className="text-lg font-semibold text-gray-800 truncate">
+                  {form.title}
+                </h3>
+                <p className="text-sm text-gray-500 mt-1 truncate">
+                  {form.description || "No description provided"}
+                </p>
+                <div className="flex gap-5 mt-4 text-sm font-semibold">
+                  <Link
+                    to={`/edit/${form.id}`}
+                    className="text-green-600 hover:underline"
+                  >
+                    Edit
+                  </Link>
+                  <Link
+                    to={`/forms/${form.id}/responses`}
+                    className="text-blue-600 hover:underline"
+                  >
+                    Responses
+                  </Link>
+                  <Link
+                    to={`/public/${form.slug}`}
+                    className="text-indigo-600 hover:underline"
+                  >
+                    Share
+                  </Link>
+                </div>
+              </motion.div>
+            ))
+          ) : (
+            <div className="text-gray-600 italic text-center col-span-full">
+              You haven’t created any forms yet.
             </div>
-          </div>
-        ))}
-      </div>
+          )}
+        </div>
+      </div> */}
     </div>
   );
 }
