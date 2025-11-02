@@ -21,7 +21,7 @@ export class FormsService {
     @InjectRepository(FormResponseItem) private itemsRepo: Repository<FormResponseItem>,
     private qrCodeService: QrCodeService,
     private responseGateway: ResponseGateway,
-  ) {}
+  ) { }
 
   // --- Create form ---
   async createForm(owner: User, dto: CreateFormDto): Promise<Form> {
@@ -60,14 +60,30 @@ export class FormsService {
   }
 
   // --- Find form by slug ---
+  // forms.service.ts
   async findOne(slug: string): Promise<Form> {
     const form = await this.formsRepo.findOne({
       where: { slug },
       relations: ['fields', 'owner'],
     });
     if (!form) throw new NotFoundException('Form not found');
+
+    // ✅ Check if form is inactive
+    if (form.status !== 'Active') {
+      throw new NotFoundException('Form not found');
+    }
+
     return form;
   }
+
+  // old async findOne(slug: string): Promise<Form> {
+  //   const form = await this.formsRepo.findOne({
+  //     where: { slug },
+  //     relations: ['fields', 'owner'],
+  //   });
+  //   if (!form) throw new NotFoundException('Form not found');
+  //   return form;
+  // }
 
   // --- Find by ID ---
   async findById(id: string, user: User): Promise<Form> {
@@ -93,6 +109,7 @@ export class FormsService {
     form.title = dto.title ?? form.title;
     form.description = dto.description ?? form.description;
     form.isPublic = dto.isPublic ?? form.isPublic;
+    form.status = dto.status ?? form.status;
 
     await this.fieldsRepo.delete({ form: { id: form.id } });
 

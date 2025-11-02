@@ -1,6 +1,6 @@
 // src/pages/Forms/MyForms.jsx
 import React, { useEffect, useState } from 'react';
-import { getUserForms, deleteForm } from '../../api/forms';
+import { getUserForms, deleteForm, updateForm } from '../../api/forms';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -35,6 +35,16 @@ export default function MyForms() {
     } catch (err) {
       console.error('Failed to delete form:', err);
       alert('Delete failed');
+    }
+  };
+
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      await updateForm(token, id, { status: newStatus });
+      fetchForms(); // Refresh the list to show updated status
+    } catch (err) {
+      console.error('Failed to update form status:', err);
+      alert('Status update failed');
     }
   };
 
@@ -99,7 +109,7 @@ export default function MyForms() {
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.4 }}
                 >
-                  <FormCard form={form} onDelete={handleDelete} />
+                  <FormCard form={form} onDelete={handleDelete} onStatusChange={handleStatusChange} />
                 </motion.div>
               ))
             ) : (
