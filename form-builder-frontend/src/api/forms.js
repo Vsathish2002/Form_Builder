@@ -1,6 +1,8 @@
 import axios from 'axios';
 
 const API_URL = 'http://localhost:4000';
+// const API_URL = ' http://192.168.0.105:4000';
+
 
 // Get all forms
 export const getForms = async (token) => {
@@ -47,7 +49,7 @@ export const deleteForm = async (token, id) => {
     headers: { Authorization: `Bearer ${token}` },
   });
   return res.data;
-};
+};  
 
 // Get form responses
 export const getFormResponses = async (token, id) => {
@@ -64,12 +66,6 @@ export const getUserForms = async (token) => {
   });
   return res.data;
 };
-// old export const getUserForms = async (token) => {
-//   const res = await axios.get(`${API_URL}/forms/user/me`, {
-//     headers: { Authorization: `Bearer ${token}` },
-//   });
-//   return res.data;
-// };
 
 // Generate QR code for form
 export const generateFormQrCode = async (token, id) => {
@@ -79,7 +75,6 @@ export const generateFormQrCode = async (token, id) => {
   return res.data;
 };
 
-// Submit public response
 
 // Submit public response
 export const submitPublicResponse = async (slug, answers) => {
@@ -87,7 +82,3 @@ export const submitPublicResponse = async (slug, answers) => {
   return res.data;
 };
 
-// old export const submitPublicResponse = async (slug, answers) => {
-//   const res = await axios.post(`${API_URL}/forms/public/${slug}/submit`, answers);
-//   return res.data;
-// };

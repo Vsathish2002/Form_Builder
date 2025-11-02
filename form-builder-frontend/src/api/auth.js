@@ -1,6 +1,8 @@
 import axios from 'axios';
 
 const BASE_URL = 'http://localhost:4000/auth'; // your NestJS backend URL
+// const BASE_URL = ' http://192.168.0.105:4000/auth'; // your NestJS backend URL
+
 
 export async function registerUser(name, email, password) {
   try {

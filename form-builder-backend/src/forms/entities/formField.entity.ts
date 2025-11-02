@@ -1,10 +1,7 @@
-
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
 import { Form } from './form.entity';
 import { FormResponseItem } from './formResponseItem.entity';
 
-// Make sure these match the values your frontend sends
-// export type FieldType = 'text' | 'textarea' | 'number' | 'checkbox' | 'radio' | 'select';
 export type FieldType =
   | 'text'
   | 'textarea'
@@ -13,6 +10,8 @@ export type FieldType =
   | 'radio'
   | 'select'
   | 'header'
+  | 'date'
+  | 'section'
   | 'file';
 
 @Entity()
@@ -25,7 +24,18 @@ export class FormField {
 
   @Column({
     type: 'enum',
-    enum: ['text', 'textarea', 'number', 'checkbox', 'radio', 'select', 'header', 'file'],
+    enum: [
+      'text',
+      'textarea',
+      'number',
+      'checkbox',
+      'radio',
+      'select',
+      'header',
+      'date',
+      'section',
+      'file',
+    ],
   })
   type: FieldType;
 
@@ -41,9 +51,9 @@ export class FormField {
   @Column({ type: 'json', nullable: true })
   validation: any;
 
-  @ManyToOne(() => Form, form => form.fields, { onDelete: 'CASCADE', eager: false })
+  @ManyToOne(() => Form, (form) => form.fields, { onDelete: 'CASCADE', eager: false })
   form: Form;
 
-  @OneToMany(() => FormResponseItem, item => item.field, { cascade: true })
+  @OneToMany(() => FormResponseItem, (item) => item.field, { cascade: true })
   responseItems: FormResponseItem[];
 }

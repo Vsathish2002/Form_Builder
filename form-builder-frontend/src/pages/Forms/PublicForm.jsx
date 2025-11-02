@@ -10,7 +10,7 @@ export default function PublicForm() {
   const [form, setForm] = useState(null);
   const [status, setStatus] = useState({ loading: false, error: null, success: false });
 
-  // Fetch form
+  // ✅ Fetch form
   useEffect(() => {
     (async () => {
       try {
@@ -26,26 +26,44 @@ export default function PublicForm() {
     })();
   }, [slug]);
 
-  // Submit handler
-  const handleSubmit = async (answers) => {
+  // ✅ Submit handler supporting files, dates, etc.
+  const handleSubmit = async (answers, files) => {
     setStatus({ loading: true, error: null, success: false });
+
     try {
-      await submitPublicResponse(slug, answers);
+      const formData = new FormData();
+
+      // Normal fields
+      Object.entries(answers).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+
+      // Files
+      if (files) {
+        Object.entries(files).forEach(([key, file]) => {
+          formData.append(key, file);
+        });
+      }
+
+      await submitPublicResponse(slug, formData, true); // send FormData
+
+      // ✅ On success
       setStatus({ loading: false, error: null, success: true });
     } catch (err) {
-      setStatus({ loading: false, error: err?.message || 'Submit failed', success: false });
+      console.error(err);
+      setStatus({ loading: false, error: 'Failed to submit response. Try again.', success: false });
     }
   };
 
-  // Success Page (Google Form Style)
+  // ✅ Success page
   if (status.success) {
     return (
       <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-r from-purple-50 via-white to-indigo-50 p-4">
-        <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-10 text-center">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-10 text-center animate-fadeIn">
           <FiCheckCircle className="text-green-500 mx-auto mb-4" size={60} />
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Response Submitted</h2>
           <p className="text-gray-600 mb-6">
-            Thank you for your time! Your response has been recorded successfully.
+            Thank you! Your response has been recorded successfully.
           </p>
           <button
             onClick={() => navigate('/')}
@@ -58,9 +76,10 @@ export default function PublicForm() {
     );
   }
 
+  // ✅ Loading / form display
   return (
     <div className="min-h-screen flex flex-col justify-center items-center bg-gradient-to-r from-purple-50 via-white to-indigo-50 p-4">
-      <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl p-8 relative">
+      <div className="w-full max-w-xl bg-white rounded-3xl shadow-2xl p-8 relative animate-fadeIn">
         {/* Cancel Button */}
         <button
           onClick={() => navigate(-1)}
@@ -70,33 +89,21 @@ export default function PublicForm() {
           <FiX size={24} />
         </button>
 
-        {/* Error Message */}
+        {/* Error */}
         {status.error && (
           <div className="bg-red-100 text-red-800 p-4 rounded mb-6 text-center font-semibold">
             {status.error}
           </div>
         )}
 
-        {/* Loading State */}
-        {status.loading && (
-          <div className="text-center text-gray-600 font-medium mb-4">Submitting...</div>
-        )}
-
-        {/* Form */}
+        {/* Form Renderer */}
         {form && (
-          <>
-            {/* <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">{form.title}</h2> */}
-            {/* {form.description && (
-              <p className="text-gray-600 mb-6 text-center">{form.description}</p>
-            )} */}
-
-            <FormRenderer
-              form={form}
-              onSubmit={handleSubmit}
-              submitLabel={status.loading ? 'Submitting...' : 'Submit Response'}
-              className="space-y-4"
-            />
-          </>
+          <FormRenderer
+            form={form}
+            onSubmit={handleSubmit}
+            submitLabel={status.loading ? 'Submitting...' : 'Submit Response'}
+            className="space-y-4"
+          />
         )}
       </div>
     </div>

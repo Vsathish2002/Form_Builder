@@ -8,6 +8,7 @@ async function bootstrap() {
 
   // ✅ Enable CORS for your React app
   app.enableCors({
+    // origin: ' http://192.168.0.105:5173', // your Vite React frontend
     origin: 'http://localhost:5173', // your Vite React frontend
     credentials: true, // allow cookies and headers
   });
@@ -28,6 +29,7 @@ async function bootstrap() {
 
   const PORT = process.env.PORT || 4000;
   await app.listen(PORT);
+  // console.log(`🚀 Server running at  http://192.168.0.105:${PORT}`);
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 }
 bootstrap();

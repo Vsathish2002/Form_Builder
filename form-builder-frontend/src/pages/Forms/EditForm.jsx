@@ -1,15 +1,14 @@
-import React, { useEffect, useState } from 'react';
-import { getFormById, updateForm } from '../../api/forms';
-import { useNavigate, useParams } from 'react-router-dom';
-import FormEditor from '../../components/FormEditor';
-import FormBuilderWrapper from '../../components/FormBuilderWrapper';
-import { useAuth } from '../../context/AuthContext';
+import React, { useEffect, useState } from "react";
+import { getFormById, updateForm } from "../../api/forms";
+import { useNavigate, useParams } from "react-router-dom";
+import FormBuilderWrapper from "../../components/FormBuilderWrapper";
+import { useAuth } from "../../context/AuthContext";
 
 export default function EditForm() {
   const { id } = useParams();
   const [form, setForm] = useState({
-    title: '',
-    description: '',
+    title: "",
+    description: "",
     isPublic: false,
     fields: [],
   });
@@ -18,14 +17,16 @@ export default function EditForm() {
   const navigate = useNavigate();
   const { token, user } = useAuth();
 
+  // Load form data
   useEffect(() => {
     const fetchForm = async () => {
       try {
         const data = await getFormById(token, id);
-        const fieldsWithId = (data.fields || []).map((f, index) => ({
-          id: f.id || `field-${index}`,
+        const fieldsWithId = (data.fields || []).map((f, i) => ({
+          id: f.id || `field-${i}`,
           ...f,
         }));
+
         setForm({
           id: data.id,
           title: data.title,
@@ -34,8 +35,8 @@ export default function EditForm() {
           fields: fieldsWithId,
         });
       } catch (err) {
-        console.error('Failed to load form:', err);
-        alert('Error loading form. Please try again.');
+        console.error("Failed to load form:", err);
+        alert("Error loading form. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -44,75 +45,105 @@ export default function EditForm() {
     fetchForm();
   }, [id, token]);
 
+  // Handle field updates from builder
   const handleFieldsUpdate = (newFields) => {
-    const fieldsWithId = newFields.map((f, index) => ({
-      id: f.id || `field-${index}`,
+    const fieldsWithId = newFields.map((f, i) => ({
+      id: f.id || `field-${i}`,
       ...f,
     }));
     setForm((prev) => ({ ...prev, fields: fieldsWithId }));
   };
 
-  const handleFormMetaChange = (updatedForm) => {
-    setForm((prev) => ({
-      ...prev,
-      title: updatedForm.title,
-      description: updatedForm.description,
-      isPublic: updatedForm.isPublic,
-    }));
-  };
-
+  // Save form updates
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title.trim()) return alert('Form title is required.');
+    if (!form.title.trim()) return alert("Form title is required.");
     setSaving(true);
 
     try {
+      // trigger save on builder to ensure latest fieldsJson
+      const fb = window.jQuery("#fb-editor").data("formBuilder");
+      if (fb) fb.actions.save(); // triggers onSave in builder
+
       const payload = {
         title: form.title,
         description: form.description,
         isPublic: form.isPublic,
-        fields: form.fields.map((field, index) => ({
-          id: field.id,
-          label: field.label,
-          type: field.type,
-          required: field.required || false,
-          options: field.options || [],
-          order: index,
-          validation: field.validation || null,
-          className: field.className || '', // include design
+        fields: form.fields.map((f, i) => ({
+          id: f.id,
+          label: f.label,
+          type: f.type,
+          required: f.required || false,
+          options: f.options || [],
+          order: i,
+          validation: f.validation || null,
+          className: f.className || "",
         })),
       };
 
       await updateForm(token, form.id, payload);
+      alert("Form updated successfully!");
 
-      alert('Form updated successfully!');
-      navigate(user.role === 'admin' ? '/admin/dashboard' : '/user/dashboard');
-    } catch (error) {
-      console.error('Failed to update form:', error);
-      alert('Failed to update form. Please try again.');
+      navigate(user.role === "admin" ? "/admin/dashboard" : "/user/dashboard");
+    } catch (err) {
+      console.error("Failed to update form:", err);
+      alert("Failed to update form. Please try again.");
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) {
-    return <div className="text-center p-10 text-gray-600">Loading form editor...</div>;
-  }
+  if (loading)
+    return (
+      <div className="text-center p-10 text-gray-600">
+        Loading form editor...
+      </div>
+    );
 
   return (
     <div className="max-w-5xl mx-auto">
       <h2 className="text-3xl font-bold mb-6 text-center">Edit Form</h2>
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded-lg shadow-lg">
-        <FormEditor form={form} setForm={handleFormMetaChange} />
-        <FormBuilderWrapper fieldsJson={form.fields || []} onSave={handleFieldsUpdate} />
+
+      {/* ⚠️ NOT a <form> tag — keeps FormBuilder working */}
+      <div className="bg-white p-8 rounded-lg shadow-lg">
+        <div className="mb-6">
+          <label className="block text-lg font-semibold mb-2">
+            Form Title
+          </label>
+          <input
+            type="text"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+            className="w-full border p-2 rounded-md"
+            placeholder="Enter form title"
+          />
+        </div>
+
+        <div className="mb-6">
+          <label className="block text-lg font-semibold mb-2">
+            Description
+          </label>
+          <textarea
+            value={form.description}
+            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            className="w-full border p-2 rounded-md"
+            placeholder="Enter description"
+          ></textarea>
+        </div>
+
+        <FormBuilderWrapper
+          fieldsJson={form.fields || []}
+          onSave={handleFieldsUpdate}
+        />
+
         <button
-          type="submit"
+          onClick={handleSubmit}
           disabled={saving}
           className="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-md transition disabled:bg-blue-300"
         >
-          {saving ? 'Saving...' : 'Save Changes'}
+          {saving ? "Saving..." : "Save Changes"}
         </button>
-      </form>
+      </div>
     </div>
   );
 }

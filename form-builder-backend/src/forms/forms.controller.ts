@@ -8,22 +8,25 @@ import {
   Body,
   UseGuards,
   Request,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
 import { FormsService } from './forms.service';
 import { CreateFormDto } from './dto/create-form.dto';
 import { UpdateFormDto } from './dto/update-form.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { User } from '../users/user.entity';
+import { FilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('forms')
 export class FormsController {
-  constructor(private formsService: FormsService) { }
+  constructor(private formsService: FormsService) {}
 
   // Create new form
   @UseGuards(JwtAuthGuard)
   @Post()
   create(@Request() req, @Body() dto: CreateFormDto) {
-    const user = req.user; // full user object
+    const user: User = req.user;
     return this.formsService.createForm(user, dto);
   }
 
@@ -31,89 +34,78 @@ export class FormsController {
   @UseGuards(JwtAuthGuard)
   @Get()
   findAll(@Request() req) {
-    const user = req.user;          // get logged-in user
-    return this.formsService.findAll(user); // pass user to service
+    const user: User = req.user;
+    return this.formsService.findAll(user);
   }
 
-
-  // old @Get()
-  // findAll() {
-  //   return this.formsService.findAll();
-  // }
-
-  // Get form by slug
+  // Get form by slug (public)
   @Get('slug/:slug')
   findOneBySlug(@Param('slug') slug: string) {
     return this.formsService.findOne(slug);
   }
 
   // Get form by ID
-  @Get('id/:id')
   @UseGuards(JwtAuthGuard)
+  @Get('id/:id')
   findOneById(@Param('id') id: string, @Request() req) {
-    const user = req.user;
+    const user: User = req.user;
     return this.formsService.findById(id, user);
   }
 
   // Update form
-  @Put(':id')
   @UseGuards(JwtAuthGuard)
+  @Put(':id')
   update(@Param('id') id: string, @Body() dto: UpdateFormDto, @Request() req) {
-    const user = req.user;
+    const user: User = req.user;
     return this.formsService.updateForm(id, dto, user);
   }
 
   // Delete form
-  @Delete(':id')
   @UseGuards(JwtAuthGuard)
+  @Delete(':id')
   remove(@Param('id') id: string, @Request() req) {
-    const user = req.user;
+    const user: User = req.user;
     return this.formsService.deleteForm(id, user);
   }
 
-  // Submit public response
+  // Submit public response with file support
   @Post('public/:slug/submit')
-  submit(
+  @UseInterceptors(FilesInterceptor('files')) // 'files' matches the FormData key from frontend
+  async submitPublic(
     @Param('slug') slug: string,
-    @Body() body: { answers: { fieldId: string; value: string }[] },
+    @Body() body: any,
+    @UploadedFiles() files: Express.Multer.File[],
   ) {
-    console.log('Incoming body:', body); // 🔍 Debug log
-    return this.formsService.submitResponse(slug, body.answers);
+    // Parse answers from string if sent as JSON
+    let answers = body.answers;
+    if (typeof answers === 'string') {
+      answers = JSON.parse(answers);
+    }
+
+    return this.formsService.submitResponseWithFiles(slug, answers, files);
   }
 
-  // gpt new-1@Post('public/:slug/submit')
-  // submit(
-  //   @Param('slug') slug: string,
-  //   @Body() body: { answers: { fieldId: string; value: string }[] },
-  // ) {
-  //   return this.formsService.submitResponse(slug, body.answers);
-  // }
-  // old @Post('public/:slug/submit')
-  // submit(@Param('slug') slug: string, @Body() answers: { fieldId: string; value: string }[]) {
-  //   return this.formsService.submitResponse(slug, answers);
-  // }
-
   // Get form responses
-  @Get(':id/responses')
   @UseGuards(JwtAuthGuard)
+  @Get(':id/responses')
   getResponses(@Param('id') id: string, @Request() req) {
-    const user = req.user;
+    const user: User = req.user;
     return this.formsService.getFormResponses(id, user);
   }
 
   // Get user's forms
-  @Get('user/me')
   @UseGuards(JwtAuthGuard)
+  @Get('user/me')
   getUserForms(@Request() req) {
-    const user = req.user;
+    const user: User = req.user;
     return this.formsService.getUserForms(user);
   }
 
   // Generate QR code for form
-  @Get(':id/qrcode')
   @UseGuards(JwtAuthGuard)
+  @Get(':id/qrcode')
   generateQrCode(@Param('id') id: string, @Request() req) {
-    const user = req.user;
+    const user: User = req.user;
     return this.formsService.generateFormQrCode(id, user);
   }
 }

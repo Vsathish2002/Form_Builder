@@ -64,16 +64,42 @@ export default function FormResponses() {
     ? new Date(responses[responses.length - 1].createdAt).toLocaleString()
     : "No responses yet";
 
-  // ------------------- Table data -------------------
-  const data = useMemo(() => {
+    // Table  data
+const data = useMemo(() => {
     return responses.map((r) => {
       const row = { submittedAt: new Date(r.createdAt).toLocaleString() };
       r.items.forEach((item) => {
+        const type = item.field.type;
         let val = item.value;
+
+        // Skip structural fields
+        if (type === "header" || type === "section") return;
+
+        // Parse JSON for multi-select/checkbox
         try {
           const parsed = JSON.parse(val);
           if (Array.isArray(parsed)) val = parsed.join(", ");
         } catch {}
+
+        // Format date fields
+        if (type === "date" && val) {
+          val = new Date(val).toLocaleDateString();
+        }
+
+        // Format file fields as clickable link
+        if (type === "file" && val) {
+          val = (
+            <a
+              href={val}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+            >
+              {val.split("/").pop()}
+            </a>
+          );
+        }
+
         row[item.field.label] = val;
       });
       return row;
@@ -82,7 +108,10 @@ export default function FormResponses() {
 
   const columns = useMemo(() => {
     if (!responses.length) return [];
-    const labels = responses[0].items.map((item) => item.field.label);
+    const labels = responses[0].items
+      .filter((item) => !["header", "section"].includes(item.field.type))
+      .map((item) => item.field.label);
+
     return [
       columnHelper.accessor("submittedAt", { header: "Submitted At" }),
       ...labels.map((label) => columnHelper.accessor(label, { header: label })),
@@ -103,10 +132,16 @@ export default function FormResponses() {
   // ------------------- Chart fields -------------------
   const chartFields = useMemo(() => {
     if (!responses.length) return [];
-    const labels = responses[0].items.map((item) => item.field.label);
-    return labels.filter((label) =>
-      ["Age", "Rating", "Satisfaction"].includes(label)
-    );
+    return responses[0].items
+      .filter(
+        (item) =>
+          !["header", "section", "file"].includes(item.field.type) &&
+          ["number", "text", "select", "checkbox", "radio"].includes(
+            item.field.type
+          )
+      )
+      .map((item) => item.field.label)
+      .filter((label) => ["Age", "Rating", "Satisfaction"].includes(label));
   }, [responses]);
 
   const chartData = useMemo(() => {
@@ -119,6 +154,7 @@ export default function FormResponses() {
       "#ec4899",
     ];
     const result = [];
+
     chartFields.forEach((fieldLabel) => {
       const counts = {};
       responses.forEach((r) => {
@@ -134,15 +170,16 @@ export default function FormResponses() {
           counts[val] = (counts[val] || 0) + 1;
         }
       });
+
       result.push({
         field: fieldLabel,
         data: Object.entries(counts).map(([name, value]) => ({ name, value })),
         COLORS,
       });
     });
+
     return result;
   }, [responses, chartFields]);
-
   // ------------------- Render -------------------
   if (loading)
     return (

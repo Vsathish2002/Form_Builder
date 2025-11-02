@@ -1,5 +1,3 @@
-//this use for render on public reponse 
-
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -16,29 +14,44 @@ export default function FormRenderer({
 
   const [values, setValues] = useState(initial);
   const [showModal, setShowModal] = useState(false);
+  const [filePreviews, setFilePreviews] = useState({}); // for file preview
 
   const handleChange = (field, value, checked) => {
     if (field.type === "checkbox") {
       const prev = values[field.id] || [];
       if (checked) setValues({ ...values, [field.id]: [...prev, value] });
       else setValues({ ...values, [field.id]: prev.filter((v) => v !== value) });
+    } else if (field.type === "file") {
+      // Handle file upload
+      const file = value?.target?.files?.[0];
+      if (file) {
+        setValues({ ...values, [field.id]: file });
+        setFilePreviews({
+          ...filePreviews,
+          [field.id]: URL.createObjectURL(file),
+        });
+      }
     } else {
       setValues({ ...values, [field.id]: value });
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const answers = (form.fields || []).map((f) => {
-      const val = values[f.id];
-      if (Array.isArray(val))
-        return { fieldId: f.id, value: JSON.stringify(val) };
-      if (f.type === "number") return { fieldId: f.id, value: Number(val) };
-      return { fieldId: f.id, value: String(val ?? "") };
-    });
-    if (onSubmit) await onSubmit(answers);
-    setShowModal(true); // show confirmation modal
-  };
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  const answers = {};
+  const files = {};
+
+  (form.fields || []).forEach((f) => {
+    const val = values[f.id];
+    if (f.type === "file" && val) files[f.id] = val;
+    else if (Array.isArray(val)) answers[f.id] = JSON.stringify(val);
+    else answers[f.id] = val;
+  });
+
+  if (onSubmit) await onSubmit(answers, files);
+  setShowModal(true);
+};
+
 
   return (
     <div className="relative">
@@ -70,7 +83,7 @@ export default function FormRenderer({
                 {field.required ? <span className="text-red-500"> *</span> : ""}
               </label>
 
-              {/* Inputs */}
+              {/* TEXT */}
               {field.type === "text" && (
                 <input
                   className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -79,6 +92,8 @@ export default function FormRenderer({
                   required={!!field.required}
                 />
               )}
+
+              {/* TEXTAREA */}
               {field.type === "textarea" && (
                 <textarea
                   className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -87,6 +102,8 @@ export default function FormRenderer({
                   required={!!field.required}
                 />
               )}
+
+              {/* NUMBER */}
               {field.type === "number" && (
                 <input
                   type="number"
@@ -96,6 +113,19 @@ export default function FormRenderer({
                   required={!!field.required}
                 />
               )}
+
+              {/* DATE */}
+              {field.type === "date" && (
+                <input
+                  type="date"
+                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  value={values[field.id] || ""}
+                  onChange={(e) => handleChange(field, e.target.value)}
+                  required={!!field.required}
+                />
+              )}
+
+              {/* SELECT */}
               {field.type === "select" && (
                 <select
                   className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -111,6 +141,8 @@ export default function FormRenderer({
                   ))}
                 </select>
               )}
+
+              {/* RADIO */}
               {field.type === "radio" &&
                 (field.options || []).map((opt) => (
                   <label
@@ -129,6 +161,8 @@ export default function FormRenderer({
                     {opt}
                   </label>
                 ))}
+
+              {/* CHECKBOX */}
               {field.type === "checkbox" &&
                 (field.options || []).map((opt) => (
                   <label
@@ -147,6 +181,26 @@ export default function FormRenderer({
                     {opt}
                   </label>
                 ))}
+
+              {/* FILE UPLOAD */}
+              {field.type === "file" && (
+                <div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="w-full p-2 border rounded-lg"
+                    onChange={(e) => handleChange(field, e)}
+                    required={!!field.required}
+                  />
+                  {filePreviews[field.id] && (
+                    <img
+                      src={filePreviews[field.id]}
+                      alt="Preview"
+                      className="mt-3 w-32 h-32 object-cover rounded-lg border"
+                    />
+                  )}
+                </div>
+              )}
             </motion.div>
           ))}
         </div>
@@ -160,7 +214,7 @@ export default function FormRenderer({
         </motion.button>
       </motion.form>
 
-      {/* Modal */}
+      {/* Confirmation Modal */}
       <AnimatePresence>
         {showModal && (
           <motion.div
