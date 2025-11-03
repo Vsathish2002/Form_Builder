@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { getFormById, updateForm } from "../../api/forms";
 import { useNavigate, useParams } from "react-router-dom";
 import FormBuilderWrapper from "../../components/FormBuilderWrapper";
@@ -16,6 +16,7 @@ export default function EditForm() {
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
   const { token, user } = useAuth();
+  const formBuilderRef = useRef(null);
 
   // Load form data
   useEffect(() => {
@@ -62,8 +63,9 @@ export default function EditForm() {
 
     try {
       // trigger save on builder to ensure latest fieldsJson
-      const fb = window.jQuery("#fb-editor").data("formBuilder");
-      if (fb) fb.actions.save(); // triggers onSave in builder
+      if (formBuilderRef.current) {
+        await formBuilderRef.current.save();
+      }
 
       const payload = {
         title: form.title,
@@ -132,6 +134,7 @@ export default function EditForm() {
         </div>
 
         <FormBuilderWrapper
+          ref={formBuilderRef}
           fieldsJson={form.fields || []}
           onSave={handleFieldsUpdate}
         />

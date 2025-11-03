@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 
-export default function FormBuilderWrapper({ fieldsJson, onSave }) {
+const FormBuilderWrapper = forwardRef(({ fieldsJson, onSave }, ref) => {
   const builderRef = useRef(null);
   const editorContainer = useRef(null);
 
@@ -84,6 +84,10 @@ export default function FormBuilderWrapper({ fieldsJson, onSave }) {
       },
       onSave: (evt, formData) => {
         try {
+          if (!formData || formData === "undefined") {
+            console.warn("Invalid formData received:", formData);
+            return;
+          }
           const parsed = JSON.parse(formData);
           const parsedWithId = parsed.map((f, i) => {
             let type = f.type;
@@ -118,6 +122,22 @@ export default function FormBuilderWrapper({ fieldsJson, onSave }) {
     };
   }, [fieldsJson.length, onSave]);
 
+  useImperativeHandle(ref, () => ({
+    getData: async () => {
+      if (builderRef.current?.promise) {
+        await builderRef.current.promise;
+        return builderRef.current.actions.getData();
+      }
+      return null;
+    },
+    save: async () => {
+      if (builderRef.current?.promise) {
+        await builderRef.current.promise;
+        builderRef.current.actions.save();
+      }
+    },
+  }));
+
   return (
     <div className="my-8">
       <h3 className="text-2xl font-semibold mb-4">
@@ -130,4 +150,8 @@ export default function FormBuilderWrapper({ fieldsJson, onSave }) {
       ></div>
     </div>
   );
-}
+});
+
+FormBuilderWrapper.displayName = 'FormBuilderWrapper';
+
+export default FormBuilderWrapper;
