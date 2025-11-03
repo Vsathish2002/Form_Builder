@@ -5,6 +5,7 @@ import { Form } from '../forms/entities/form.entity';
 import { FormField } from '../forms/entities/formField.entity';
 import { FormResponse } from '../forms/entities/formResponse.entity';
 import { FormResponseItem } from '../forms/entities/formResponseItem.entity';
+import { FormDraft } from '../forms/entities/formDraft.entity';
 
 export const typeOrmConfig: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -13,6 +14,14 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASS || '2002',
   database: process.env.DB_NAME || 'formdb',
-  entities: [User, Role, Form, FormField, FormResponse, FormResponseItem],
+  entities: [
+    User,
+    Role,
+    Form,
+    FormField,
+    FormResponse,
+    FormResponseItem,
+    FormDraft,
+  ],
   synchronize: true, // disable in production
 };

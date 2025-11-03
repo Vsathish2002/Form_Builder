@@ -5,6 +5,7 @@ const API_URL = 'http://localhost:4000';
 
 
 // Get all forms
+
 export const getForms = async (token) => {
   const res = await axios.get(`${API_URL}/forms`, {
     headers: { Authorization: `Bearer ${token}` },
@@ -90,5 +91,36 @@ export const submitPublicResponse = async (slug, formData) => {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
   return res.data;
+};
+
+// Draft-related API functions for auto-save functionality
+export const saveFormDraft = async (formSlug, draftData, sessionId) => {
+  // Save draft data to backend for persistence across sessions
+  const response = await axios.post(`${API_URL}/forms/public/${formSlug}/draft`, {
+    draftData,
+    sessionId,
+  });
+  return response.data;
+};
+
+export const loadFormDraft = async (formSlug, sessionId) => {
+  // Load previously saved draft data
+  try {
+    const response = await axios.get(`${API_URL}/forms/public/${formSlug}/draft`, {
+      params: { sessionId },
+    });
+    return response.data;
+  } catch (error) {
+    // Return null if no draft exists
+    return null;
+  }
+};
+
+export const deleteFormDraft = async (formSlug, sessionId) => {
+  // Delete draft after successful form submission
+  const response = await axios.delete(`${API_URL}/forms/public/${formSlug}/draft`, {
+    data: { sessionId },
+  });
+  return response.data;
 };
 

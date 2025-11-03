@@ -113,15 +113,18 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getFormBySlug, submitPublicResponse } from '../../api/forms';
+import { getFormBySlug, submitPublicResponse, saveFormDraft, loadFormDraft, deleteFormDraft } from '../../api/forms';
 import FormRenderer from '../../components/FormRenderer';
 import { FiX, FiCheckCircle } from 'react-icons/fi';
+
 
 export default function PublicForm() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [form, setForm] = useState(null);
   const [status, setStatus] = useState({ loading: false, error: null, success: false });
+  const [draftData, setDraftData] = useState(null);
+  const [sessionId] = useState(() => `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
 
   useEffect(() => {
     (async () => {
@@ -140,24 +143,43 @@ export default function PublicForm() {
           ...f,
         }));
         setForm({ ...data, fields: fieldsWithId });
-      } catch (err) {
+
+        // Load existing draft if available
+        const draft = await loadFormDraft(slug, sessionId);
+        if (draft) {
+          setDraftData(draft);
+        }
+      } catch {
         setStatus({ loading: false, error: 'Form not found', success: false });
       }
     })();
-  }, [slug]);
+  }, [slug, sessionId]);
 
   const handleSubmit = async (answers, files) => {
     setStatus({ loading: true, error: null, success: false });
     try {
       const formData = new FormData();
       formData.append('answers', JSON.stringify(answers));
-      if (files) Object.entries(files).forEach(([key, file]) => formData.append('files', file));
+      if (files) Object.entries(files).forEach(([, file]) => formData.append('files', file));
 
       await submitPublicResponse(slug, formData);
+
+      // Delete draft after successful submission
+      await deleteFormDraft(slug, sessionId);
+
       setStatus({ loading: false, error: null, success: true });
     } catch (err) {
       console.error(err);
       setStatus({ loading: false, error: 'Failed to submit response. Try again.', success: false });
+    }
+  };
+
+  // Auto-save draft on form changes
+  const handleFormChange = async (answers) => {
+    try {
+      await saveFormDraft(slug, answers, sessionId);
+    } catch (err) {
+      console.error('Failed to save draft:', err);
     }
   };
 
@@ -201,6 +223,8 @@ export default function PublicForm() {
         <FormRenderer
           form={form}
           onSubmit={handleSubmit}
+          onChange={handleFormChange}
+          initialValues={draftData}
           submitLabel={status.loading ? 'Submitting...' : 'Submit Response'}
         />
       )}

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { getFormById, getFormResponses, deleteResponse } from "../../api/forms";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { io } from "socket.io-client";
 import {
   createColumnHelper,
   flexRender,
@@ -38,6 +39,36 @@ export default function FormResponses() {
   const [pageSize, setPageSize] = useState(10);
 
   const columnHelper = createColumnHelper();
+
+  // ------------------- WebSocket connection for real-time updates -------------------
+  useEffect(() => {
+    // Connect to WebSocket server for real-time response updates
+    const socket = io('http://localhost:4000', {
+    // const socket = io('http://192.168.0.105:5173:4000', {
+      transports: ['websocket', 'polling'],
+    });
+
+    // Listen for new form responses and update the UI instantly
+    socket.on('newFormResponse', (data) => {
+      if (data.formId === id) {
+        // Refresh responses to show the new submission
+        const fetchUpdatedResponses = async () => {
+          try {
+            const res = await getFormResponses(token, id);
+            setResponses(res || []);
+          } catch (err) {
+            console.error('Failed to fetch updated responses:', err);
+          }
+        };
+        fetchUpdatedResponses();
+      }
+    });
+
+    // Cleanup on component unmount
+    return () => {
+      socket.disconnect();
+    };
+  }, [id, token]);
 
   // ------------------- Fetch data -------------------
   useEffect(() => {

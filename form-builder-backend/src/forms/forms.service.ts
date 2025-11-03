@@ -7,6 +7,7 @@ import { CreateFormDto } from './dto/create-form.dto';
 import { UpdateFormDto } from './dto/update-form.dto';
 import { FormResponse } from './entities/formResponse.entity';
 import { FormResponseItem } from './entities/formResponseItem.entity';
+import { FormDraft } from './entities/formDraft.entity';
 import { User } from '../users/user.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { QrCodeService } from '../qrcode/qrcode.service';
@@ -19,6 +20,7 @@ export class FormsService {
     @InjectRepository(FormResponse) private responsesRepo: Repository<FormResponse>,
     @InjectRepository(FormField) private fieldsRepo: Repository<FormField>,
     @InjectRepository(FormResponseItem) private itemsRepo: Repository<FormResponseItem>,
+    @InjectRepository(FormDraft) private draftsRepo: Repository<FormDraft>,
     private qrCodeService: QrCodeService,
     private responseGateway: ResponseGateway,
   ) { }
@@ -166,16 +168,26 @@ export class FormsService {
       });
     }
 
-    const fieldIds = answersArray.map(a => a.fieldId);
+    const fieldIds = answersArray.map((a) => a.fieldId);
     const fields = await this.fieldsRepo.findBy({ id: In(fieldIds) });
 
-    response.items = answersArray.map(a => {
-      const field = fields.find(f => f.id === a.fieldId);
+    response.items = answersArray.map((a) => {
+      const field = fields.find((f) => f.id === a.fieldId);
       if (!field) throw new NotFoundException(`Field ${a.fieldId} not found`);
       return this.itemsRepo.create({ field, value: a.value, response });
     });
 
     await this.itemsRepo.save(response.items);
+
+    // Broadcast real-time update to form owner for immediate visibility
+    // This enables mobile QR scan responses to appear instantly on the owner's site
+    this.responseGateway.broadcastNewResponse({
+      formId: form.id,
+      formTitle: form.title,
+      responseId: response.id,
+      totalAnswers: response.items.length,
+      submittedAt: response.createdAt,
+    });
 
     return response;
   }
@@ -213,7 +225,10 @@ export class FormsService {
 
   // --- Generate QR code ---
   async generateFormQrCode(formId: string, user: User): Promise<string> {
-    const form = await this.formsRepo.findOne({ where: { id: formId }, relations: ['owner'] });
+    const form = await this.formsRepo.findOne({
+      where: { id: formId },
+      relations: ['owner'],
+    });
     if (!form) throw new NotFoundException('Form not found');
     if (form.owner?.id !== user.id && user.role.name !== 'admin') {
       throw new NotFoundException('Form not found');
@@ -222,5 +237,55 @@ export class FormsService {
     // const formUrl = ` http://192.168.0.105:5173/public/${form.slug}`;
 
     return this.qrCodeService.generateQrCode(formUrl);
+  }
+
+  // --- Save form draft for auto-save functionality ---
+  async saveFormDraft(formSlug: string, draftData: any, sessionId?: string): Promise<FormDraft> {
+    const form = await this.findOne(formSlug);
+
+    // Find existing draft for this form and session
+    let draft = await this.draftsRepo.findOne({
+      where: { formId: form.id, sessionId },
+    });
+
+    if (draft) {
+      // Update existing draft
+      draft.draftData = JSON.stringify(draftData);
+      draft.updatedAt = new Date();
+    } else {
+      // Create new draft
+      draft = this.draftsRepo.create({
+        formId: form.id,
+        form,
+        draftData: JSON.stringify(draftData),
+        sessionId,
+      });
+    }
+
+    return this.draftsRepo.save(draft);
+  }
+
+  // --- Load form draft ---
+  async loadFormDraft(formSlug: string, sessionId?: string): Promise<any> {
+    const form = await this.findOne(formSlug);
+
+    const draft = await this.draftsRepo.findOne({
+      where: { formId: form.id, sessionId },
+      order: { updatedAt: 'DESC' },
+    });
+
+    if (!draft) return null;
+
+    try {
+      return JSON.parse(draft.draftData);
+    } catch {
+      return null;
+    }
+  }
+
+  // --- Delete form draft (after successful submission) ---
+  async deleteFormDraft(formSlug: string, sessionId?: string): Promise<void> {
+    const form = await this.findOne(formSlug);
+    await this.draftsRepo.delete({ formId: form.id, sessionId });
   }
 }

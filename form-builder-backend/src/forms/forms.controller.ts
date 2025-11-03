@@ -82,7 +82,14 @@ export class FormsController {
       answers = JSON.parse(answers);
     }
 
-    return this.formsService.submitResponseWithFiles(slug, answers, files);
+    const response = await this.formsService.submitResponseWithFiles(slug, answers, files);
+
+    // Delete draft after successful submission to prevent showing saved data again
+    if (body.sessionId) {
+      await this.formsService.deleteFormDraft(slug, body.sessionId);
+    }
+
+    return response;
   }
 
   // Get form responses
@@ -115,5 +122,33 @@ export class FormsController {
   generateQrCode(@Param('id') id: string, @Request() req) {
     const user: User = req.user;
     return this.formsService.generateFormQrCode(id, user);
+  }
+
+  // Save form draft (auto-save functionality)
+  @Post('public/:slug/draft')
+  async saveDraft(
+    @Param('slug') slug: string,
+    @Body() body: { draftData: any; sessionId?: string },
+  ) {
+    return this.formsService.saveFormDraft(slug, body.draftData, body.sessionId);
+  }
+
+  // Load form draft
+  @Get('public/:slug/draft')
+  async loadDraft(
+    @Param('slug') slug: string,
+    @Body('sessionId') sessionId?: string,
+  ) {
+    return this.formsService.loadFormDraft(slug, sessionId);
+  }
+
+  // Delete form draft (after successful submission)
+  @Delete('public/:slug/draft')
+  async deleteDraft(
+    @Param('slug') slug: string,
+    @Body('sessionId') sessionId?: string,
+  ) {
+    await this.formsService.deleteFormDraft(slug, sessionId);
+    return { message: 'Draft deleted successfully' };
   }
 }

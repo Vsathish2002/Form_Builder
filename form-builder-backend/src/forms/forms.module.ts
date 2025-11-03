@@ -6,12 +6,19 @@ import { Form } from './entities/form.entity';
 import { FormField } from './entities/formField.entity';
 import { FormResponse } from './entities/formResponse.entity';
 import { FormResponseItem } from './entities/formResponseItem.entity';
+import { FormDraft } from './entities/formDraft.entity';
 import { QrcodeModule } from '../qrcode/qrcode.module';
 import { GatewayModule } from '../gateway/gateway.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Form, FormField, FormResponse, FormResponseItem]),
+    TypeOrmModule.forFeature([
+      Form,
+      FormField,
+      FormResponse,
+      FormResponseItem,
+      FormDraft,
+    ]),
     QrcodeModule,
     GatewayModule,
   ],
