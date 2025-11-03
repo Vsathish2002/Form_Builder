@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { getFormById, updateForm } from "../../api/forms";
 import { useNavigate, useParams } from "react-router-dom";
 import FormBuilderWrapper from "../../components/FormBuilderWrapper";
@@ -15,8 +15,7 @@ export default function EditForm() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
-  const { token, user } = useAuth();
-  const formBuilderRef = useRef(null);
+  const { token } = useAuth();
 
   // Load form data
   useEffect(() => {
@@ -33,7 +32,10 @@ export default function EditForm() {
           title: data.title,
           description: data.description,
           isPublic: data.isPublic,
-          fields: fieldsWithId,
+          fields: fieldsWithId.map(f => ({
+            ...f,
+            type: f.type === "checkbox" ? "checkbox-group" : f.type === "radio" ? "radio-group" : f.type
+          })),
         });
       } catch (err) {
         console.error("Failed to load form:", err);
@@ -62,10 +64,14 @@ export default function EditForm() {
     setSaving(true);
 
     try {
-      // trigger save on builder to ensure latest fieldsJson
-      if (formBuilderRef.current) {
-        await formBuilderRef.current.save();
+      const fb = window.jQuery("#fb-editor").data("formBuilder");
+      if (!fb) {
+        alert("Form builder not loaded. Please try again.");
+        return;
       }
+
+      // Trigger save on builder to ensure latest fields are updated in state
+      fb.actions.save();
 
       const payload = {
         title: form.title,
@@ -86,7 +92,7 @@ export default function EditForm() {
       await updateForm(token, form.id, payload);
       alert("Form updated successfully!");
 
-      navigate(user.role === "admin" ? "/admin/dashboard" : "/user/dashboard");
+      navigate("/my-forms");
     } catch (err) {
       console.error("Failed to update form:", err);
       alert("Failed to update form. Please try again.");
@@ -134,7 +140,6 @@ export default function EditForm() {
         </div>
 
         <FormBuilderWrapper
-          ref={formBuilderRef}
           fieldsJson={form.fields || []}
           onSave={handleFieldsUpdate}
         />

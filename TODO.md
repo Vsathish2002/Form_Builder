@@ -1,0 +1,4 @@
+- [ ] Modify FormBuilderWrapper.jsx to pass formData in options during initialization
+- [ ] Sanitize fieldsJson to remove fields with invalid types
+- [ ] Simplify disableFields array to only known field types
+- [ ] Test the changes by running the application

@@ -1,11 +1,11 @@
-import React, { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
+import React, { useEffect, useRef } from "react";
 
-const FormBuilderWrapper = forwardRef(({ fieldsJson, onSave }, ref) => {
+export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
   const builderRef = useRef(null);
   const editorContainer = useRef(null);
 
   useEffect(() => {
-    // ✅ Dynamically load Bootstrap
+    // ✅ 1. Dynamically load Bootstrap only once
     const bootstrapCSS = document.createElement("link");
     bootstrapCSS.rel = "stylesheet";
     bootstrapCSS.href =
@@ -17,126 +17,134 @@ const FormBuilderWrapper = forwardRef(({ fieldsJson, onSave }, ref) => {
       "https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js";
     document.body.appendChild(bootstrapJS);
 
-    const $ = window.$;
-    if (!$.fn.formBuilder) {
-      console.error("formBuilder not loaded — check index.html");
-      return;
-    }
+    // ✅ 2. Ensure formBuilder is available
+    const checkInterval = setInterval(() => {
+      const $ = window.$;
+      if ($ && $.fn.formBuilder) {
+        clearInterval(checkInterval);
+        initFormBuilder($);
+      }
+    }, 200);
 
-    if (builderRef.current?.actions) {
-      builderRef.current.actions.clearFields();
-      builderRef.current = null;
-      $(editorContainer.current).empty();
-    }
+    // ✅ 3. Init function (safe)
+    function initFormBuilder($) {
+      // Clear any old instance
+      if (builderRef.current?.actions) {
+        builderRef.current.actions.clearFields();
+        $(editorContainer.current).empty();
+        builderRef.current = null;
+      }
 
-    // ✅ Register custom field types
-    const controlPlugins = {
-      header: {
-        label: "Header",
-        icon: "🌟",
-        fields: [
-          { label: "Text", name: "label", type: "text" },
-          { label: "Header Level", name: "subtype", type: "select", options: ["h1", "h2", "h3", "h4", "h5", "h6"] },
-        ],
-        onRender: (field) => {
-          const subtype = field.subtype || "h3";
-          return `<${subtype} class="fw-bold mt-3 mb-2">${field.label}</${subtype}>`;
+      // ✅ Custom field definitions
+      const controlPlugins = {
+        header: {
+          label: "Header",
+          icon: "🌟",
+          fields: [
+            { label: "Text", name: "label", type: "text" },
+            {
+              label: "Header Level",
+              name: "subtype",
+              type: "select",
+              options: ["h1", "h2", "h3", "h4", "h5", "h6"],
+            },
+          ],
+          onRender: (field) => {
+            const subtype = field.subtype || "h3";
+            return `<${subtype} class="fw-bold mt-3 mb-2">${field.label}</${subtype}>`;
+          },
         },
-      },
-      section: {
-        label: "Section Break",
-        icon: "📄",
-        onRender: () => `<hr class="my-4 border border-2 border-primary" />`,
-      },
-      date: {
-        label: "Date Picker",
-        icon: "📅",
-        onRender: (field) => {
-          return `
+        section: {
+          label: "Section Break",
+          icon: "📄",
+          onRender: () =>
+            `<hr class="my-4 border border-2 border-primary" />`,
+        },
+        date: {
+          label: "Date Picker",
+          icon: "📅",
+          onRender: (field) => `
             <div class="mb-3">
               <label class="form-label">${field.label}</label>
               <input type="date" class="form-control" />
-            </div>`;
+            </div>`,
         },
-      },
-      file: {
-        label: "File Upload",
-        icon: "📎",
-        onRender: (field) => {
-          return `
+        file: {
+          label: "File Upload",
+          icon: "📎",
+          onRender: (field) => `
             <div class="mb-3">
               <label class="form-label">${field.label}</label>
               <input type="file" class="form-control" />
-            </div>`;
+            </div>`,
         },
-      },
-    };
+      };
 
-    // ✅ Initialize FormBuilder
-    const options = {
-      disableFields: ["autocomplete", "button", "paragraph", "hidden", "starRating", "range"],
-      controlOrder: ["header", "section", "text", "textarea", "select", "checkbox", "radio", "date", "file"],
-      typeUserEvents: {
-        header: controlPlugins.header,
-        section: controlPlugins.section,
-        date: controlPlugins.date,
-        file: controlPlugins.file,
-      },
-      onSave: (evt, formData) => {
-        try {
-          if (!formData || formData === "undefined") {
-            console.warn("Invalid formData received:", formData);
-            return;
+      // ✅ Options config
+      const options = {
+        disableFields: [
+          "autocomplete",
+          "button",
+          "paragraph",
+          "hidden",
+          "starRating",
+          "range",
+        ],
+        controlOrder: [
+          "header",
+          "section",
+          "text",
+          "textarea",
+          "select",
+          "checkbox",
+          "radio",
+          "date",
+          "file",
+        ],
+        typeUserEvents: controlPlugins,
+        onSave: (evt, formData) => {
+          try {
+            const parsed = JSON.parse(formData);
+            const parsedWithId = parsed.map((f, i) => {
+              let type = f.type;
+              if (type === "radio-group") type = "radio";
+              if (type === "checkbox-group") type = "checkbox";
+              return { id: f.id || `field-${i}`, ...f, type };
+            });
+            onSave(parsedWithId);
+          } catch (err) {
+            console.error("Error parsing form data:", err);
           }
-          const parsed = JSON.parse(formData);
-          const parsedWithId = parsed.map((f, i) => {
-            let type = f.type;
-            if (type === "radio-group") type = "radio";
-            if (type === "checkbox-group") type = "checkbox";
-            return { id: f.id || `field-${i}`, ...f, type };
-          });
-          onSave(parsedWithId);
-        } catch (err) {
-          console.error("Error parsing form data:", err);
+        },
+      };
+
+      // ✅ Initialize formBuilder
+      const fbEditor = $(editorContainer.current).formBuilder(options);
+      builderRef.current = fbEditor;
+
+      // ✅ Wait until it's ready to set data
+      fbEditor.promise.then(() => {
+        if (fieldsJson.length > 0) {
+          const jsonData = JSON.stringify(fieldsJson);
+          setTimeout(() => fbEditor.actions.setData(jsonData), 200);
         }
-      },
-    };
-
-    const fbEditor = $(editorContainer.current).formBuilder(options);
-    builderRef.current = fbEditor;
-
-    if (fieldsJson?.length > 0) {
-      const jsonData = JSON.stringify(fieldsJson);
-      fbEditor.promise.then(() => fbEditor.actions.setData(jsonData));
+      });
     }
 
-    // ✅ Cleanup
+    // ✅ 4. Cleanup
     return () => {
+      clearInterval(checkInterval);
       if (builderRef.current?.actions) {
         builderRef.current.actions.clearFields();
         builderRef.current = null;
       }
-      $(editorContainer.current).empty();
-      document.head.removeChild(bootstrapCSS);
-      document.body.removeChild(bootstrapJS);
+      if (editorContainer.current) {
+        editorContainer.current.innerHTML = "";
+      }
+      if (bootstrapCSS.parentNode) document.head.removeChild(bootstrapCSS);
+      if (bootstrapJS.parentNode) document.body.removeChild(bootstrapJS);
     };
-  }, [fieldsJson.length, onSave]);
-
-  useImperativeHandle(ref, () => ({
-    getData: async () => {
-      if (builderRef.current?.promise) {
-        await builderRef.current.promise;
-        return builderRef.current.actions.getData();
-      }
-      return null;
-    },
-    save: async () => {
-      if (builderRef.current?.promise) {
-        await builderRef.current.promise;
-        builderRef.current.actions.save();
-      }
-    },
-  }));
+  }, [fieldsJson, onSave]);
 
   return (
     <div className="my-8">
@@ -150,8 +158,4 @@ const FormBuilderWrapper = forwardRef(({ fieldsJson, onSave }, ref) => {
       ></div>
     </div>
   );
-});
-
-FormBuilderWrapper.displayName = 'FormBuilderWrapper';
-
-export default FormBuilderWrapper;
+}

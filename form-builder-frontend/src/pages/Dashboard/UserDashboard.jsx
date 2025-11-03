@@ -85,12 +85,12 @@ export default function UserDashboard() {
     { name: "Responses", value: totalResponses },
   ];
 
-  const lineData = responsesData.map((f, i) => ({
+  const lineData = responsesData.map((f) => ({
     name: f.name,
     growth: Math.floor(Math.random() * 100),
   }));
 
-  const radarData = responsesData.map((f, i) => ({
+  const radarData = responsesData.map((f) => ({
     subject: f.name.length > 10 ? f.name.slice(0, 10) + "..." : f.name,
     engagement: Math.floor(Math.random() * 100),
   }));
@@ -98,11 +98,11 @@ export default function UserDashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-8 space-y-10">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         <motion.h1
           initial={{ y: -20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="text-4xl font-extrabold text-gray-800 tracking-tight"
+          className="text-3xl sm:text-4xl font-extrabold text-gray-800 tracking-tight"
         >
           My Dashboard
         </motion.h1>
@@ -110,7 +110,7 @@ export default function UserDashboard() {
         <motion.div whileHover={{ scale: 1.05 }}>
           <Link
             to="/create"
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-700 hover:to-blue-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md transition-all"
+            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-indigo-700 hover:to-blue-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-semibold shadow-md transition-all text-sm sm:text-base w-full sm:w-auto text-center"
           >
             + Create Form
           </Link>
@@ -122,11 +122,11 @@ export default function UserDashboard() {
         {[
           { title: "Forms Created", value: forms.length, color: "from-blue-500 to-indigo-600" },
           { title: "Total Responses", value: totalResponses, color: "from-green-500 to-emerald-600" },
-          { title: "Active Forms", value: Math.floor(forms.length * 0.8), color: "from-yellow-400 to-orange-500" },
+          { title: "Active Forms", value: forms.filter(f => f.status === 'Active').length, color: "from-yellow-400 to-orange-500" },
           { title: "Avg Responses/Form", value: forms.length ? (totalResponses / forms.length).toFixed(1) : 0, color: "from-pink-500 to-red-500" },
-        ].map((stat, i) => (
+        ].map((stat, index) => (
           <motion.div
-            key={i}
+            key={index}
             whileHover={{ y: -6 }}
             transition={{ type: "spring", stiffness: 200 }}
             className={`bg-gradient-to-r ${stat.color} text-white rounded-xl shadow-lg p-6 flex flex-col items-center`}
@@ -135,7 +135,7 @@ export default function UserDashboard() {
             <motion.p
               initial={{ scale: 0.7, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2 + i * 0.1 }}
+              transition={{ delay: 0.2 + index * 0.1 }}
               className="text-4xl font-extrabold mt-2"
             >
               {stat.value}
