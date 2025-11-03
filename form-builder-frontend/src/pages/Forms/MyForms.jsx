@@ -41,7 +41,7 @@ export default function MyForms() {
   const handleStatusChange = async (id, newStatus) => {
     try {
       await updateForm(token, id, { status: newStatus });
-      fetchForms(); // Refresh the list to show updated status
+      setForms(forms.map(f => f.id === id ? { ...f, status: newStatus } : f));
     } catch (err) {
       console.error('Failed to update form status:', err);
       alert('Status update failed');

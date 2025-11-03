@@ -79,7 +79,7 @@ export default function Register() {
           <input
             type="password"
             className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
-            placeholder="Password"
+            placeholder="Password (min 6 chars, 1 uppercase, 1 lowercase, 1 number)"
             value={password}
             onChange={e => setPassword(e.target.value)}
             required

@@ -75,10 +75,20 @@ export const generateFormQrCode = async (token, id) => {
   return res.data;
 };
 
+// Delete response
+export const deleteResponse = async (token, responseId) => {
+  const res = await axios.delete(`${API_URL}/forms/responses/${responseId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+
 
 // Submit public response
-export const submitPublicResponse = async (slug, answers) => {
-  const res = await axios.post(`${API_URL}/forms/public/${slug}/submit`, { answers });
+export const submitPublicResponse = async (slug, formData) => {
+  const res = await axios.post(`${API_URL}/forms/public/${slug}/submit`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return res.data;
 };
 

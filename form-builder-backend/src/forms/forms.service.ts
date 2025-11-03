@@ -144,7 +144,7 @@ export class FormsService {
   // --- Submit form response with optional files ---
   async submitResponseWithFiles(
     formSlug: string,
-    body: any,
+    answers: any,
     files?: Express.Multer.File[],
   ): Promise<FormResponse> {
     const form = await this.findOne(formSlug);
@@ -154,8 +154,8 @@ export class FormsService {
 
     const answersArray: { fieldId: string; value: string }[] = [];
 
-    // --- Normal fields from body ---
-    Object.entries(body || {}).forEach(([fieldId, value]) => {
+    // --- Normal fields from answers ---
+    Object.entries(answers || {}).forEach(([fieldId, value]) => {
       answersArray.push({ fieldId, value: String(value) });
     });
 
@@ -199,6 +199,16 @@ export class FormsService {
       where: { owner: { id: user.id } },
       relations: ['fields'],
     });
+  }
+
+  // --- Delete response ---
+  async deleteResponse(responseId: string, user: User): Promise<void> {
+    const response = await this.responsesRepo.findOne({ where: { id: responseId }, relations: ['form', 'form.owner'] });
+    if (!response) throw new NotFoundException('Response not found');
+    if (response.form.owner?.id !== user.id && user.role.name !== 'admin') {
+      throw new NotFoundException('Response not found');
+    }
+    await this.responsesRepo.delete(responseId);
   }
 
   // --- Generate QR code ---

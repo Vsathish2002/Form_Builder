@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { getFormById, getFormResponses } from "../../api/forms";
+import { getFormById, getFormResponses, deleteResponse } from "../../api/forms";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import {
@@ -58,6 +58,17 @@ export default function FormResponses() {
     fetchData();
   }, [id, token]);
 
+  const handleDeleteResponse = async (responseId) => {
+    if (!window.confirm('Are you sure you want to delete this response?')) return;
+    try {
+      await deleteResponse(token, responseId);
+      setResponses(responses.filter(r => r.id !== responseId));
+    } catch (err) {
+      console.error('Failed to delete response:', err);
+      alert('Delete failed');
+    }
+  };
+
   // ------------------- Summary data -------------------
   const totalResponses = responses.length;
   const latestResponseTime = responses.length
@@ -115,6 +126,18 @@ const data = useMemo(() => {
     return [
       columnHelper.accessor("submittedAt", { header: "Submitted At" }),
       ...labels.map((label) => columnHelper.accessor(label, { header: label })),
+      columnHelper.display({
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <button
+            onClick={() => handleDeleteResponse(responses[row.index].id)}
+            className="text-red-600 hover:text-red-800"
+          >
+            Delete
+          </button>
+        ),
+      }),
     ];
   }, [responses, columnHelper]);
 

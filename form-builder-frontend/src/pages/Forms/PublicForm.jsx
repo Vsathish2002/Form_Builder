@@ -150,10 +150,10 @@ export default function PublicForm() {
     setStatus({ loading: true, error: null, success: false });
     try {
       const formData = new FormData();
-      Object.entries(answers).forEach(([key, value]) => formData.append(key, value));
-      if (files) Object.entries(files).forEach(([key, file]) => formData.append(key, file));
+      formData.append('answers', JSON.stringify(answers));
+      if (files) Object.entries(files).forEach(([key, file]) => formData.append('files', file));
 
-      await submitPublicResponse(slug, formData, true);
+      await submitPublicResponse(slug, formData);
       setStatus({ loading: false, error: null, success: true });
     } catch (err) {
       console.error(err);

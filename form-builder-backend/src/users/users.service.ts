@@ -28,4 +28,16 @@ export class UsersService {
   findAll(): Promise<User[]> {
     return this.userRepo.find({ relations: ['role'] });
   }
+
+  async updateUserResetToken(userId: string, resetToken: string, resetTokenExpiry: Date): Promise<void> {
+    await this.userRepo.update(userId, { resetToken, resetTokenExpiry });
+  }
+
+  async updateUserPassword(userId: string, newPassword: string): Promise<void> {
+    await this.userRepo.update(userId, { password: newPassword });
+  }
+
+  async clearResetToken(userId: string): Promise<void> {
+    await this.userRepo.update(userId, { resetToken: null, resetTokenExpiry: null });
+  }
 }

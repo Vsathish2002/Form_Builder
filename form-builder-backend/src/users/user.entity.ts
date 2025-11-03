@@ -15,6 +15,12 @@ export class User {
   @Column()
   password: string;
 
+  @Column({ type: 'varchar', nullable: true })
+  resetToken: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  resetTokenExpiry: Date | null;
+
   @ManyToOne(() => Role, { eager: true })
   role: Role;
 }

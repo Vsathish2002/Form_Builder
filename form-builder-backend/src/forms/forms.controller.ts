@@ -70,7 +70,7 @@ export class FormsController {
 
   // Submit public response with file support
   @Post('public/:slug/submit')
-  @UseInterceptors(FilesInterceptor('files')) // 'files' matches the FormData key from frontend
+  @UseInterceptors(FilesInterceptor('files')) // Intercept all files in the form
   async submitPublic(
     @Param('slug') slug: string,
     @Body() body: any,
@@ -99,6 +99,14 @@ export class FormsController {
   getUserForms(@Request() req) {
     const user: User = req.user;
     return this.formsService.getUserForms(user);
+  }
+
+  // Delete response
+  @UseGuards(JwtAuthGuard)
+  @Delete('responses/:responseId')
+  deleteResponse(@Param('responseId') responseId: string, @Request() req) {
+    const user: User = req.user;
+    return this.formsService.deleteResponse(responseId, user);
   }
 
   // Generate QR code for form

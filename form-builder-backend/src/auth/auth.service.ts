@@ -1,14 +1,16 @@
-import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/user.entity';
+import { EmailService } from './email.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
+    private emailService: EmailService,
   ) {}
 
   // Register user
@@ -18,6 +20,12 @@ export class AuthService {
     password: string,
     role: string = 'user', // default role
   ): Promise<User> {
+    // Validate password strength: at least 6 characters, 1 uppercase, 1 lowercase, 1 number
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/;
+    if (!passwordRegex.test(password)) {
+      throw new BadRequestException('Password must be at least 6 characters long and contain at least one uppercase letter, one lowercase letter, and one number');
+    }
+
     const existing = await this.usersService.findByEmail(email);
     if (existing) throw new ConflictException('Email already exists');
 
@@ -37,13 +45,87 @@ export class AuthService {
     return user;
   }
 
+  // Forgot password - generate OTP and send email
+  async forgotPassword(email: string) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user) throw new BadRequestException('User not found');
+
+    // Generate a 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Hash the OTP for storage
+    const hashedOtp = await bcrypt.hash(otp, 10);
+
+    // Set expiry to 10 minutes from now
+    const expiry = new Date();
+    expiry.setMinutes(expiry.getMinutes() + 10);
+
+    // Update user with reset token and expiry
+    await this.usersService.updateUserResetToken(user.id, hashedOtp, expiry);
+
+    // Send email with OTP
+    await this.emailService.sendOtpEmail(email, otp);
+
+    return { message: 'OTP sent to your email' };
+  }
+
+  // Verify OTP
+  async verifyOtp(email: string, otp: string) {
+    const user = await this.usersService.findByEmail(email);
+    if (!user || !user.resetToken || !user.resetTokenExpiry) {
+      throw new BadRequestException('Invalid or expired OTP');
+    }
+
+    if (user.resetTokenExpiry && new Date() > user.resetTokenExpiry) {
+      throw new BadRequestException('OTP has expired');
+    }
+
+    const isOtpValid = await bcrypt.compare(otp, user.resetToken);
+    if (!isOtpValid) {
+      throw new BadRequestException('Invalid OTP');
+    }
+
+    return { message: 'OTP verified successfully' };
+  }
+
+  // Reset password
+  async resetPassword(email: string, otp: string, newPassword: string) {
+    // Validate password strength: at least 6 characters, 1 uppercase, 1 lowercase, 1 number
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/;
+    if (!passwordRegex.test(newPassword)) {
+      throw new BadRequestException('Password must be at least 6 characters long and contain at least one uppercase letter, one lowercase letter, and one number');
+    }
+
+    const user = await this.usersService.findByEmail(email);
+    if (!user || !user.resetToken || !user.resetTokenExpiry) {
+      throw new BadRequestException('Invalid or expired OTP');
+    }
+
+    if (user.resetTokenExpiry && new Date() > user.resetTokenExpiry) {
+      throw new BadRequestException('OTP has expired');
+    }
+
+    const isOtpValid = await bcrypt.compare(otp, user.resetToken);
+    if (!isOtpValid) {
+      throw new BadRequestException('Invalid OTP');
+    }
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password and clear reset token
+    await this.usersService.updateUserPassword(user.id, hashedPassword);
+    await this.usersService.clearResetToken(user.id);
+
+    return { message: 'Password reset successfully' };
+  }
+
   // Login user and return JWT
   async login(user: User) {
     const payload = { email: user.email, sub: user.id, role: user.role.name };
 
-
     // Ensure expiresIn is a number
-   const expiresIn = parseInt(process.env.JWT_EXPIRATION || '3600', 10);
+    const expiresIn = parseInt(process.env.JWT_EXPIRATION || '3600', 10);
 
     return {
       access_token: this.jwtService.sign(payload, {
