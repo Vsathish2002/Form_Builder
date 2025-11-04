@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -15,7 +14,7 @@ export default function FormRenderer({
 
   const [values, setValues] = useState(initial);
   const [showModal, setShowModal] = useState(false);
-  const [filePreviews, setFilePreviews] = useState({}); // for file preview
+  const [filePreviews, setFilePreviews] = useState({});
 
   const handleChange = (field, value, checked) => {
     if (field.type === "checkbox") {
@@ -23,7 +22,6 @@ export default function FormRenderer({
       if (checked) setValues({ ...values, [field.id]: [...prev, value] });
       else setValues({ ...values, [field.id]: prev.filter((v) => v !== value) });
     } else if (field.type === "file") {
-      // Handle file upload
       const file = value?.target?.files?.[0];
       if (file) {
         setValues({ ...values, [field.id]: file });
@@ -54,39 +52,40 @@ export default function FormRenderer({
   };
 
   return (
-    <div className="relative">
+    <div className="relative w-full flex justify-center items-center py-10 px-4">
       <motion.form
         onSubmit={handleSubmit}
-        className="bg-white p-8 rounded-3xl shadow-xl w-full max-w-2xl mx-auto border border-gray-100"
-        initial={{ opacity: 0, y: 20 }}
+        className="w-full max-w-2xl bg-white/95 backdrop-blur-xl border border-gray-100 shadow-xl rounded-3xl px-8 py-10 sm:px-10 sm:py-12
+          transition-all duration-500 hover:shadow-2xl"
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
       >
-        <h2 className="text-3xl font-bold mb-2 text-gray-800 text-center">
-          {form.title}
-        </h2>
-        {form.description && (
-          <p className="text-gray-500 mb-6 text-center">{form.description}</p>
-        )}
+        <div className="text-center mb-8">
+          <h2 className="text-4xl font-bold text-gray-800">{form.title}</h2>
+          {form.description && (
+            <p className="text-gray-500 mt-2 text-lg">{form.description}</p>
+          )}
+        </div>
 
-        <div className="space-y-5">
+        <div className="space-y-7">
           {(form.fields || []).map((field, i) => (
             <motion.div
               key={field.id}
-              className="mb-4"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
+              className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100/70 transition"
             >
-              <label className="block mb-1 font-medium text-gray-700">
+              <label className="block text-lg font-medium text-gray-700 mb-2">
                 {field.label}
-                {field.required ? <span className="text-red-500"> *</span> : ""}
+                {field.required && <span className="text-red-500 ml-1">*</span>}
               </label>
 
               {/* TEXT */}
               {field.type === "text" && (
                 <input
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   value={values[field.id] || ""}
                   onChange={(e) => handleChange(field, e.target.value)}
                   required={!!field.required}
@@ -96,7 +95,8 @@ export default function FormRenderer({
               {/* TEXTAREA */}
               {field.type === "textarea" && (
                 <textarea
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  rows="3"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   value={values[field.id] || ""}
                   onChange={(e) => handleChange(field, e.target.value)}
                   required={!!field.required}
@@ -107,7 +107,7 @@ export default function FormRenderer({
               {field.type === "number" && (
                 <input
                   type="number"
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   value={values[field.id] || ""}
                   onChange={(e) => handleChange(field, e.target.value)}
                   required={!!field.required}
@@ -118,7 +118,7 @@ export default function FormRenderer({
               {field.type === "date" && (
                 <input
                   type="date"
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   value={values[field.id] || ""}
                   onChange={(e) => handleChange(field, e.target.value)}
                   required={!!field.required}
@@ -128,7 +128,7 @@ export default function FormRenderer({
               {/* SELECT */}
               {field.type === "select" && (
                 <select
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   value={values[field.id] || ""}
                   onChange={(e) => handleChange(field, e.target.value)}
                   required={!!field.required}
@@ -147,7 +147,7 @@ export default function FormRenderer({
                 (field.options || []).map((opt) => (
                   <label
                     key={opt}
-                    className="inline-flex items-center mr-4 text-gray-700"
+                    className="inline-flex items-center mr-5 mt-2 cursor-pointer"
                   >
                     <input
                       type="radio"
@@ -158,7 +158,7 @@ export default function FormRenderer({
                       required={!!field.required}
                       className="mr-2 accent-blue-600"
                     />
-                    {opt}
+                    <span className="text-gray-700">{opt}</span>
                   </label>
                 ))}
 
@@ -167,7 +167,7 @@ export default function FormRenderer({
                 (field.options || []).map((opt) => (
                   <label
                     key={opt}
-                    className="inline-flex items-center mr-4 text-gray-700"
+                    className="inline-flex items-center mr-5 mt-2 cursor-pointer"
                   >
                     <input
                       type="checkbox"
@@ -178,17 +178,17 @@ export default function FormRenderer({
                       }
                       className="mr-2 accent-blue-600"
                     />
-                    {opt}
+                    <span className="text-gray-700">{opt}</span>
                   </label>
                 ))}
 
-              {/* FILE UPLOAD */}
+              {/* FILE */}
               {field.type === "file" && (
-                <div>
+                <div className="mt-2">
                   <input
                     type="file"
                     accept="image/*"
-                    className="w-full p-2 border rounded-lg"
+                    className="block w-full p-2 border border-gray-300 rounded-lg"
                     onChange={(e) => handleChange(field, e)}
                     required={!!field.required}
                   />
@@ -196,7 +196,7 @@ export default function FormRenderer({
                     <img
                       src={filePreviews[field.id]}
                       alt="Preview"
-                      className="mt-3 w-32 h-32 object-cover rounded-lg border"
+                      className="mt-3 w-32 h-32 object-cover rounded-lg border border-gray-200 shadow-sm"
                     />
                   )}
                 </div>
@@ -207,14 +207,15 @@ export default function FormRenderer({
 
         <motion.button
           type="submit"
-          className="mt-6 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-semibold shadow-md hover:shadow-lg transform hover:scale-[1.02] transition duration-300"
+          className="mt-10 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg py-3 rounded-lg font-semibold 
+            shadow-md hover:shadow-lg hover:scale-[1.02] transition duration-300"
           whileTap={{ scale: 0.96 }}
         >
           {submitLabel}
         </motion.button>
       </motion.form>
 
-      {/* Confirmation Modal */}
+      {/* Modal */}
       <AnimatePresence>
         {showModal && (
           <motion.div
@@ -228,7 +229,7 @@ export default function FormRenderer({
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: "spring", duration: 0.5 }}
+              transition={{ type: 'spring', duration: 0.5 }}
             >
               <h2 className="text-2xl font-bold text-green-600 mb-2">
                 🎉 Submitted Successfully!
