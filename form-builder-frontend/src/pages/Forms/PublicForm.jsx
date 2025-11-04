@@ -3,14 +3,39 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getFormBySlug, submitPublicResponse, saveFormDraft, loadFormDraft, deleteFormDraft } from '../../api/forms';
 import FormRenderer from '../../components/FormRenderer';
 import { FiCheckCircle } from 'react-icons/fi';
+import io from 'socket.io-client';
 
 export default function PublicForm() {
+
   const { slug } = useParams();
   const navigate = useNavigate();
   const [form, setForm] = useState(null);
   const [status, setStatus] = useState({ loading: false, error: null, success: false });
   const [draftData, setDraftData] = useState(null);
   const [sessionId] = useState(() => `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`);
+   useEffect(() => {
+    if (!form) return;
+
+    // ✅ Connect to backend websocket
+    const socket = io("http://localhost:4000", {
+      transports: ["websocket"],
+      reconnection: true,
+    });
+
+    socket.on("connect", () => {
+      console.log("📡 PublicForm connected:", socket.id);
+      // 🔥 Tell backend that this form is now being filled
+      socket.emit("formOpened", { formId: form.id });
+      console.log("📩 formOpened emitted for", form.id);
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("❌ WebSocket error:", err.message);
+    });
+
+    return () => socket.disconnect();
+  }, [form]);
+
 
   useEffect(() => {
     (async () => {
@@ -29,6 +54,11 @@ export default function PublicForm() {
         setForm({ ...data, fields: fieldsWithId });
         const draft = await loadFormDraft(slug, sessionId);
         if (draft) setDraftData(draft);
+
+        // Emit form opened event to notify form owner
+        const socket = io('http://localhost:4000');
+        socket.emit('formOpened', { formId: data.id });
+        socket.disconnect();
       } catch {
         setStatus({ loading: false, error: '❌ Form not found or unavailable.', success: false });
       }
@@ -38,6 +68,11 @@ export default function PublicForm() {
   const handleSubmit = async (answers, files) => {
     setStatus({ loading: true, error: null, success: false });
     try {
+      // Emit form submitting event
+      const socket = io('http://localhost:4000');
+      socket.emit('formSubmitting', { formId: form.id });
+      socket.disconnect();
+
       const formData = new FormData();
       formData.append('answers', JSON.stringify(answers));
       if (files) Object.entries(files).forEach(([, file]) => formData.append('files', file));
@@ -65,7 +100,7 @@ export default function PublicForm() {
         </div>
       </div>
     );
-  }
+   }
 
   if (status.error) {
     return (

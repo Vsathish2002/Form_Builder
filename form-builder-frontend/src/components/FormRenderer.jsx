@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 
 export default function FormRenderer({
   form,
@@ -53,13 +53,10 @@ export default function FormRenderer({
 
   return (
     <div className="relative w-full flex justify-center items-center py-10 px-4">
-      <motion.form
+      <form
         onSubmit={handleSubmit}
         className="w-full max-w-2xl bg-white/95 backdrop-blur-xl border border-gray-100 shadow-xl rounded-3xl px-8 py-10 sm:px-10 sm:py-12
           transition-all duration-500 hover:shadow-2xl"
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
       >
         <div className="text-center mb-8">
           <h2 className="text-4xl font-bold text-gray-800">{form.title}</h2>
@@ -69,12 +66,9 @@ export default function FormRenderer({
         </div>
 
         <div className="space-y-7">
-          {(form.fields || []).map((field, i) => (
-            <motion.div
+          {(form.fields || []).map((field) => (
+            <div
               key={field.id}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.1 }}
               className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100/70 transition"
             >
               <label className="block text-lg font-medium text-gray-700 mb-2">
@@ -201,19 +195,18 @@ export default function FormRenderer({
                   )}
                 </div>
               )}
-            </motion.div>
+            </div>
           ))}
         </div>
 
-        <motion.button
+        <button
           type="submit"
-          className="mt-10 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg py-3 rounded-lg font-semibold 
+          className="mt-10 w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg py-3 rounded-lg font-semibold
             shadow-md hover:shadow-lg hover:scale-[1.02] transition duration-300"
-          whileTap={{ scale: 0.96 }}
         >
           {submitLabel}
-        </motion.button>
-      </motion.form>
+        </button>
+      </form>
 
       {/* Modal */}
       <AnimatePresence>

@@ -149,7 +149,7 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
   return (
     <div className="my-8">
       <h3 className="text-2xl font-semibold mb-4">
-        🧱 Advanced Drag & Drop Form Builder
+        Advanced Drag & Drop Form Builder
       </h3>
       <div
         ref={editorContainer}

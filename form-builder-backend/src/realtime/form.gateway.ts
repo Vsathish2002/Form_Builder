@@ -30,4 +30,18 @@ export class FormGateway {
   broadcastDraftUpdate(formSlug: string, draftData: any, sessionId?: string) {
     this.server.emit('draftUpdate', { formSlug, draftData, sessionId });
   }
+
+  // Handle form opened event from public form
+  @SubscribeMessage('formOpened')
+  handleFormOpened(@MessageBody() data: { formId: string }) {
+    this.logger.log(`Form opened: ${data.formId}`);
+    this.server.emit('formOpened', data);
+  }
+
+  // Handle form submitting event from public form
+  @SubscribeMessage('formSubmitting')
+  handleFormSubmitting(@MessageBody() data: { formId: string }) {
+    this.logger.log(`Form submitting: ${data.formId}`);
+    this.server.emit('formSubmitting', data);
+  }
 }

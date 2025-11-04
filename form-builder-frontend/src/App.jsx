@@ -15,7 +15,7 @@ function App() {
       {!isPublicFormPage && <Navbar />}
       <main className="flex-1 w-full pt-16 sm:pt-18">
         <AppRoutes />
-      </main>
+      </main> 
       {!isPublicFormPage && <Footer />}
     </div>
   );

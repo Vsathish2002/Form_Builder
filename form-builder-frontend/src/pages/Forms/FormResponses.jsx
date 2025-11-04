@@ -48,9 +48,20 @@ export default function FormResponses() {
       transports: ['websocket', 'polling'],
     });
 
+    socket.on('connect', () => {
+      console.log('FormResponses socket connected:', socket.id);
+      socket.emit('joinFormRoom', id);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('FormResponses socket disconnected');
+    });
+
     // Listen for new form responses and update the UI instantly
-    socket.on('newFormResponse', (data) => {
+    socket.on('formSubmitted', (data) => {
+      console.log('Received formSubmitted event:', data);
       if (data.formId === id) {
+        console.log('Updating responses for form:', id);
         // Refresh responses to show the new submission
         const fetchUpdatedResponses = async () => {
           try {
@@ -106,7 +117,7 @@ export default function FormResponses() {
     ? new Date(responses[responses.length - 1].createdAt).toLocaleString()
     : "No responses yet";
 
-    // Table  data
+    // Table data for display
 const data = useMemo(() => {
     return responses.map((r) => {
       const row = { submittedAt: new Date(r.createdAt).toLocaleString() };
@@ -128,7 +139,7 @@ const data = useMemo(() => {
           val = new Date(val).toLocaleDateString();
         }
 
-        // Format file fields as clickable link
+        // Format file fields as clickable link for display
         if (type === "file" && val) {
           val = (
             <a
@@ -140,6 +151,39 @@ const data = useMemo(() => {
               {val.split("/").pop()}
             </a>
           );
+        }
+
+        row[item.field.label] = val;
+      });
+      return row;
+    });
+  }, [responses]);
+
+  // CSV export data (plain text, no JSX)
+  const csvData = useMemo(() => {
+    return responses.map((r) => {
+      const row = { submittedAt: new Date(r.createdAt).toLocaleString() };
+      r.items.forEach((item) => {
+        const type = item.field.type;
+        let val = item.value;
+
+        // Skip structural fields
+        if (type === "header" || type === "section") return;
+
+        // Parse JSON for multi-select/checkbox
+        try {
+          const parsed = JSON.parse(val);
+          if (Array.isArray(parsed)) val = parsed.join(", ");
+        } catch {}
+
+        // Format date fields
+        if (type === "date" && val) {
+          val = new Date(val).toLocaleDateString();
+        }
+
+        // For CSV, use plain text for file fields (just the filename)
+        if (type === "file" && val) {
+          val = val.split("/").pop();
         }
 
         row[item.field.label] = val;
@@ -311,22 +355,24 @@ const data = useMemo(() => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <div className="flex flex-col md:flex-row justify-between items-center p-4 gap-2">
+        <div className="p-4 space-y-4">
           <input
             value={globalFilter || ""}
             onChange={(e) => setGlobalFilter(e.target.value)}
             placeholder="Search responses..."
-            className="w-full md:w-1/3 px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
-          <motion.div whileHover={{ scale: 1.05 }}>
-            <CSVLink
-              data={data}
-              filename={`${form.title}-responses.csv`}
-              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow transition"
-            >
-              Export CSV
-            </CSVLink>
-          </motion.div>
+          <div className="flex justify-end">
+            <motion.div whileHover={{ scale: 1.05 }}>
+              <CSVLink
+                data={csvData}
+                filename={`${form.title}-responses.csv`}
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow transition"
+              >
+                Export CSV
+              </CSVLink>
+            </motion.div>
+          </div>
         </div>
 
         <table className="min-w-full">

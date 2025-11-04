@@ -8,6 +8,7 @@ import FormCard from '../../components/FormCard';
 
 export default function MyForms() {
   const [forms, setForms] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const { token } = useAuth();
   const [loading, setLoading] = useState(true);
 
@@ -48,6 +49,11 @@ export default function MyForms() {
     }
   };
 
+  // Filtered forms based on search query
+  const filteredForms = forms.filter(form =>
+    form.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-indigo-100 p-6 md:p-10">
       
@@ -80,12 +86,28 @@ export default function MyForms() {
         </motion.div>
       </motion.div>
 
+      {/* Search Bar */}
+      <motion.div
+        className="mb-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.5 }}
+      >
+        <input
+          type="text"
+          placeholder="Search forms by title..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full max-w-md mx-auto block px-4 py-2 border border-indigo-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+        />
+      </motion.div>
+
       {/* Info / Subtitle */}
       <motion.p
         className="text-center text-indigo-700 mb-8 text-lg"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.7, delay: 0.5 }}
+        transition={{ duration: 0.7, delay: 0.6 }}
       >
         Manage your forms easily, update them, or delete any outdated ones. Keep your workflow organized!
       </motion.p>
@@ -99,8 +121,8 @@ export default function MyForms() {
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
             layout
           >
-            {forms.length > 0 ? (
-              forms.map((form) => (
+            {filteredForms.length > 0 ? (
+              filteredForms.map((form) => (
                 <motion.div
                   key={form.id}
                   layout
@@ -119,7 +141,7 @@ export default function MyForms() {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                No forms created yet. Click "Create New Form" to start your first one!
+                {searchQuery ? 'No forms match your search.' : 'No forms created yet. Click "Create New Form" to start your first one!'}
               </motion.p>
             )}
           </motion.div>

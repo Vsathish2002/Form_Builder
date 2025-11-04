@@ -187,6 +187,7 @@ export class FormsService {
       responseId: response.id,
       totalAnswers: response.items.length,
       submittedAt: response.createdAt,
+      answers: response.items.map(item => ({ label: item.field.label, value: item.value })),
     });
 
     return response;

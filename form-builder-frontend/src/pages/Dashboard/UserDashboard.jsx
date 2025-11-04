@@ -22,6 +22,7 @@ import {
   Radar,
 } from "recharts";
 import { motion } from "framer-motion";
+import io from "socket.io-client";
 
 export default function UserDashboard() {
   const [forms, setForms] = useState([]);
@@ -34,7 +35,7 @@ export default function UserDashboard() {
   useEffect(() => {
     if (!token) return;
 
-    const fetchData = async () => {
+    const setup = async () => {
       try {
         setLoading(true);
         const userForms = await getUserForms(token);
@@ -53,6 +54,37 @@ export default function UserDashboard() {
           id: f.id,
         }));
         setResponsesData(formatted);
+
+        // WebSocket connection for real-time updates (after data is fetched)
+        const socket = io("http://localhost:4000", {
+          transports: ["websocket"],
+          reconnection: true,
+        });
+
+        socket.on("connect", () => {
+          console.log("✅ Dashboard connected to WebSocket:", socket.id);
+          // Join rooms for each form
+          userForms.forEach((form) => {
+            socket.emit("joinFormRoom", form.id);
+          });
+        });
+
+        socket.on("formSubmitted", (data) => {
+          console.log("📩 New response received:", data);
+          setTotalResponses((prev) => prev + 1);
+          setResponsesData((prev) =>
+            prev.map((item) =>
+              item.id === data.formId ? { ...item, responses: item.responses + 1 } : item
+            )
+          );
+        });
+
+        socket.on("connect_error", (err) => {
+          console.error("❌ WebSocket error:", err.message);
+        });
+
+        // Store socket for cleanup
+        window.dashboardSocket = socket;
       } catch (err) {
         console.error("Error fetching data:", err);
         setError("Failed to load dashboard data");
@@ -60,7 +92,14 @@ export default function UserDashboard() {
         setLoading(false);
       }
     };
-    fetchData();
+
+    setup();
+
+    return () => {
+      if (window.dashboardSocket) {
+        window.dashboardSocket.disconnect();
+      }
+    };
   }, [token]);
 
   const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444"];
@@ -231,53 +270,7 @@ export default function UserDashboard() {
         </motion.div>
       </div>
 
-      {/* Forms List */}
-      {/* <div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-4">Your Forms</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {forms.length > 0 ? (
-            forms.map((form, index) => (
-              <motion.div
-                key={form.id}
-                whileHover={{ scale: 1.02 }}
-                transition={{ type: "spring", stiffness: 200 }}
-                className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all p-5 border-l-4 border-blue-600"
-              >
-                <h3 className="text-lg font-semibold text-gray-800 truncate">
-                  {form.title}
-                </h3>
-                <p className="text-sm text-gray-500 mt-1 truncate">
-                  {form.description || "No description provided"}
-                </p>
-                <div className="flex gap-5 mt-4 text-sm font-semibold">
-                  <Link
-                    to={`/edit/${form.id}`}
-                    className="text-green-600 hover:underline"
-                  >
-                    Edit
-                  </Link>
-                  <Link
-                    to={`/forms/${form.id}/responses`}
-                    className="text-blue-600 hover:underline"
-                  >
-                    Responses
-                  </Link>
-                  <Link
-                    to={`/public/${form.slug}`}
-                    className="text-indigo-600 hover:underline"
-                  >
-                    Share
-                  </Link>
-                </div>
-              </motion.div>
-            ))
-          ) : (
-            <div className="text-gray-600 italic text-center col-span-full">
-              You haven’t created any forms yet.
-            </div>
-          )}
-        </div>
-      </div> */}
+     
     </div>
   );
 }
