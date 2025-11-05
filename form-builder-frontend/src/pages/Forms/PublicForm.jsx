@@ -65,24 +65,29 @@ export default function PublicForm() {
     })();
   }, [slug, sessionId]);
 
-  const handleSubmit = async (answers, files) => {
-    setStatus({ loading: true, error: null, success: false });
-    try {
-      // Emit form submitting event
-      const socket = io('http://localhost:4000');
-      socket.emit('formSubmitting', { formId: form.id });
-      socket.disconnect();
+const handleSubmit = async (formData) => {
+  setStatus({ loading: true, error: null, success: false });
 
-      const formData = new FormData();
-      formData.append('answers', JSON.stringify(answers));
-      if (files) Object.entries(files).forEach(([, file]) => formData.append('files', file));
-      await submitPublicResponse(slug, formData);
-      await deleteFormDraft(slug, sessionId);
-      setStatus({ loading: false, success: true, error: null });
-    } catch {
-      setStatus({ loading: false, success: false, error: '⚠️ Failed to submit response. Please try again later.' });
-    }
-  };
+  try {
+    const socket = io('http://localhost:4000');
+    socket.emit('formSubmitting', { formId: form.id });
+    socket.disconnect();
+
+    // ✅ Directly send FormData (already includes files + answers)
+    await submitPublicResponse(slug, formData);
+
+    await deleteFormDraft(slug, sessionId);
+    setStatus({ loading: false, success: true, error: null });
+  } catch (err) {
+    console.error("Submission error:", err);
+    setStatus({
+      loading: false,
+      success: false,
+      error: "⚠️ Failed to submit response. Please try again later.",
+    });
+  }
+};
+
 
   if (status.success) {
     return (

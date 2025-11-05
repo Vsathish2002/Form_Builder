@@ -11,6 +11,8 @@ import { GatewayModule } from './gateway/gateway.module';
 import { typeOrmConfig } from './database/typeorm.config';
 import { AppController } from './app.controller';
 import { RolesSeeder } from './roles/roles.seed';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -23,6 +25,10 @@ import { RolesSeeder } from './roles/roles.seed';
     QrcodeModule,
     RealtimeModule,
     GatewayModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', 'uploads'),
+      serveRoot: '/uploads',
+    }),
   ],
   providers: [RolesSeeder],
   controllers: [AppController],

@@ -118,7 +118,7 @@ export default function FormResponses() {
     : "No responses yet";
 
     // Table data for display
-const data = useMemo(() => {
+  const data = useMemo(() => {
     return responses.map((r) => {
       const row = { submittedAt: new Date(r.createdAt).toLocaleString() };
       r.items.forEach((item) => {
@@ -139,18 +139,27 @@ const data = useMemo(() => {
           val = new Date(val).toLocaleDateString();
         }
 
-        // Format file fields as clickable link for display
-        if (type === "file" && val) {
-          val = (
-            <a
-              href={val}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 underline"
-            >
-              {val.split("/").pop()}
-            </a>
-          );
+        // Format file fields as clickable download link
+        if (type === "file") {
+          if (typeof val === 'string' && val && val.startsWith('/uploads/')) {
+            const filename = val.split("/").pop();
+            val = (
+              <a
+                href={val}
+                download={filename}
+                className="text-blue-600 underline"
+              >
+                {filename}
+              </a>
+            );
+          } else {
+            val = 'Uploaded file';
+          }
+        }
+
+        // Ensure val is a string or JSX, not object (for non-file types)
+        if (type !== "file" && typeof val === 'object' && val !== null) {
+          val = val.toString();
         }
 
         row[item.field.label] = val;

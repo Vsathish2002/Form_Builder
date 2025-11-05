@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+} from 'typeorm';
 import { Form } from './form.entity';
 import { FormResponseItem } from './formResponseItem.entity';
 
@@ -12,7 +18,10 @@ export type FieldType =
   | 'header'
   | 'date'
   | 'section'
-  | 'file';
+  | 'file'
+  | 'paragraph'
+  | 'page'
+  | 'autocomplete';
 
 @Entity()
 export class FormField {
@@ -35,6 +44,9 @@ export class FormField {
       'date',
       'section',
       'file',
+      'paragraph',
+      'page',
+      'autocomplete',
     ],
   })
   type: FieldType;
@@ -45,13 +57,22 @@ export class FormField {
   @Column({ type: 'simple-array', nullable: true })
   options: string[];
 
+  @Column({ type: 'text', nullable: true })
+  extraValue?: string; // For video/link URLs etc.
+
   @Column({ type: 'int', default: 0 })
   order: number;
 
   @Column({ type: 'json', nullable: true })
   validation: any;
 
-  @ManyToOne(() => Form, (form) => form.fields, { onDelete: 'CASCADE', eager: false })
+  @Column({ nullable: true })
+  subtype?: string;
+
+  @ManyToOne(() => Form, (form) => form.fields, {
+    onDelete: 'CASCADE',
+    eager: false,
+  })
   form: Form;
 
   @OneToMany(() => FormResponseItem, (item) => item.field, { cascade: true })

@@ -10,13 +10,17 @@ import {
   Request,
   UseInterceptors,
   UploadedFiles,
+  Req,
+  BadRequestException,
 } from '@nestjs/common';
 import { FormsService } from './forms.service';
 import { CreateFormDto } from './dto/create-form.dto';
 import { UpdateFormDto } from './dto/update-form.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { User } from '../users/user.entity';
-import { FilesInterceptor } from '@nestjs/platform-express';
+// import { FilesInterceptor } from '@nestjs/platform-express';
+import { AnyFilesInterceptor } from '@nestjs/platform-express';
+
 
 @Controller('forms')
 export class FormsController {
@@ -68,28 +72,34 @@ export class FormsController {
     return this.formsService.deleteForm(id, user);
   }
 
-  // Submit public response with file support
+  // ✅ Submit public response with file support (UPDATED)
   @Post('public/:slug/submit')
-  @UseInterceptors(FilesInterceptor('files')) // Intercept all files in the form
+@UseInterceptors(AnyFilesInterceptor())
   async submitPublic(
     @Param('slug') slug: string,
-    @Body() body: any,
-    @UploadedFiles() files: Express.Multer.File[],
+    @UploadedFiles() uploadedFiles: Express.Multer.File[],
+    @Req() req: any,
   ) {
-    // Parse answers from string if sent as JSON
-    let answers = body.answers;
-    if (typeof answers === 'string') {
-      answers = JSON.parse(answers);
+    try {
+      const formData = req.body; // now each field ID is a key
+      console.log("📩 Received form data keys:", Object.keys(formData));
+      console.log("📎 Uploaded files:", uploadedFiles?.map(f => f.filename));
+
+      const response = await this.formsService.submitResponseWithFiles(
+        slug,
+        formData,
+        uploadedFiles,
+      );
+
+      if (formData.sessionId) {
+        await this.formsService.deleteFormDraft(slug, formData.sessionId);
+      }
+
+      return response;
+    } catch (err) {
+      console.error("❌ submitPublic error:", err);
+      throw new BadRequestException(err.message || "Form submission failed");
     }
-
-    const response = await this.formsService.submitResponseWithFiles(slug, answers, files);
-
-    // Delete draft after successful submission to prevent showing saved data again
-    if (body.sessionId) {
-      await this.formsService.deleteFormDraft(slug, body.sessionId);
-    }
-
-    return response;
   }
 
   // Get form responses
@@ -124,7 +134,7 @@ export class FormsController {
     return this.formsService.generateFormQrCode(id, user);
   }
 
-  // Save form draft (auto-save functionality)
+  // Save form draft
   @Post('public/:slug/draft')
   async saveDraft(
     @Param('slug') slug: string,
@@ -142,7 +152,7 @@ export class FormsController {
     return this.formsService.loadFormDraft(slug, sessionId);
   }
 
-  // Delete form draft (after successful submission)
+  // Delete form draft
   @Delete('public/:slug/draft')
   async deleteDraft(
     @Param('slug') slug: string,
