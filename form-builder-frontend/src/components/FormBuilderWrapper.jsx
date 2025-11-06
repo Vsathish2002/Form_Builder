@@ -25,7 +25,9 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
 
     return () => {
       document
-        .querySelectorAll('link[href="/libs/bootstrap.min.css"], script[src="/libs/bootstrap.bundle.min.js"]')
+        .querySelectorAll(
+          'link[href="/libs/bootstrap.min.css"], script[src="/libs/bootstrap.bundle.min.js"]'
+        )
         .forEach((el) => el.remove());
     };
   }, []);
@@ -79,7 +81,8 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
         section: {
           label: "Section Break",
           icon: "📄",
-          onRender: () => `<hr class="my-4 border border-2 border-primary" />`,
+          onRender: () =>
+            `<hr class="my-4 border border-2 border-primary" />`,
         },
 
         date: {
@@ -105,7 +108,8 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
         page: {
           label: "Page Break",
           icon: "📑",
-          onRender: () => `<div class="text-center text-primary my-3">--- Page Break ---</div>`,
+          onRender: () =>
+            `<div class="text-center text-primary my-3">--- Page Break ---</div>`,
         },
 
         autocomplete: {
@@ -113,7 +117,11 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
           icon: "🔍",
           fields: [
             { label: "Label", name: "label", type: "text" },
-            { label: "Options (comma separated)", name: "options", type: "text" },
+            {
+              label: "Options (comma separated)",
+              name: "options",
+              type: "text",
+            },
           ],
           onRender: (field) => `
             <div class="mb-3">
@@ -161,19 +169,30 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
         /** ✅ Called when user clicks SAVE in formBuilder */
         onSave: (evt, formData) => {
           try {
-            const parsed = JSON.parse(formData);
+            const fb = builderRef.current;
+            const liveData = fb?.actions?.getData("json") || formData;
+            const parsed = JSON.parse(liveData);
+
             const parsedWithId = parsed.map((f, i) => {
-              let options;
-              if (f.type === "autocomplete") {
-                options = f.options ? f.options.split(",").map((o) => o.trim()) : [];
-              } else {
-                options = (f.values || f.options || [])
-                  .map((opt) =>
-                    typeof opt === "object"
-                      ? opt.label || opt.value || opt.toString()
-                      : opt
-                  )
+              let options = [];
+
+              if (["select", "radio", "checkbox"].includes(f.type)) {
+                // ✅ Sync labels and values
+                options = (f.values || [])
+                  .map((opt) => {
+                    if (typeof opt === "object") {
+                      const label = opt.label?.trim() || "";
+                      const value = opt.value?.trim() || label;
+                      return label || value ? { label, value } : null;
+                    }
+                    const str = opt?.toString().trim();
+                    return str ? { label: str, value: str } : null;
+                  })
                   .filter(Boolean);
+              } else if (f.type === "autocomplete") {
+                options = f.options
+                  ? f.options.split(",").map((o) => o.trim())
+                  : [];
               }
 
               return {
@@ -189,7 +208,7 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
               };
             });
 
-            console.log("✅ Saved fields:", parsedWithId);
+            console.log("✅ Final Saved Fields:", parsedWithId);
             onSave(parsedWithId);
           } catch (err) {
             console.error("Error parsing saved form data:", err);
@@ -232,11 +251,15 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
     const loadData = () => {
       const transformed = fieldsJson.map((f) => {
         const newField = { ...f };
+
         if (["select", "radio", "checkbox"].includes(f.type)) {
-          newField.values = f.options || [];
+          newField.values = (f.options || []).map((opt) =>
+            typeof opt === "object" ? opt : { label: opt, value: opt }
+          );
         } else if (f.type === "autocomplete") {
           newField.options = (f.options || []).join(", ");
         }
+
         if (f.type === "header" && !f.subtype) newField.subtype = "h3";
         return newField;
       });
@@ -253,14 +276,16 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
       }
     };
 
-    if (builderRef.current.promise) builderRef.current.promise.then(loadData);
+    if (builderRef.current.promise)
+      builderRef.current.promise.then(loadData);
     else setTimeout(loadData, 500);
   }, [fieldsJson]);
 
   /** ✅ Cleanup */
   useEffect(() => {
     return () => {
-      if (builderRef.current?.actions) builderRef.current.actions.clearFields();
+      if (builderRef.current?.actions)
+        builderRef.current.actions.clearFields();
       builderRef.current = null;
       if (editorContainer.current) editorContainer.current.innerHTML = "";
     };
