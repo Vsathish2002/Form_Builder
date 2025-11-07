@@ -39,15 +39,28 @@ export default function MyForms() {
     }
   };
 
-  const handleStatusChange = async (id, newStatus) => {
-    try {
-      await updateForm(token, id, { status: newStatus });
-      setForms(forms.map(f => f.id === id ? { ...f, status: newStatus } : f));
-    } catch (err) {
-      console.error('Failed to update form status:', err);
-      alert('Status update failed');
-    }
-  };
+// ✅ Fixed version
+const handleStatusChange = async (id, newStatus) => {
+  try {
+    const form = forms.find(f => f.id === id);
+
+    await updateForm(token, id, {
+      status: newStatus,
+      title: form.title,
+      description: form.description,
+      isPublic: form.isPublic,
+      fields: form.fields || [],
+    });
+
+    setForms(forms.map(f =>
+      f.id === id ? { ...f, status: newStatus } : f
+    ));
+  } catch (err) {
+    console.error('Failed to update form status:', err);
+    alert('Status update failed');
+  }
+};
+
 
   // Filtered forms based on search query
   const filteredForms = forms.filter(form =>
