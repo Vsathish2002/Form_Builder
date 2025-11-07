@@ -51,5 +51,5 @@ export async function resetPassword(email, otp, newPassword) {
   } catch (err) {
     console.error('Reset password error:', err.response?.data || err.message);
     return err.response?.data || { message: 'Network error during password reset' };
-  }
+  }z
 }

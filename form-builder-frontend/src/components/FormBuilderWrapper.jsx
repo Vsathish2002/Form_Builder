@@ -1,13 +1,5 @@
 import React, { useEffect, useRef } from "react";
 
-/**
- * ✅ FormBuilderWrapper
- * Handles the formBuilder plugin lifecycle correctly:
- * - Loads once
- * - Persists builder instance
- * - Properly loads data (no race conditions)
- * - Triggers onSave manually only when user clicks "Save"
- */
 export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
   const builderRef = useRef(null);
   const editorContainer = useRef(null);
@@ -81,8 +73,7 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
         section: {
           label: "Section Break",
           icon: "📄",
-          onRender: () =>
-            `<hr class="my-4 border border-2 border-primary" />`,
+          onRender: () => `<hr class="my-4 border border-2 border-primary" />`,
         },
 
         date: {
@@ -158,35 +149,33 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
           "textarea",
           "number",
           "select",
-          "radio",
-          "checkbox",
+          "radio-group",
+          "checkbox-group",
           "date",
           "file",
           "autocomplete",
         ],
         controlConfig: controlPlugins,
 
-        /** ✅ Called when user clicks SAVE in formBuilder */
+        /** ✅ When user clicks SAVE */
         onSave: (evt, formData) => {
           try {
             const fb = builderRef.current;
-            const liveData = fb?.actions?.getData("json") || formData;
+            const liveData = fb?.actions?.getData("json");
             const parsed = JSON.parse(liveData);
 
             const parsedWithId = parsed.map((f, i) => {
               let options = [];
 
-              if (["select", "radio", "checkbox"].includes(f.type)) {
-                // ✅ Sync labels and values
+              if (["select", "radio-group", "checkbox-group"].includes(f.type)) {
                 options = (f.values || [])
                   .map((opt) => {
-                    if (typeof opt === "object") {
-                      const label = opt.label?.trim() || "";
-                      const value = opt.value?.trim() || label;
-                      return label || value ? { label, value } : null;
-                    }
-                    const str = opt?.toString().trim();
-                    return str ? { label: str, value: str } : null;
+                    const label = (opt.label || "").trim();
+                    const value =
+                      opt.value && opt.value.startsWith("option-")
+                        ? label
+                        : (opt.value || label).trim();
+                    return label ? { label, value } : null;
                   })
                   .filter(Boolean);
               } else if (f.type === "autocomplete") {
@@ -199,19 +188,30 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
                 id: f.id || `field-${i}`,
                 label: f.label,
                 type: f.type,
-                required: f.required || false,
+                required: !!f.required,
                 options,
-                order: f.order || i,
+                order: i,
                 validation: f.validation || null,
-                extraValue: f.extraValue || undefined,
                 subtype: f.subtype || (f.type === "header" ? "h3" : undefined),
               };
             });
 
             console.log("✅ Final Saved Fields:", parsedWithId);
             onSave(parsedWithId);
+
+            // ✅ Force UI refresh to show latest options immediately
+            fb.promise.then(() => {
+              fb.actions.clearFields();
+              fb.actions.setData(
+                parsedWithId.map((f) => ({
+                  ...f,
+                  values: f.options || [],
+                }))
+              );
+              console.log("🔄 UI refreshed with updated values");
+            });
           } catch (err) {
-            console.error("Error parsing saved form data:", err);
+            console.error("❌ Error parsing saved form data:", err);
           }
         },
       };
@@ -219,73 +219,46 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
       /** ✅ Initialize plugin */
       const fbEditor = $(editorContainer.current).formBuilder(options);
       builderRef.current = fbEditor;
-
-      // 🔹 Store builder globally for EditForm save reference
       window._formBuilderInstance = fbEditor;
-      try {
-        $(editorContainer.current).data("formBuilder", fbEditor);
-      } catch (e) {
-        console.warn("Couldn't attach builder data:", e);
-      }
+      $(editorContainer.current).data("formBuilder", fbEditor);
 
-      // 🔹 Safety: reload previous fields if already passed
-      if (fieldsJson.length > 0) {
-        setTimeout(() => {
+      /** ✅ Proper Rehydration after initialization */
+      fbEditor.promise.then(() => {
+        if (fieldsJson.length > 0) {
           try {
-            console.log("Rehydrating builder...");
-            fbEditor.actions.setData(fieldsJson);
+            console.log("Rehydrating saved fields...");
+            const transformed = fieldsJson.map((f) => {
+              const newField = { ...f };
+
+              if (["select", "radio-group", "checkbox-group"].includes(f.type)) {
+                newField.values = (f.options || []).map((opt) =>
+                  typeof opt === "object"
+                    ? { label: opt.label, value: opt.value }
+                    : { label: opt, value: opt }
+                );
+              } else if (f.type === "autocomplete") {
+                newField.options = (f.options || []).join(", ");
+              }
+
+              if (f.type === "header" && !f.subtype) newField.subtype = "h3";
+              return newField;
+            });
+
+            fbEditor.actions.setData(transformed);
           } catch (e) {
             console.warn("Rehydrate failed:", e);
           }
-        }, 800);
-      }
+        }
+      });
     }
 
     return () => clearInterval(checkInterval);
-  }, []);
-
-  /** ✅ Load data when fieldsJson changes */
-  useEffect(() => {
-    if (!builderRef.current || fieldsJson.length === 0) return;
-
-    const loadData = () => {
-      const transformed = fieldsJson.map((f) => {
-        const newField = { ...f };
-
-        if (["select", "radio", "checkbox"].includes(f.type)) {
-          newField.values = (f.options || []).map((opt) =>
-            typeof opt === "object" ? opt : { label: opt, value: opt }
-          );
-        } else if (f.type === "autocomplete") {
-          newField.options = (f.options || []).join(", ");
-        }
-
-        if (f.type === "header" && !f.subtype) newField.subtype = "h3";
-        return newField;
-      });
-
-      try {
-        builderRef.current.actions.setData(transformed);
-      } catch (err) {
-        console.warn("setData() failed, trying stringified:", err);
-        try {
-          builderRef.current.actions.setData(JSON.stringify(transformed));
-        } catch (err2) {
-          console.error("Fallback failed:", err2);
-        }
-      }
-    };
-
-    if (builderRef.current.promise)
-      builderRef.current.promise.then(loadData);
-    else setTimeout(loadData, 500);
   }, [fieldsJson]);
 
   /** ✅ Cleanup */
   useEffect(() => {
     return () => {
-      if (builderRef.current?.actions)
-        builderRef.current.actions.clearFields();
+      if (builderRef.current?.actions) builderRef.current.actions.clearFields();
       builderRef.current = null;
       if (editorContainer.current) editorContainer.current.innerHTML = "";
     };

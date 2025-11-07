@@ -17,25 +17,54 @@ export default function EditForm() {
   const navigate = useNavigate();
   const { token } = useAuth();
 
-  // Load form data
+  /** ✅ Load form data */
   useEffect(() => {
     const fetchForm = async () => {
       try {
         const data = await getFormById(token, id);
-        const fieldsWithId = (data.fields || []).map((f, i) => ({
-          id: f.id || `field-${i}`,
-          ...f,
-        }));
+
+        const fieldsWithId = (data.fields || []).map((f, i) => {
+          // ✅ Parse stringified JSON from DB if needed
+          let parsedOptions = f.options;
+          if (typeof parsedOptions === "string") {
+            try {
+              parsedOptions = JSON.parse(parsedOptions);
+            } catch {
+              parsedOptions = [];
+            }
+          }
+
+          // ✅ Ensure options array structure for builder
+          const values = Array.isArray(parsedOptions)
+            ? parsedOptions.map((opt) => ({
+                label: opt.label || "",
+                value: opt.value || "",
+              }))
+            : [];
+
+          return {
+            id: f.id || `field-${i}`,
+            label: f.label,
+            type:
+              f.type === "checkbox"
+                ? "checkbox-group"
+                : f.type === "radio"
+                ? "radio-group"
+                : f.type,
+            required: !!f.required,
+            options: values,
+            order: f.order || i,
+            validation: f.validation || null,
+            subtype: f.subtype || undefined,
+          };
+        });
 
         setForm({
           id: data.id,
           title: data.title,
           description: data.description,
           isPublic: data.isPublic,
-          fields: fieldsWithId.map(f => ({
-            ...f,
-            type: f.type === "checkbox" ? "checkbox-group" : f.type === "radio" ? "radio-group" : f.type
-          })),
+          fields: fieldsWithId,
         });
       } catch (err) {
         console.error("Failed to load form:", err);
@@ -48,7 +77,7 @@ export default function EditForm() {
     fetchForm();
   }, [id, token]);
 
-  // Handle field updates from builder
+  /** ✅ Handle builder save */
   const handleFieldsUpdate = (newFields) => {
     const fieldsWithId = newFields.map((f, i) => ({
       id: f.id || `field-${i}`,
@@ -57,7 +86,7 @@ export default function EditForm() {
     setForm((prev) => ({ ...prev, fields: fieldsWithId }));
   };
 
-  // Save form updates
+  /** ✅ Save changes */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title.trim()) return alert("Form title is required.");
@@ -70,28 +99,36 @@ export default function EditForm() {
         return;
       }
 
-      // Trigger save on builder to ensure latest fields are updated in state
-      fb.actions.save();
+      // ✅ Always grab latest data from builder
+      const liveData = fb.actions.getData("json");
+      const parsed = JSON.parse(liveData);
 
       const payload = {
         title: form.title,
         description: form.description,
         isPublic: form.isPublic,
-        fields: form.fields.map((f, i) => ({
-          id: f.id,
+        fields: parsed.map((f, i) => ({
+          id: f.id || `field-${i}`,
           label: f.label,
           type: f.type,
-          required: f.required || false,
-          options: f.options || [],
+          required: !!f.required,
           order: i,
+          options:
+            ["select", "radio-group", "checkbox-group"].includes(f.type)
+              ? (f.values || []).map((opt) => ({
+                  label: (opt.label || "").trim(),
+                  value: (opt.value || "").trim(),
+                }))
+              : null,
           validation: f.validation || null,
           className: f.className || "",
         })),
       };
 
+      console.log("🚀 Final payload to update:", payload);
       await updateForm(token, form.id, payload);
-      alert("Form updated successfully!");
 
+      alert("Form updated successfully!");
       navigate("/my-forms");
     } catch (err) {
       console.error("Failed to update form:", err);
@@ -112,7 +149,6 @@ export default function EditForm() {
     <div className="max-w-5xl mx-auto">
       <h2 className="text-3xl font-bold mb-6 text-center">Edit Form</h2>
 
-      {/* ⚠️ NOT a <form> tag — keeps FormBuilder working */}
       <div className="bg-white p-8 rounded-lg shadow-lg">
         <div className="mb-6">
           <label className="block text-lg font-semibold mb-2">

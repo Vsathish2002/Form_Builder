@@ -1,17 +1,24 @@
-import { Entity, PrimaryGeneratedColumn, ManyToOne, OneToMany, CreateDateColumn } from 'typeorm';
+// src/forms/entities/formResponse.entity.ts
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  Column,
+  CreateDateColumn,
+} from 'typeorm';
 import { Form } from './form.entity';
-import { FormResponseItem } from './formResponseItem.entity';
 
-@Entity()
+@Entity('form_responses')
 export class FormResponse {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => Form, form => form.responses, { onDelete: 'CASCADE' })
+  @ManyToOne(() => Form, (form) => form.responses, { onDelete: 'CASCADE' })
   form: Form;
 
-  @OneToMany(() => FormResponseItem, item => item.response, { cascade: true, eager: true, onDelete: 'CASCADE' })
-  items: FormResponseItem[];
+  // ✅ store all answers as JSON object
+  @Column({ type: 'jsonb' })
+  responseData: Record<string, any>;
 
   @CreateDateColumn()
   createdAt: Date;

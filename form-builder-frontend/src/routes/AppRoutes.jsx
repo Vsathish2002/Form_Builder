@@ -12,6 +12,7 @@ import FormDetails from '../pages/Forms/FormDetails';
 import FormResponses from '../pages/Forms/FormResponses';
 import PublicForm from '../pages/Forms/PublicForm';
 import MyForms from '../pages/Forms/MyForms'; // <-- Import MyForms
+import ProfilePage from '../pages/ProfilePage';
 
 export default function AppRoutes() {
   return (
@@ -28,6 +29,8 @@ export default function AppRoutes() {
       <Route path="/forms/:id/responses" element={<FormResponses />} />
       <Route path="/public/:slug" element={<PublicForm />} />
       <Route path="/my-forms" element={<MyForms />} /> {/* <-- Add this route */}
+      <Route path="/profile" element={<ProfilePage />} />
+
     </Routes>
   );
 }

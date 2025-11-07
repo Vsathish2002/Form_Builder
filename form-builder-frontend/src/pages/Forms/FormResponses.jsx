@@ -36,52 +36,41 @@ export default function FormResponses() {
   const [responses, setResponses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [globalFilter, setGlobalFilter] = useState("");
-  const [pageSize, setPageSize] = useState(10);
 
   const columnHelper = createColumnHelper();
 
   // ------------------- WebSocket connection for real-time updates -------------------
   useEffect(() => {
-    // Connect to WebSocket server for real-time response updates
-    const socket = io('http://localhost:4000', {
-    // const socket = io('http://192.168.0.105:5173:4000', {
-      transports: ['websocket', 'polling'],
+    const socket = io("http://localhost:4000", {
+      transports: ["websocket", "polling"],
     });
 
-    socket.on('connect', () => {
-      console.log('FormResponses socket connected:', socket.id);
-      socket.emit('joinFormRoom', id);
+    socket.on("connect", () => {
+      console.log("FormResponses socket connected:", socket.id);
+      socket.emit("joinFormRoom", id);
     });
 
-    socket.on('disconnect', () => {
-      console.log('FormResponses socket disconnected');
-    });
-
-    // Listen for new form responses and update the UI instantly
-    socket.on('formSubmitted', (data) => {
-      console.log('Received formSubmitted event:', data);
+    socket.on("formSubmitted", (data) => {
       if (data.formId === id) {
-        console.log('Updating responses for form:', id);
-        // Refresh responses to show the new submission
+        console.log("New response received for this form:", id);
         const fetchUpdatedResponses = async () => {
           try {
             const res = await getFormResponses(token, id);
             setResponses(res || []);
           } catch (err) {
-            console.error('Failed to fetch updated responses:', err);
+            console.error("Failed to fetch updated responses:", err);
           }
         };
         fetchUpdatedResponses();
       }
     });
 
-    // Cleanup on component unmount
     return () => {
       socket.disconnect();
     };
   }, [id, token]);
 
-  // ------------------- Fetch data -------------------
+  // ------------------- Fetch form & responses -------------------
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -101,115 +90,72 @@ export default function FormResponses() {
   }, [id, token]);
 
   const handleDeleteResponse = async (responseId) => {
-    if (!window.confirm('Are you sure you want to delete this response?')) return;
+    if (!window.confirm("Are you sure you want to delete this response?")) return;
     try {
       await deleteResponse(token, responseId);
-      setResponses(responses.filter(r => r.id !== responseId));
+      setResponses(responses.filter((r) => r.id !== responseId));
     } catch (err) {
-      console.error('Failed to delete response:', err);
-      alert('Delete failed');
+      console.error("Failed to delete response:", err);
+      alert("Delete failed");
     }
   };
 
-  // ------------------- Summary data -------------------
-  const totalResponses = responses.length;
-  const latestResponseTime = responses.length
-    ? new Date(responses[responses.length - 1].createdAt).toLocaleString()
-    : "No responses yet";
-
-    // Table data for display
+  // ------------------- Build table data from JSON -------------------
   const data = useMemo(() => {
+    if (!responses.length || !form) return [];
+
     return responses.map((r) => {
       const row = { submittedAt: new Date(r.createdAt).toLocaleString() };
-      r.items.forEach((item) => {
-        const type = item.field.type;
-        let val = item.value;
-
-        // Skip structural fields
-        if (type === "header" || type === "section") return;
-
-        // Parse JSON for multi-select/checkbox
-        try {
-          const parsed = JSON.parse(val);
-          if (Array.isArray(parsed)) val = parsed.join(", ");
-        } catch {}
-
-        // Format date fields
-        if (type === "date" && val) {
-          val = new Date(val).toLocaleDateString();
+      form.fields.forEach((field) => {
+        const val = r.responseData?.[field.id];
+        if (!val) row[field.label] = "-";
+        else if (Array.isArray(val)) row[field.label] = val.join(", ");
+        else if (typeof val === "string" && val.startsWith("/uploads/")) {
+          const filename = val.split("/").pop();
+          row[field.label] = (
+            <a
+              href={`http://localhost:4000${val}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline"
+            >
+              {filename}
+            </a>
+          );
+        } else {
+          row[field.label] = val.toString();
         }
-
-        // Format file fields as clickable download link
-        if (type === "file") {
-          if (typeof val === 'string' && val && val.startsWith('/uploads/')) {
-            const filename = val.split("/").pop();
-            val = (
-              <a
-                href={val}
-                download={filename}
-                className="text-blue-600 underline"
-              >
-                {filename}
-              </a>
-            );
-          } else {
-            val = 'Uploaded file';
-          }
-        }
-
-        // Ensure val is a string or JSX, not object (for non-file types)
-        if (type !== "file" && typeof val === 'object' && val !== null) {
-          val = val.toString();
-        }
-
-        row[item.field.label] = val;
       });
       return row;
     });
-  }, [responses]);
+  }, [responses, form]);
 
-  // CSV export data (plain text, no JSX)
+  // ------------------- CSV Export -------------------
   const csvData = useMemo(() => {
+    if (!responses.length || !form) return [];
     return responses.map((r) => {
       const row = { submittedAt: new Date(r.createdAt).toLocaleString() };
-      r.items.forEach((item) => {
-        const type = item.field.type;
-        let val = item.value;
-
-        // Skip structural fields
-        if (type === "header" || type === "section") return;
-
-        // Parse JSON for multi-select/checkbox
-        try {
-          const parsed = JSON.parse(val);
-          if (Array.isArray(parsed)) val = parsed.join(", ");
-        } catch {}
-
-        // Format date fields
-        if (type === "date" && val) {
-          val = new Date(val).toLocaleDateString();
-        }
-
-        // For CSV, use plain text for file fields (just the filename)
-        if (type === "file" && val) {
-          val = val.split("/").pop();
-        }
-
-        row[item.field.label] = val;
+      form.fields.forEach((field) => {
+        const val = r.responseData?.[field.id];
+        if (Array.isArray(val)) row[field.label] = val.join(", ");
+        else if (typeof val === "string" && val.startsWith("/uploads/"))
+          row[field.label] = val.split("/").pop();
+        else row[field.label] = val || "-";
       });
       return row;
     });
-  }, [responses]);
+  }, [responses, form]);
 
+  // ------------------- Table Columns -------------------
   const columns = useMemo(() => {
-    if (!responses.length) return [];
-    const labels = responses[0].items
-      .filter((item) => !["header", "section"].includes(item.field.type))
-      .map((item) => item.field.label);
-
+    if (!form) return [];
     return [
       columnHelper.accessor("submittedAt", { header: "Submitted At" }),
-      ...labels.map((label) => columnHelper.accessor(label, { header: label })),
+      ...form.fields.map((f) =>
+        columnHelper.accessor(f.label, {
+          header: f.label,
+        })
+      ),
       columnHelper.display({
         id: "actions",
         header: "Actions",
@@ -223,7 +169,7 @@ export default function FormResponses() {
         ),
       }),
     ];
-  }, [responses, columnHelper]);
+  }, [form, responses, columnHelper]);
 
   const table = useReactTable({
     data,
@@ -236,75 +182,23 @@ export default function FormResponses() {
     globalFilterFn: "includesString",
   });
 
-  // ------------------- Chart fields -------------------
-  const chartFields = useMemo(() => {
-    if (!responses.length) return [];
-    return responses[0].items
-      .filter(
-        (item) =>
-          !["header", "section", "file"].includes(item.field.type) &&
-          ["number", "text", "select", "checkbox", "radio"].includes(
-            item.field.type
-          )
-      )
-      .map((item) => item.field.label)
-      .filter((label) => ["Age", "Rating", "Satisfaction"].includes(label));
-  }, [responses]);
+  // ------------------- Summary -------------------
+  const totalResponses = responses.length;
+  const latestResponseTime = responses.length
+    ? new Date(responses[responses.length - 1].createdAt).toLocaleString()
+    : "No responses yet";
 
-  const chartData = useMemo(() => {
-    const COLORS = [
-      "#3b82f6",
-      "#f59e0b",
-      "#10b981",
-      "#ef4444",
-      "#8b5cf6",
-      "#ec4899",
-    ];
-    const result = [];
-
-    chartFields.forEach((fieldLabel) => {
-      const counts = {};
-      responses.forEach((r) => {
-        const item = r.items.find((i) => i.field.label === fieldLabel);
-        if (!item) return;
-        let val = item.value;
-        try {
-          const parsed = JSON.parse(val);
-          if (Array.isArray(parsed))
-            parsed.forEach((v) => (counts[v] = (counts[v] || 0) + 1));
-          else counts[parsed] = (counts[parsed] || 0) + 1;
-        } catch {
-          counts[val] = (counts[val] || 0) + 1;
-        }
-      });
-
-      result.push({
-        field: fieldLabel,
-        data: Object.entries(counts).map(([name, value]) => ({ name, value })),
-        COLORS,
-      });
-    });
-
-    return result;
-  }, [responses, chartFields]);
   // ------------------- Render -------------------
   if (loading)
     return (
-      <motion.div
-        className="p-6 text-center text-gray-600"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
+      <motion.div className="p-6 text-center text-gray-600" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         Loading responses...
       </motion.div>
     );
+
   if (!form)
     return (
-      <motion.div
-        className="p-6 text-center text-red-500"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-      >
+      <motion.div className="p-6 text-center text-red-500" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         Form not found.
       </motion.div>
     );
@@ -328,42 +222,20 @@ export default function FormResponses() {
         </motion.button>
       </div>
 
-      {/* Summary cards */}
-      <motion.div
-        className="grid md:grid-cols-2 gap-4"
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: {},
-          visible: {
-            transition: { staggerChildren: 0.2 },
-          },
-        }}
-      >
-        {[
-          { title: "Total Responses", value: totalResponses },
-          { title: "Latest Submission", value: latestResponseTime },
-        ].map((item, i) => (
-          <motion.div
-            key={i}
-            className="bg-white p-4 rounded-xl shadow"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <h2 className="text-lg font-semibold mb-1">{item.title}</h2>
-            <p className="text-gray-600">{item.value}</p>
-          </motion.div>
-        ))}
-      </motion.div>
+      {/* Summary */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <div className="bg-white p-4 rounded-xl shadow">
+          <h2 className="text-lg font-semibold mb-1">Total Responses</h2>
+          <p className="text-gray-600">{totalResponses}</p>
+        </div>
+        <div className="bg-white p-4 rounded-xl shadow">
+          <h2 className="text-lg font-semibold mb-1">Latest Submission</h2>
+          <p className="text-gray-600">{latestResponseTime}</p>
+        </div>
+      </div>
 
-      {/* Table with search + export */}
-      <motion.div
-        className="bg-white rounded-lg shadow-lg overflow-x-auto"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      {/* Table */}
+      <motion.div className="bg-white rounded-lg shadow-lg overflow-x-auto">
         <div className="p-4 space-y-4">
           <input
             value={globalFilter || ""}
@@ -372,15 +244,13 @@ export default function FormResponses() {
             className="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
           <div className="flex justify-end">
-            <motion.div whileHover={{ scale: 1.05 }}>
-              <CSVLink
-                data={csvData}
-                filename={`${form.title}-responses.csv`}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow transition"
-              >
-                Export CSV
-              </CSVLink>
-            </motion.div>
+            <CSVLink
+              data={csvData}
+              filename={`${form.title}-responses.csv`}
+              className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow transition"
+            >
+              Export CSV
+            </CSVLink>
           </div>
         </div>
 
@@ -394,10 +264,7 @@ export default function FormResponses() {
                     className="px-4 py-3 text-left font-semibold cursor-pointer select-none"
                     onClick={header.column.getToggleSortingHandler()}
                   >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
+                    {flexRender(header.column.columnDef.header, header.getContext())}
                     <span>
                       {header.column.getIsSorted() === "asc"
                         ? " 🔼"
@@ -412,13 +279,7 @@ export default function FormResponses() {
           </thead>
           <tbody>
             {table.getRowModel().rows.map((row) => (
-              <motion.tr
-                key={row.id}
-                className="border-b hover:bg-gray-100 transition"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
+              <motion.tr key={row.id} className="border-b hover:bg-gray-100 transition">
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} className="px-4 py-3 text-gray-700">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -432,102 +293,7 @@ export default function FormResponses() {
         {data.length === 0 && (
           <p className="mt-4 text-gray-500 text-center">No responses yet.</p>
         )}
-
-        {/* Pagination */}
-        <div className="flex flex-wrap items-center justify-between p-4 gap-2">
-          <div className="flex gap-2">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-              className="px-3 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
-            >
-              Previous
-            </motion.button>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-              className="px-3 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
-            >
-              Next
-            </motion.button>
-          </div>
-          <span>
-            Page {table.getState().pagination.pageIndex + 1} of{" "}
-            {table.getPageCount()}
-          </span>
-          <select
-            value={table.getState().pagination.pageSize}
-            onChange={(e) => table.setPageSize(Number(e.target.value))}
-            className="border rounded px-2 py-1"
-          >
-            {[5, 10, 20, 50].map((size) => (
-              <option key={size} value={size}>
-                Show {size}
-              </option>
-            ))}
-          </select>
-        </div>
       </motion.div>
-
-      {/* Charts */}
-      {chartData.length > 0 && (
-        <motion.div
-          className="grid md:grid-cols-2 gap-4 mt-6"
-          initial="hidden"
-          animate="visible"
-          variants={{
-            hidden: {},
-            visible: { transition: { staggerChildren: 0.2 } },
-          }}
-        >
-          {chartData.map((chart, idx) => (
-            <motion.div
-              key={idx}
-              className="bg-white p-4 rounded-lg shadow"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <h2 className="text-lg font-semibold mb-2">{chart.field}</h2>
-              <div className="h-64">
-                {chart.data.length <= 6 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={chart.data}
-                        dataKey="value"
-                        nameKey="name"
-                        outerRadius={80}
-                        label
-                      >
-                        {chart.data.map((entry, i) => (
-                          <Cell
-                            key={i}
-                            fill={chart.COLORS[i % chart.COLORS.length]}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chart.data}>
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Legend />
-                      <Bar dataKey="value" fill="#3b82f6" />
-                    </BarChart>
-                  </ResponsiveContainer>
-                )}
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      )}
     </motion.div>
   );
 }

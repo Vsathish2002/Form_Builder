@@ -3,10 +3,8 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
-  OneToMany,
 } from 'typeorm';
 import { Form } from './form.entity';
-import { FormResponseItem } from './formResponseItem.entity';
 
 export type FieldType =
   | 'text'
@@ -54,8 +52,9 @@ export class FormField {
   @Column({ default: false })
   required: boolean;
 
-  @Column({ type: 'simple-array', nullable: true })
-  options: string[];
+  @Column({ type: 'json', nullable: true })
+  options: any;
+
 
   @Column({ type: 'text', nullable: true })
   extraValue?: string; // For video/link URLs etc.
@@ -74,7 +73,4 @@ export class FormField {
     eager: false,
   })
   form: Form;
-
-  @OneToMany(() => FormResponseItem, (item) => item.field, { cascade: true })
-  responseItems: FormResponseItem[];
 }

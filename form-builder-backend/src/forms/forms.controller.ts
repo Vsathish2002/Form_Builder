@@ -314,10 +314,6 @@ export class FormsController {
         uploadedFiles,
       );
 
-      if (formData.sessionId) {
-        await this.formsService.deleteFormDraft(slug, formData.sessionId);
-      }
-
       return response;
     } catch (error) {
       throw new HttpException(
@@ -376,43 +372,6 @@ export class FormsController {
       return await this.formsService.generateFormQrCode(id, user);
     } catch (error) {
       throw new HttpException('Failed to generate QR code', HttpStatus.BAD_REQUEST);
-    }
-  }
-
-  // ✅ Save form draft (public)
-  @Post('public/:slug/draft')
-  @ApiOperation({ summary: 'Save a draft response for a public form' })
-  async saveDraft(
-    @Param('slug') slug: string,
-    @Body() body: { draftData: any; sessionId?: string },
-  ) {
-    try {
-      return await this.formsService.saveFormDraft(slug, body.draftData, body.sessionId);
-    } catch (error) {
-      throw new HttpException('Failed to save draft', HttpStatus.BAD_REQUEST);
-    }
-  }
-
-  // ✅ Load form draft
-  @Get('public/:slug/draft')
-  @ApiOperation({ summary: 'Load saved draft for a public form' })
-  async loadDraft(@Param('slug') slug: string, @Body('sessionId') sessionId?: string) {
-    try {
-      return await this.formsService.loadFormDraft(slug, sessionId);
-    } catch (error) {
-      throw new HttpException('Failed to load draft', HttpStatus.BAD_REQUEST);
-    }
-  }
-
-  // ✅ Delete form draft
-  @Delete('public/:slug/draft')
-  @ApiOperation({ summary: 'Delete saved draft for a public form' })
-  async deleteDraft(@Param('slug') slug: string, @Body('sessionId') sessionId?: string) {
-    try {
-      await this.formsService.deleteFormDraft(slug, sessionId);
-      return { message: 'Draft deleted successfully' };
-    } catch (error) {
-      throw new HttpException('Failed to delete draft', HttpStatus.BAD_REQUEST);
     }
   }
 }

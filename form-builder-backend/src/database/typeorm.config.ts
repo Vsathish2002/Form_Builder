@@ -4,8 +4,6 @@ import { Role } from '../roles/role.entity';
 import { Form } from '../forms/entities/form.entity';
 import { FormField } from '../forms/entities/formField.entity';
 import { FormResponse } from '../forms/entities/formResponse.entity';
-import { FormResponseItem } from '../forms/entities/formResponseItem.entity';
-import { FormDraft } from '../forms/entities/formDraft.entity';
 
 export const typeOrmConfig: TypeOrmModuleOptions = {
   type: 'postgres',
@@ -13,15 +11,13 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
   port: parseInt(process.env.DB_PORT || '5432', 10),
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASS || '2002',
-  database: process.env.DB_NAME || 'formdb',
+  database: process.env.DB_NAME || 'formbuilderly', // ✅ Changed here
   entities: [
     User,
     Role,
     Form,
     FormField,
-    FormResponse,
-    FormResponseItem,
-    FormDraft,
+    FormResponse, // ✅ Only 5 entities
   ],
-  synchronize: true, // disable in production
+  synchronize: true, // ✅ Auto-creates tables
 };

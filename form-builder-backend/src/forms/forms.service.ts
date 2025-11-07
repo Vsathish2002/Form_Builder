@@ -7,8 +7,6 @@ import { FormField, FieldType } from './entities/formField.entity';
 import { CreateFormDto } from './dto/create-form.dto';
 import { UpdateFormDto } from './dto/update-form.dto';
 import { FormResponse } from './entities/formResponse.entity';
-import { FormResponseItem } from './entities/formResponseItem.entity';
-import { FormDraft } from './entities/formDraft.entity';
 import { User } from '../users/user.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { QrCodeService } from '../qrcode/qrcode.service';
@@ -20,8 +18,6 @@ export class FormsService {
     @InjectRepository(Form) private formsRepo: Repository<Form>,
     @InjectRepository(FormResponse) private responsesRepo: Repository<FormResponse>,
     @InjectRepository(FormField) private fieldsRepo: Repository<FormField>,
-    @InjectRepository(FormResponseItem) private itemsRepo: Repository<FormResponseItem>,
-    @InjectRepository(FormDraft) private draftsRepo: Repository<FormDraft>,
     private qrCodeService: QrCodeService,
     private responseGateway: ResponseGateway,
   ) { }
@@ -186,94 +182,66 @@ export class FormsService {
     formData: Record<string, any>,
     files: Express.Multer.File[],
   ) {
+    // 1️⃣ Find the form by slug
     const form = await this.formsRepo.findOne({
       where: { slug },
       relations: ['fields'],
     });
-
     if (!form) throw new BadRequestException('Form not found');
 
-    const answersArray: { fieldId: string; value: string }[] = [];
-
-    // 🟩 1️⃣ Handle text, checkbox, radio, etc.
-    Object.entries(formData).forEach(([fieldId, value]) => {
-      if (fieldId === 'sessionId') return; // skip
-      const field = form.fields.find((f) => f.id === fieldId);
-      if (!field) return;
-      if (field.type === 'file') return; // skip file fields, handled separately
-
-      let val = value;
-      try {
-        if (typeof value === 'string' && value.startsWith('[')) {
-          val = JSON.parse(value);
-          if (Array.isArray(val)) val = val.join(', ');
-        }
-      } catch {
-        // ignore parse errors
-      }
-
-      answersArray.push({ fieldId, value: String(val) });
-    });
-
-    // 🟩 2️⃣ Handle file uploads
+    // 2️⃣ Handle uploaded files (convert to URLs)
     if (files && files.length > 0) {
       for (const file of files) {
-        answersArray.push({
-          fieldId: file.fieldname,
-          value: `/uploads/${file.filename}`,
-        });
+        formData[file.fieldname] = `/uploads/${file.filename}`;
       }
     }
 
-    console.log('🧾 Answers array before save:', answersArray);
-
-    if (answersArray.length === 0) {
-      throw new BadRequestException('No valid field IDs found in form data.');
-    }
-
-    // 🟩 3️⃣ Create and save FormResponse
+    // 3️⃣ Save as JSON
     const newResponse = this.responsesRepo.create({
       form,
-      items: answersArray.map((ans) =>
-        this.itemsRepo.create({
-          field: form.fields.find((f) => f.id === ans.fieldId),
-          value: ans.value,
-        }),
-      ),
+      responseData: formData,
     });
-
     await this.responsesRepo.save(newResponse);
 
-    // Emit real-time update to response page
-    const totalResponses = await this.responsesRepo.count({ where: { form: { id: form.id } } });
+    // 4️⃣ 🔥 Broadcast real-time update
     this.responseGateway.broadcastNewResponse({
       formId: form.id,
       formTitle: form.title,
       responseId: newResponse.id,
-      totalAnswers: totalResponses,
-      submittedAt: newResponse.createdAt,
-      answers: newResponse.items.map(item => ({
-        label: item.field.label,
-        value: item.value,
+      totalAnswers: Object.keys(formData).length,
+      submittedAt: new Date(),
+      answers: Object.entries(formData).map(([key, value]) => ({
+        label: key,
+        value: typeof value === 'object' ? JSON.stringify(value) : String(value),
       })),
     });
 
+    // 5️⃣ Return confirmation
     return { message: 'Response saved successfully', id: newResponse.id };
   }
 
 
+
   // --- 📊 Get All Responses ---
   async getFormResponses(formId: string, user: User): Promise<FormResponse[]> {
-    const form = await this.formsRepo.findOne({ where: { id: formId }, relations: ['owner'] });
-    if (!form) throw new NotFoundException('Form not found');
-    if (form.owner?.id !== user.id && user.role.name !== 'admin')
-      throw new NotFoundException('Form not found');
+    const form = await this.formsRepo.findOne({
+      where: { id: formId },
+      relations: ['owner'],
+    });
 
+    if (!form) throw new NotFoundException('Form not found');
+
+    if (form.owner?.id !== user.id && user.role.name !== 'admin') {
+      throw new NotFoundException('Form not found');
+    }
+
+    // ✅ Removed 'relations' since FormResponse now stores JSON data
     return this.responsesRepo.find({
       where: { form: { id: formId } },
-      relations: ['items', 'items.field'],
+      order: { createdAt: 'ASC' }, // optional: keeps responses in order
     });
   }
+
 
   // --- 📁 Get User Forms ---
   async getUserForms(user: User): Promise<Form[]> {
@@ -306,48 +274,4 @@ export class FormsService {
     return this.qrCodeService.generateQrCode(formUrl);
   }
 
-  // --- 💾 Save Draft ---
-  async saveFormDraft(formSlug: string, draftData: any, sessionId?: string): Promise<FormDraft> {
-    const form = await this.findOne(formSlug);
-
-    let draft = await this.draftsRepo.findOne({
-      where: { formId: form.id, sessionId },
-    });
-
-    if (draft) {
-      draft.draftData = JSON.stringify(draftData);
-      draft.updatedAt = new Date();
-    } else {
-      draft = this.draftsRepo.create({
-        formId: form.id,
-        form,
-        draftData: JSON.stringify(draftData),
-        sessionId,
-      });
-    }
-
-    return this.draftsRepo.save(draft);
-  }
-
-  // --- 📥 Load Draft ---
-  async loadFormDraft(formSlug: string, sessionId?: string): Promise<any> {
-    const form = await this.findOne(formSlug);
-    const draft = await this.draftsRepo.findOne({
-      where: { formId: form.id, sessionId },
-      order: { updatedAt: 'DESC' },
-    });
-    if (!draft) return null;
-
-    try {
-      return JSON.parse(draft.draftData);
-    } catch {
-      return null;
-    }
-  }
-
-  // --- 🧹 Delete Draft ---
-  async deleteFormDraft(formSlug: string, sessionId?: string): Promise<void> {
-    const form = await this.findOne(formSlug);
-    await this.draftsRepo.delete({ formId: form.id, sessionId });
-  }
 }
