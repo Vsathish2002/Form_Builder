@@ -1,13 +1,17 @@
 import React, { useState } from "react";
-import { useAuth } from "../context/AuthContext";
 import axios from "axios";
+import toast, { Toaster } from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
+import { requestEmailOtp, verifyEmailOtp } from "../api/users";
+import OtpModal from "../components/OtpModal";
 
 export default function ProfilePage() {
-  const { user, logout, setUser } = useAuth(); // ✅ get user + setter from context
+  const { user, setUser } = useAuth();
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [otpModal, setOtpModal] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState("");
 
   if (!user) {
     return (
@@ -20,59 +24,69 @@ export default function ProfilePage() {
   }
 
   const handleSave = async () => {
-    setLoading(true);
-    setMessage("");
+    if (!name.trim() || !email.trim()) {
+      toast.error("Name and email cannot be empty!");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    // ✅ If email changed → OTP flow
+    if (email !== user.email) {
+      try {
+        await requestEmailOtp(user.id, email, token);
+        toast.success("OTP sent to new email!");
+        setPendingEmail(email);
+        setOtpModal(true);
+      } catch (err) {
+        toast.error(err.response?.data?.message || "Failed to send OTP");
+      }
+      return;
+    }
+
+    // ✅ Name-only update
     try {
-      const token = localStorage.getItem("token");
       const res = await axios.put(
         `http://localhost:4000/users/update/${user.id}`,
-        { name, email },
+        { name },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      // ✅ Update user in AuthContext instantly
       setUser(res.data.user);
-
-      setMessage("Profile updated successfully!");
-    } catch (err) {
-      console.error(err);
-      setMessage("❌ Error updating profile");
-    } finally {
-      setLoading(false);
+      toast.success("Profile updated successfully!");
+    } catch {
+      toast.error("Something went wrong while updating profile.");
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex justify-center items-center px-4 py-10">
-      <div className="bg-white shadow-2xl rounded-2xl p-8 max-w-md w-full">
+      <Toaster position="top-center" />
+      <div className="bg-white shadow-2xl rounded-2xl p-8 max-w-md w-full transition-all hover:shadow-blue-200">
         <h2 className="text-3xl font-extrabold text-blue-700 mb-8 text-center">
           My Profile
         </h2>
 
         <div className="space-y-5">
-          {/* Full Name */}
           <div>
             <label className="text-gray-500 text-sm">Full Name</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+              className="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
 
-          {/* Email */}
           <div>
             <label className="text-gray-500 text-sm">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+              className="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
 
-          {/* Role (Read-only) */}
           <div>
             <label className="text-gray-500 text-sm">Role</label>
             <input
@@ -84,7 +98,6 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Buttons */}
         <div className="mt-8 flex flex-col gap-3">
           <button
             onClick={handleSave}
@@ -97,26 +110,35 @@ export default function ProfilePage() {
           >
             {loading ? "Saving..." : "Save Changes"}
           </button>
-
-          {/* <button
-            onClick={logout}
-            className="w-full py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition"
-          >
-            Logout
-          </button> */}
         </div>
-
-        {/* Status Message */}
-        {message && (
-          <p
-            className={`mt-4 text-center font-medium ${
-              message.includes("Error") ? "text-red-600" : "text-green-600"
-            }`}
-          >
-            {message}
-          </p>
-        )}
       </div>
+
+      {/* ✅ OTP Modal */}
+      <OtpModal
+        email={pendingEmail}
+        open={otpModal}
+        onClose={() => setOtpModal(false)}
+        onVerify={async (otp) => {
+          const token = localStorage.getItem("token");
+          try {
+            const res = await verifyEmailOtp(user.id, pendingEmail, otp, token);
+            setUser(res.user);
+            toast.success("Email updated successfully!");
+            setOtpModal(false);
+          } catch (err) {
+            toast.error(err.response?.data?.message || "Invalid OTP");
+          }
+        }}
+        onResend={async () => {
+          const token = localStorage.getItem("token");
+          try {
+            await requestEmailOtp(user.id, pendingEmail, token);
+            toast.success("OTP resent!");
+          } catch {
+            toast.error("Failed to resend OTP");
+          }
+        }}
+      />
     </div>
   );
 }

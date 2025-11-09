@@ -1,99 +1,3 @@
-// import { Controller, Post, Body, UseGuards, Request, HttpException, HttpStatus } from '@nestjs/common';
-// import { AuthService } from './auth.service';
-// import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-// import { JwtAuthGuard } from './guards/jwt-auth.guard';
-
-// @ApiTags('Auth (Login Authentication)')
-// @Controller('auth')
-// export class AuthController {
-//   constructor(private authService: AuthService) { }
-
-//   @Post('register')
-//   @ApiOperation({ summary: 'Register a new user' })
-//   @ApiResponse({ status: 201, description: 'User registered successfully' })
-//   @ApiResponse({ status: 400, description: 'Invalid registration data' })
-//   async register(
-//     @Body() body: { name: string; email: string; password: string; role?: string }
-//   ) {
-//     try {
-//       const user = await this.authService.register(
-//         body.name,
-//         body.email,
-//         body.password,
-//         body.role,
-//       );
-
-//       const loginResult = await this.authService.login(user);
-
-//       return {
-//         message: 'User registered successfully',
-//         access_token: loginResult.access_token,
-//         user: loginResult.user,
-//       };
-//     } catch (error) {
-//       throw new HttpException(error.message || 'Registration failed', HttpStatus.BAD_REQUEST);
-//     }
-//   }
-
-//   @Post('login')
-//   @ApiOperation({ summary: 'Login user and return JWT token' })
-//   @ApiResponse({ status: 200, description: 'Login successful' })
-//   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-//   async login(@Body() body: { email: string; password: string }) {
-//     try {
-//       const user = await this.authService.validateUser(body.email, body.password);
-//       return this.authService.login(user);
-//     } catch (error) {
-//       throw new HttpException(error.message || 'Login failed', HttpStatus.UNAUTHORIZED);
-//     }
-//   }
-
-//   @Post('forgot-password')
-//   @ApiOperation({ summary: 'Send OTP for password reset' })
-//   @ApiResponse({ status: 200, description: 'OTP sent to email' })
-//   async forgotPassword(@Body() body: { email: string }) {
-//     try {
-//       return await this.authService.forgotPassword(body.email);
-//     } catch (error) {
-//       throw new HttpException(error.message || 'Failed to send OTP', HttpStatus.BAD_REQUEST);
-//     }
-//   }
-
-//   @Post('verify-otp')
-//   @ApiOperation({ summary: 'Verify OTP for password reset' })
-//   @ApiResponse({ status: 200, description: 'OTP verified successfully' })
-//   async verifyOtp(@Body() body: { email: string; otp: string }) {
-//     try {
-//       return await this.authService.verifyOtp(body.email, body.otp);
-//     } catch (error) {
-//       throw new HttpException(error.message || 'Invalid OTP', HttpStatus.BAD_REQUEST);
-//     }
-//   }
-
-//   @Post('reset-password')
-//   @ApiOperation({ summary: 'Reset password after OTP verification' })
-//   @ApiResponse({ status: 200, description: 'Password reset successfully' })
-//   async resetPassword(@Body() body: { email: string; otp: string; newPassword: string }) {
-//     try {
-//       return await this.authService.resetPassword(body.email, body.otp, body.newPassword);
-//     } catch (error) {
-//       throw new HttpException(error.message || 'Failed to reset password', HttpStatus.BAD_REQUEST);
-//     }
-//   }
-
-//   @UseGuards(JwtAuthGuard)
-//   @Post('me')
-//   @ApiOperation({ summary: 'Get currently authenticated user profile' })
-//   @ApiResponse({ status: 200, description: 'User profile fetched successfully' })
-//   async getProfile(@Request() req) {
-//     try {
-//       return req.user;
-//     } catch (error) {
-//       throw new HttpException('Unable to fetch user profile', HttpStatus.INTERNAL_SERVER_ERROR);
-//     }
-//   }
-// } old one
-
 import {
   Controller,
   Post,
@@ -115,7 +19,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 @ApiTags('Auth (Login Authentication)')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) { }
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
@@ -149,6 +53,35 @@ export class AuthController {
 
       throw new HttpException(
         error.message || 'Registration failed',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Post('register-request-otp')
+  async registerRequestOtp(@Body() body: RegisterDto) {
+    try {
+      return await this.authService.sendRegisterOtp(body.email);
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Failed to send OTP',
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+  }
+
+  @Post('register-verify-otp')
+  async registerVerifyOtp(@Body() body: any) {
+    try {
+      return await this.authService.verifyRegisterOtp(
+        body.name,
+        body.email,
+        body.password,
+        body.otp,
+      );
+    } catch (error) {
+      throw new HttpException(
+        error.message || 'Invalid OTP',
         HttpStatus.BAD_REQUEST,
       );
     }
@@ -248,18 +181,21 @@ export class AuthController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Post('me')
-  @ApiOperation({ summary: 'Get currently authenticated user profile' })
-  @ApiResponse({ status: 200, description: 'User profile fetched successfully' })
-  async getProfile(@Request() req) {
-    try {
-      return req.user;
-    } catch (error) {
-      throw new HttpException(
-        'Unable to fetch user profile',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
+  // @UseGuards(JwtAuthGuard)
+  // @Post('me')
+  // @ApiOperation({ summary: 'Get currently authenticated user profile' })
+  // @ApiResponse({ status: 200, description: 'User profile fetched successfully' })
+  // async getProfile(@Request() req) {
+  //   try {
+  //     return req.user;
+  //   } catch (error) {
+  //     throw new HttpException(
+  //       'Unable to fetch user profile',
+  //       HttpStatus.INTERNAL_SERVER_ERROR,
+  //     );
+  //   }
+  // }
+
+  
+
 }

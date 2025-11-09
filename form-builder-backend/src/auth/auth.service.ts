@@ -11,7 +11,7 @@ export class AuthService {
     private usersService: UsersService,
     private jwtService: JwtService,
     private emailService: EmailService,
-  ) {}
+  ) { }
 
   // Register user
   async register(
@@ -120,12 +120,67 @@ export class AuthService {
     return { message: 'Password reset successfully' };
   }
 
+  // ✅ 1. Send OTP before registration
+  async sendRegisterOtp(email: string) {
+    const existing = await this.usersService.findByEmail(email);
+    if (existing) throw new ConflictException('Email already registered');
+
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOtp = await bcrypt.hash(otp, 10);
+
+    const expiry = new Date();
+    expiry.setMinutes(expiry.getMinutes() + 10);
+
+    // Temporarily reuse User reset fields for pending registration
+    // You could store this in a temp map if user doesn’t exist yet
+    // For simplicity, we’ll keep a static in-memory store
+    (global as any).pendingOtps = (global as any).pendingOtps || {};
+    (global as any).pendingOtps[email] = { otp: hashedOtp, expiry };
+
+    await this.emailService.sendOtpEmail(email, otp);
+
+    return { message: 'OTP sent for registration verification' };
+  }
+
+  // ✅ 2. Verify OTP and create user
+  async verifyRegisterOtp(
+    name: string,
+    email: string,
+    password: string,
+    otp: string,
+  ) {
+    const pending = (global as any).pendingOtps?.[email];
+    if (!pending) throw new BadRequestException('No OTP requested for this email');
+
+    if (new Date() > pending.expiry) {
+      delete (global as any).pendingOtps[email];
+      throw new BadRequestException('OTP expired');
+    }
+
+    const isValid = await bcrypt.compare(otp, pending.otp);
+    if (!isValid) throw new BadRequestException('Invalid OTP');
+
+    // ✅ Create user now
+    const user = await this.register(name, email, password, 'user');
+    delete (global as any).pendingOtps[email];
+
+    // Auto login after registration
+    const loginResult = await this.login(user);
+    return {
+      message: 'Registration successful',
+      access_token: loginResult.access_token,
+      user: loginResult.user,
+    };
+  }
+
+
   // Login user and return JWT
   async login(user: User) {
     const payload = { email: user.email, sub: user.id, role: user.role.name };
 
     // Ensure expiresIn is a number
-    const expiresIn = parseInt(process.env.JWT_EXPIRATION || '3600', 10);
+    const expiresIn = parseInt(process.env.JWT_EXPIRATION || '86400', 10);
 
     return {
       access_token: this.jwtService.sign(payload, {

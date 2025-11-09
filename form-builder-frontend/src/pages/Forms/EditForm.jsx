@@ -3,6 +3,7 @@ import { getFormById, updateForm } from "../../api/forms";
 import { useNavigate, useParams } from "react-router-dom";
 import FormBuilderWrapper from "../../components/FormBuilderWrapper";
 import { useAuth } from "../../context/AuthContext";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function EditForm() {
   const { id } = useParams();
@@ -24,7 +25,7 @@ export default function EditForm() {
         const data = await getFormById(token, id);
 
         const fieldsWithId = (data.fields || []).map((f, i) => {
-          // ✅ Parse stringified JSON from DB if needed
+          // ✅ Parse JSON from DB if needed
           let parsedOptions = f.options;
           if (typeof parsedOptions === "string") {
             try {
@@ -34,7 +35,6 @@ export default function EditForm() {
             }
           }
 
-          // ✅ Ensure options array structure for builder
           const values = Array.isArray(parsedOptions)
             ? parsedOptions.map((opt) => ({
                 label: opt.label || "",
@@ -68,7 +68,7 @@ export default function EditForm() {
         });
       } catch (err) {
         console.error("Failed to load form:", err);
-        alert("Error loading form. Please try again.");
+        toast.error("Error loading form. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -77,7 +77,7 @@ export default function EditForm() {
     fetchForm();
   }, [id, token]);
 
-  /** ✅ Handle builder save */
+  /** ✅ Handle builder field updates */
   const handleFieldsUpdate = (newFields) => {
     const fieldsWithId = newFields.map((f, i) => ({
       id: f.id || `field-${i}`,
@@ -89,17 +89,19 @@ export default function EditForm() {
   /** ✅ Save changes */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.title.trim()) return alert("Form title is required.");
+    if (!form.title.trim()) {
+      toast.error("Form title is required!");
+      return;
+    }
     setSaving(true);
 
     try {
       const fb = window.jQuery("#fb-editor").data("formBuilder");
       if (!fb) {
-        alert("Form builder not loaded. Please try again.");
+        toast.error("Form builder not loaded. Please try again.");
         return;
       }
 
-      // ✅ Always grab latest data from builder
       const liveData = fb.actions.getData("json");
       const parsed = JSON.parse(liveData);
 
@@ -128,11 +130,11 @@ export default function EditForm() {
       console.log("🚀 Final payload to update:", payload);
       await updateForm(token, form.id, payload);
 
-      alert("Form updated successfully!");
-      navigate("/my-forms");
+      toast.success("✅ Form updated successfully!");
+      setTimeout(() => navigate("/my-forms"), 1200);
     } catch (err) {
       console.error("Failed to update form:", err);
-      alert("Failed to update form. Please try again.");
+      toast.error("Failed to update form. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -147,9 +149,13 @@ export default function EditForm() {
 
   return (
     <div className="max-w-5xl mx-auto">
+      {/* Toast Container */}
+      <Toaster position="top-right" reverseOrder={false} />
+
       <h2 className="text-3xl font-bold mb-6 text-center">Edit Form</h2>
 
       <div className="bg-white p-8 rounded-lg shadow-lg">
+        {/* Title Input */}
         <div className="mb-6">
           <label className="block text-lg font-semibold mb-2">
             Form Title
@@ -163,23 +169,28 @@ export default function EditForm() {
           />
         </div>
 
+        {/* Description Input */}
         <div className="mb-6">
           <label className="block text-lg font-semibold mb-2">
             Description
           </label>
           <textarea
             value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
+            onChange={(e) =>
+              setForm({ ...form, description: e.target.value })
+            }
             className="w-full border p-2 rounded-md"
             placeholder="Enter description"
           ></textarea>
         </div>
 
+        {/* Form Builder Wrapper */}
         <FormBuilderWrapper
           fieldsJson={form.fields || []}
           onSave={handleFieldsUpdate}
         />
 
+        {/* Save Button */}
         <button
           onClick={handleSubmit}
           disabled={saving}

@@ -220,8 +220,6 @@ export class FormsService {
     return { message: 'Response saved successfully', id: newResponse.id };
   }
 
-
-
   // --- 📊 Get All Responses ---
   async getFormResponses(formId: string, user: User): Promise<FormResponse[]> {
     const form = await this.formsRepo.findOne({
@@ -271,6 +269,7 @@ export class FormsService {
       throw new NotFoundException('Form not found');
 
     const formUrl = `http://localhost:5173/public/${form.slug}`;
+    // const formUrl = `http://192.168.0.105:5173/public/${form.slug}`;
     return this.qrCodeService.generateQrCode(formUrl);
   }
 

@@ -31,6 +31,7 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
   // ✅ WebSocket Setup
   useEffect(() => {
     const socket = io("http://localhost:4000", {
+    // const socket = io("http://192.168.0.105:4000", {
       transports: ["websocket"],
       reconnection: true,
     });
@@ -43,7 +44,7 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
     socket.on("formFilling", (data) => {
       if (data.formId === form.id) {
         console.log("🟡 Someone started filling this form...");
-        toast.loading("Someone started filling the form...", { id: "filling" });
+        // toast.loading("Someone started filling the form...", { id: "filling" });
         setIsLoading(true);
         setStatusMessage("Someone is filling the form...");
       }
@@ -69,7 +70,7 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
   // ✅ Generate QR
   const handleGenerateQr = async () => {
     if (!isActive) {
-      alert("Form is inactive. Activate it to generate QR.");
+      toast.error("Form is inactive. Activate it to generate QR.");
       return;
     }
 

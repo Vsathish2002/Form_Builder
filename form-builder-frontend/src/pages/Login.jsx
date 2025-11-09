@@ -1,32 +1,50 @@
-import React, { useState } from 'react';
-import { loginUser } from '../api/auth';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { EnvelopeIcon, LockClosedIcon } from '@heroicons/react/24/outline';
-import { motion } from 'framer-motion';
+import React, { useState } from "react";
+import { loginUser } from "../api/auth";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async e => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!email.trim() || !password.trim()) {
+      toast.error("Both email and password are required!");
+      return;
+    }
+
     setLoading(true);
-    const data = await loginUser(email, password);
-    setLoading(false);
-    if (data.access_token) {
-      login(data.user, data.access_token);
-      navigate('/'); // 🔹 Redirect to home page after login
-    } else {
-      alert(data.message || 'Login failed');
+    try {
+      const data = await loginUser(email, password);
+      setLoading(false);
+
+      if (data.access_token) {
+        login(data.user, data.access_token);
+        toast.success("✅ Login successful!");
+        setTimeout(() => navigate("/"), 1200);
+      } else {
+        toast.error(data.message || "Invalid credentials. Please try again.");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      toast.error("Something went wrong. Please try again.");
+      setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 flex items-center justify-center px-4 py-12">
+      {/* Toast Notifications */}
+      <Toaster position="top-right" reverseOrder={false} />
+
       <motion.form
         onSubmit={handleSubmit}
         className="bg-white shadow-2xl rounded-2xl px-10 py-12 w-full max-w-md space-y-6"
@@ -35,9 +53,14 @@ export default function Login() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
-        <h2 className="text-3xl font-extrabold text-green-700 text-center">Welcome Back</h2>
-        <p className="text-center text-gray-500">Sign in to access your dashboard</p>
+        <h2 className="text-3xl font-extrabold text-green-700 text-center">
+          Welcome Back
+        </h2>
+        <p className="text-center text-gray-500">
+          Sign in to access your dashboard
+        </p>
 
+        {/* Email Field */}
         <div className="relative">
           <EnvelopeIcon className="w-5 h-5 text-green-400 absolute left-3 top-3.5 pointer-events-none" />
           <input
@@ -45,12 +68,13 @@ export default function Login() {
             className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 transition"
             placeholder="Email"
             value={email}
-            onChange={e => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
           />
         </div>
 
+        {/* Password Field */}
         <div className="relative">
           <LockClosedIcon className="w-5 h-5 text-green-400 absolute left-3 top-3.5 pointer-events-none" />
           <input
@@ -58,33 +82,39 @@ export default function Login() {
             className="pl-10 w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-green-400 transition"
             placeholder="Password"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete="current-password"
           />
         </div>
 
+        {/* Options */}
         <div className="flex items-center justify-between">
           <label className="flex items-center text-gray-600 text-sm">
             <input type="checkbox" className="mr-2 accent-green-600" />
             Remember me
           </label>
-          <Link to="/forgot-password" className="text-green-500 hover:text-green-600 text-sm">
+          <Link
+            to="/forgot-password"
+            className="text-green-500 hover:text-green-600 text-sm"
+          >
             Forgot password?
           </Link>
         </div>
 
+        {/* Submit Button */}
         <motion.button
           type="submit"
           disabled={loading}
           className="w-full bg-green-600 hover:bg-green-700 rounded-md text-white font-semibold py-3 transition focus:outline-none focus:ring-4 focus:ring-green-300 shadow"
           whileHover={{ scale: 1.05 }}
         >
-          {loading ? 'Logging in...' : 'Login'}
+          {loading ? "Logging in..." : "Login"}
         </motion.button>
 
+        {/* Register Link */}
         <p className="text-center text-gray-600 text-sm pt-1">
-          Don&apos;t have an account?{' '}
+          Don&apos;t have an account?{" "}
           <Link to="/register" className="text-green-600 hover:underline">
             Register
           </Link>

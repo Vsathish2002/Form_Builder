@@ -359,12 +359,12 @@ export default function FormRenderer({
         className="w-full max-w-2xl bg-white/95 backdrop-blur-xl border border-gray-100 shadow-xl rounded-3xl px-8 py-10 sm:px-10 sm:py-12
           transition-all duration-500 hover:shadow-2xl"
       >
-        <div className="text-center mb-8">
+        {/* <div className="text-center mb-8">
           <h2 className="text-4xl font-bold text-gray-800">{form.title}</h2>
           {form.description && (
             <p className="text-gray-500 mt-2 text-lg">{form.description}</p>
           )}
-        </div>
+        </div> */}
 
         {/* Render current page */}
         <div className="space-y-7">

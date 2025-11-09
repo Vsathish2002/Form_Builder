@@ -15,6 +15,7 @@ export default function PublicForm() {
     if (!form) return;
 
     const socket = io("http://localhost:4000", {
+    // const socket = io("http://192.168.0.105:4000", {
       transports: ["websocket"],
       reconnection: true,
     });
@@ -55,6 +56,7 @@ export default function PublicForm() {
 
         // Optional WebSocket notify form opened
         const socket = io('http://localhost:4000');
+        // const socket = io('http://192.168.0.105:4000');
         socket.emit('formOpened', { formId: data.id });
         socket.disconnect();
       } catch {
@@ -73,6 +75,7 @@ export default function PublicForm() {
 
     try {
       const socket = io('http://localhost:4000');
+      // const socket = io('http://192.168.0.105:4000');
       socket.emit('formSubmitting', { formId: form.id });
       socket.disconnect();
 

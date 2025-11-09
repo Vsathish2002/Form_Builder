@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 
 export default function FormBuilderWrapper({ fieldsJson, onSave }) {
   const builderRef = useRef(null);
@@ -6,12 +7,15 @@ export default function FormBuilderWrapper({ fieldsJson, onSave }) {
 
   useEffect(() => {
     const $ = window.$;
+
+    // Check if formBuilder is available
     if (!$.fn.formBuilder) {
       console.error("formBuilder not loaded — check index.html");
+      toast.error("⚠️ Form builder plugin not loaded. Please check setup!");
       return;
     }
 
-    // prevent duplicate initialization
+    // Prevent multiple initializations
     if (builderRef.current) return;
 
     const options = {
@@ -28,6 +32,8 @@ export default function FormBuilderWrapper({ fieldsJson, onSave }) {
       ],
       controlOrder: ["text", "textarea", "select", "checkbox", "radio"],
       showActionButtons: true,
+
+      // ✅ onSave callback with toast feedback
       onSave: (evt, formData) => {
         try {
           const parsed = JSON.parse(formData);
@@ -41,23 +47,32 @@ export default function FormBuilderWrapper({ fieldsJson, onSave }) {
                 ? "checkbox"
                 : f.type,
           }));
+
           onSave(parsedWithId);
+          toast.success("💾 Form fields saved successfully!");
         } catch (err) {
           console.error("Error parsing form data:", err);
+          toast.error("❌ Error parsing form data. Please try again.");
         }
       },
     };
 
+    // Initialize form builder
     const fbEditor = $(editorContainer.current).formBuilder(options);
     builderRef.current = fbEditor;
 
     fbEditor.promise.then(() => {
       if (fieldsJson?.length > 0) {
         fbEditor.actions.setData(JSON.stringify(fieldsJson));
+        toast.success("✅ Loaded saved form fields!");
+      } else {
+        toast("🧱 Form builder ready! Start adding fields.", {
+          icon: "✨",
+        });
       }
     });
 
-    // cleanup
+    // Cleanup on unmount
     return () => {
       if (builderRef.current?.actions) {
         builderRef.current.actions.clearFields();

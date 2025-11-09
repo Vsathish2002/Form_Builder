@@ -9,7 +9,7 @@ async function bootstrap() {
   // ✅ Enable CORS for your React frontend (Form Builder UI)
   app.enableCors({
     // origin: ' http://192.168.0.105:5173',
-    origin: 'http://localhost:5173', // React app URL
+    origin: 'http://localhost:5173',
     credentials: true, // allow cookies, authorization headers, etc.
   });
 
@@ -38,7 +38,7 @@ async function bootstrap() {
   const PORT = process.env.PORT || 4000;
   await app.listen(PORT);
   console.log(`🚀 Server running at http://localhost:${PORT}`);
-  // console.log(`🚀 Server running at  http://192.168.0.105:5173:${PORT}`);
+  // console.log(`🚀 Server running at  http://192.168.0.105:${PORT}`);
   console.log(`👉 http://localhost:${PORT}/api/docs`);
 }
 bootstrap();
