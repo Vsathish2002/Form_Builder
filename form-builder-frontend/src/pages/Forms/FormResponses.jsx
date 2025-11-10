@@ -67,7 +67,7 @@ export default function FormResponses() {
         }
       }
     });
-
+ 
     return () => socket.disconnect();
   }, [id, token]);
 
@@ -106,34 +106,69 @@ export default function FormResponses() {
   };
 
   // ---------------- Build table data ----------------
-  const data = useMemo(() => {
-    if (!responses.length || !form) return [];
-    return responses.map((r) => {
-      const row = { submittedAt: new Date(r.createdAt).toLocaleString() };
-      form.fields.forEach((field) => {
-        const val = r.responseData?.[field.id];
-        if (!val) row[field.label] = "-";
-        else if (Array.isArray(val)) row[field.label] = val.join(", ");
-        else if (typeof val === "string" && val.startsWith("/uploads/")) {
-          const filename = val.split("/").pop();
-          row[field.label] = (
-            <a
-              href={`http://localhost:4000${val}`}
-              // href={`http://192.168.0.105:4000${val}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 underline"
-            >
-              {filename}
-            </a>
-          );
-        } else {
-          row[field.label] = val.toString();
+const data = useMemo(() => {
+  if (!responses.length || !form) return [];
+
+  return responses.map((r) => {
+    const row = { submittedAt: new Date(r.createdAt).toLocaleString() };
+
+    form.fields.forEach((field) => {
+      let val = r.responseData?.[field.id];
+
+      // ✅ Handle one-level nested object { fieldId: "/uploads/file.png" }
+      if (val && typeof val === "object" && !Array.isArray(val)) {
+        const innerValue = Object.values(val)[0];
+        if (typeof innerValue === "string") val = innerValue;
+        else val = JSON.stringify(val);
+      }
+
+      // ✅ Parse stringified arrays (checkbox values)
+      if (typeof val === "string" && val.startsWith("[")) {
+        try {
+          val = JSON.parse(val);
+        } catch {
+          // ignore invalid JSON
         }
-      });
-      return row;
+      }
+
+      // ✅ Handle checkbox or multi-select
+      if (Array.isArray(val)) {
+        row[field.label] = val.join(", ");
+      }
+
+      // ✅ Handle uploaded files (images or docs)
+     // ✅ Handle uploaded file paths (show only name)
+else if (typeof val === "string" && val.startsWith("/uploads/")) {
+  const filename = val.split("/").pop();
+
+  row[field.label] = (
+    <a
+      href={`http://localhost:4000${val}`}
+      download={filename}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 underline hover:text-blue-800"
+    >
+      {filename}
+    </a>
+  );
+}
+
+      // ✅ Normal text, numbers, etc.
+      else if (val) {
+        row[field.label] = String(val);
+      }
+
+      // ✅ Empty
+      else {
+        row[field.label] = "-";
+      }
     });
-  }, [responses, form]);
+
+    return row;
+  });
+}, [responses, form]);
+
 
   // ---------------- CSV Export ----------------
   const csvData = useMemo(() => {
@@ -153,26 +188,34 @@ export default function FormResponses() {
 
   // ---------------- Table Columns ----------------
   const columns = useMemo(() => {
-    if (!form) return [];
-    return [
-      columnHelper.accessor("submittedAt", { header: "Submitted At" }),
-      ...form.fields.map((f) =>
-        columnHelper.accessor(f.label, { header: f.label })
-      ),
+  if (!form) return [];
+  return [
+    columnHelper.accessor("submittedAt", { header: "Submitted At" }),
+
+    // ✅ Use display() instead of accessor() for JSX rendering
+    ...form.fields.map((f) =>
       columnHelper.display({
-        id: "actions",
-        header: "Actions",
-        cell: ({ row }) => (
-          <button
-            onClick={() => handleDeleteResponse(responses[row.index].id)}
-            className="text-red-600 hover:text-red-800"
-          >
-            Delete
-          </button>
-        ),
-      }),
-    ];
-  }, [form, responses, columnHelper]);
+        id: f.label,
+        header: f.label,
+        cell: (info) => info.row.original[f.label], // directly render JSX
+      })
+    ),
+
+    columnHelper.display({
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => (
+        <button
+          onClick={() => handleDeleteResponse(responses[row.index].id)}
+          className="text-red-600 hover:text-red-800"
+        >
+          Delete
+        </button>
+      ),
+    }),
+  ];
+}, [form, responses, columnHelper]);
+
 
   // ---------------- React Table Setup ----------------
   const table = useReactTable({

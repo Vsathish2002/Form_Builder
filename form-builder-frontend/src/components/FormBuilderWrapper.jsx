@@ -86,14 +86,31 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
             </div>`,
         },
 
-        file: {
+        /** 📎 File Upload Field (Fixed) */
+        fileUpload: {
           label: "File Upload",
           icon: "📎",
-          onRender: (field) => `
-            <div class="mb-3">
-              <label class="form-label">${field.label}</label>
-              <input type="file" class="form-control" />
-            </div>`,
+          fields: [
+            { label: "Label", name: "label", type: "text" },
+            { label: "Allow Multiple Files", name: "multiple", type: "checkbox" },
+            { label: "Accepted Types (e.g. image/*, .pdf)", name: "accept", type: "text" },
+          ],
+          onRender: (field) => {
+            const multiple = field.multiple ? "multiple" : "";
+            const accept = field.accept ? `accept="${field.accept}"` : "";
+            const fieldName = field.name || `file-${Date.now()}`;
+            return `
+              <div class="mb-3">
+                <label class="form-label">${field.label || "Upload File"}</label>
+                <input 
+                  type="file" 
+                  name="${fieldName}" 
+                  id="${fieldName}" 
+                  class="form-control" 
+                  ${multiple} ${accept}
+                />
+              </div>`;
+          },
         },
 
         page: {
@@ -152,7 +169,7 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
           "radio-group",
           "checkbox-group",
           "date",
-          "file",
+          "fileUpload", // ✅ renamed & added correctly
           "autocomplete",
         ],
         controlConfig: controlPlugins,
@@ -268,7 +285,7 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
   return (
     <div className="my-8">
       <h3 className="text-2xl font-semibold mb-4">
-        Advanced Drag & Drop Form Builder
+        Drag & Drop Form Builder
       </h3>
       <div
         ref={editorContainer}

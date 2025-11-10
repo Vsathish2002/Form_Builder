@@ -6,15 +6,15 @@ export class RegisterDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ example: 'sathish@example.com', description: 'User email address' })
+  @ApiProperty({ example: 'vsathish22120@gmail.com', description: 'User email address' })
   @IsEmail()
   email: string;
 
-  @ApiProperty({ example: 'password123', description: 'Password with at least 6 characters' })
+  @ApiProperty({ example: 'Password123', description: 'Password with at least 6 characters' })
   @IsString()
   @MinLength(6)
   password: string;
 
-  @ApiProperty({ example: 'admin', required: false, description: 'Optional user role' })
+  @ApiProperty({ example: 'user', required: false, description: 'Optional user role' })
   role?: string;
 }

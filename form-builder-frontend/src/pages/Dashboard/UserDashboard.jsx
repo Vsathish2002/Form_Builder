@@ -58,7 +58,7 @@ export default function UserDashboard() {
         // WebSocket connection for real-time updates (after data is fetched)
         const socket = io("http://localhost:4000", {
         // const socket = io("http://192.168.0.105:4000", {
-          transports: ["websocket"],
+          transports: ["websocket"], 
           reconnection: true,
         });
 

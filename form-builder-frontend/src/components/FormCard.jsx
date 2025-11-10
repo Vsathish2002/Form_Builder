@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,7 +9,7 @@ import {
   FiLink,
   FiEdit,
   FiTrash2,
-  FiEye,
+  FiEye, 
   FiCopy,
   FiPower,
 } from "react-icons/fi";
@@ -31,7 +30,6 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
   // ✅ WebSocket Setup
   useEffect(() => {
     const socket = io("http://localhost:4000", {
-    // const socket = io("http://192.168.0.105:4000", {
       transports: ["websocket"],
       reconnection: true,
     });
@@ -43,8 +41,6 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
 
     socket.on("formFilling", (data) => {
       if (data.formId === form.id) {
-        console.log("🟡 Someone started filling this form...");
-        // toast.loading("Someone started filling the form...", { id: "filling" });
         setIsLoading(true);
         setStatusMessage("Someone is filling the form...");
       }
@@ -52,9 +48,7 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
 
     socket.on("formSubmitted", (data) => {
       if (data.formId === form.id) {
-        console.log("✅ Form submitted:", data);
         toast.success(`New response received for "${form.title}"`);
-        toast.dismiss("filling");
         setIsLoading(false);
         setStatusMessage("Form submitted!");
         setSubmittedData(data.answers || []);
@@ -63,7 +57,6 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
 
     return () => {
       socket.disconnect();
-      toast.dismiss("filling");
     };
   }, [form.id]);
 
@@ -95,7 +88,7 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
 
   const handleCopyLink = () => {
     if (!isActive) {
-      alert("Form is inactive. Activate it to share.");
+      toast.error("Form is inactive. Activate it to share.");
       return;
     }
     navigator.clipboard.writeText(formUrl);
@@ -137,13 +130,16 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
       {/* ===================== Form Card ===================== */}
       <motion.div
         whileHover={{ scale: 1.02 }}
-        className="bg-gradient-to-br from-white/70 to-gray-50/30 backdrop-blur-lg border border-gray-200 rounded-2xl shadow-lg transition-all duration-300 p-6 flex flex-col justify-between w-full sm:w-[350px] md:w-[400px]"
+        className="bg-gradient-to-br from-white/80 to-gray-50/30 backdrop-blur-lg border border-gray-200 rounded-2xl shadow-lg transition-all duration-300 p-6 flex flex-col justify-between 
+                   w-full max-w-sm sm:max-w-md md:max-w-md lg:max-w-sm xl:max-w-md mx-auto"
       >
         {/* Header */}
         <div className="flex justify-between items-start mb-3">
-          <h3 className="text-2xl font-semibold text-gray-900">{form.title}</h3>
+          <h3 className="text-xl md:text-2xl font-semibold text-gray-900 line-clamp-1">
+            {form.title}
+          </h3>
           <span
-            className={`px-3 py-1 text-white text-sm rounded-full shadow font-medium ${
+            className={`px-3 py-1 text-white text-xs md:text-sm rounded-full shadow font-medium ${
               isActive
                 ? "bg-gradient-to-r from-green-400 to-emerald-500"
                 : "bg-gradient-to-r from-gray-400 to-gray-600"
@@ -153,36 +149,36 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
           </span>
         </div>
 
-        <p className="text-gray-600 mb-4 text-sm leading-relaxed line-clamp-3">
+        <p className="text-gray-600 mb-4 text-sm md:text-base leading-relaxed line-clamp-3">
           {form.description || "No description provided."}
         </p>
 
         {/* Buttons */}
-        <div className="flex flex-wrap gap-2 mt-auto">
+        <div className="flex flex-wrap gap-2 mt-auto justify-center md:justify-start">
           <Link
             to={`/forms/${form.id}/responses`}
-            className="flex items-center gap-2 px-4 py-2 text-sm rounded-full bg-blue-50 text-blue-700 font-medium hover:bg-blue-100 transition"
+            className="flex items-center gap-2 px-3 md:px-4 py-2 text-xs md:text-sm rounded-full bg-blue-50 text-blue-700 font-medium hover:bg-blue-100 transition"
           >
             <FiEye /> Responses
           </Link>
 
           <Link
             to={`/edit/${form.id}`}
-            className="flex items-center gap-2 px-4 py-2 text-sm rounded-full bg-green-50 text-green-700 font-medium hover:bg-green-100 transition"
+            className="flex items-center gap-2 px-3 md:px-4 py-2 text-xs md:text-sm rounded-full bg-green-50 text-green-700 font-medium hover:bg-green-100 transition"
           >
             <FiEdit /> Edit
           </Link>
 
           <button
             onClick={() => onDelete(form.id)}
-            className="flex items-center gap-2 px-4 py-2 text-sm rounded-full bg-red-50 text-red-700 font-medium hover:bg-red-100 transition"
+            className="flex items-center gap-2 px-3 md:px-4 py-2 text-xs md:text-sm rounded-full bg-red-50 text-red-700 font-medium hover:bg-red-100 transition"
           >
             <FiTrash2 /> Delete
           </button>
 
           <button
             onClick={handleToggleStatus}
-            className={`flex items-center gap-2 px-4 py-2 text-sm rounded-full font-medium transition ${
+            className={`flex items-center gap-2 px-3 md:px-4 py-2 text-xs md:text-sm rounded-full font-medium transition ${
               isActive
                 ? "bg-yellow-50 text-yellow-700 hover:bg-yellow-100"
                 : "bg-green-50 text-green-700 hover:bg-green-100"
@@ -193,7 +189,7 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
 
           <button
             onClick={handleGenerateQr}
-            className="flex items-center gap-2 px-4 py-2 text-sm rounded-full bg-purple-50 text-purple-700 font-medium hover:bg-purple-100 transition"
+            className="flex items-center gap-2 px-3 md:px-4 py-2 text-xs md:text-sm rounded-full bg-purple-50 text-purple-700 font-medium hover:bg-purple-100 transition"
           >
             <BsQrCode /> QR
           </button>
@@ -201,12 +197,12 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
           <button
             onClick={() => {
               if (!isActive) {
-                alert("Form is inactive. Activate it to share.");
+                toast.error("Form is inactive. Activate it to share.");
                 return;
               }
               setShowShareModal(true);
             }}
-            className="flex items-center gap-2 px-4 py-2 text-sm rounded-full bg-indigo-50 text-indigo-700 font-medium hover:bg-indigo-100 transition"
+            className="flex items-center gap-2 px-3 md:px-4 py-2 text-xs md:text-sm rounded-full bg-indigo-50 text-indigo-700 font-medium hover:bg-indigo-100 transition"
           >
             <FiLink /> Share
           </button>
@@ -269,9 +265,7 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
 
               {submittedData && (
                 <div className="w-full flex flex-col items-center">
-                  <div className="text-green-500 text-5xl mb-3 animate-bounce">
-                    ✅
-                  </div>
+                  <div className="text-green-500 text-5xl mb-3">✅</div>
                   <p className="text-gray-800 font-semibold text-lg mb-3">
                     Form Submitted Successfully!
                   </p>
@@ -279,18 +273,60 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
                     <table className="w-full text-sm border-collapse">
                       <thead className="bg-gray-100 text-gray-700">
                         <tr>
-                          <th className="text-left px-3 py-2 border">Field</th>
-                          <th className="text-left px-3 py-2 border">Value</th>
+                          <th className="text-left px-3 py-2 border">
+                            Responses
+                          </th>
                         </tr>
                       </thead>
-                      <tbody>
-                        {submittedData.map((a, i) => (
-                          <tr key={i} className="hover:bg-gray-50 transition">
-                            <td className="border px-3 py-2">{a.label}</td>
-                            <td className="border px-3 py-2">{a.value}</td>
-                          </tr>
-                        ))}
-                      </tbody>
+                     <tbody>
+  {submittedData
+    .filter(
+      (field) =>
+        field.type !== "header" &&
+        field.type !== "paragraph" &&
+        field.value
+    )
+    .map((a, i) => {
+      let displayValue = a.value;
+
+      // ✅ If it's an array (checkbox or multi-select)
+      if (Array.isArray(displayValue)) {
+        displayValue = displayValue.join(", ");
+      }
+
+      // ✅ If it's a stringified array like '["indoor","cricket"]'
+      if (typeof displayValue === "string" && displayValue.startsWith("[")) {
+        try {
+          const parsed = JSON.parse(displayValue);
+          if (Array.isArray(parsed)) displayValue = parsed.join(", ");
+        } catch {
+          // ignore parsing error
+        }
+      }
+
+      // ✅ If it's an uploaded file — show only filename as clickable link
+      if (typeof displayValue === "string" && displayValue.startsWith("/uploads/")) {
+        const filename = displayValue.split("/").pop();
+        displayValue = (
+          <a
+            href={`http://localhost:4000${displayValue}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline font-medium"
+          >
+            {filename}
+          </a>
+        );
+      }
+
+      return (
+        <tr key={i} className="hover:bg-gray-50 transition">
+          <td className="border px-3 py-2 text-gray-700">{displayValue}</td>
+        </tr>
+      );
+    })}
+</tbody>
+
                     </table>
                   </div>
                 </div>

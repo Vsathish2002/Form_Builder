@@ -20,6 +20,8 @@ import { UpdateFormDto } from './dto/update-form.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { User } from '../users/user.entity';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import {
   ApiTags,
   ApiOperation,
@@ -33,7 +35,7 @@ import {
 @ApiBearerAuth()
 @Controller('forms')
 export class FormsController {
-  constructor(private formsService: FormsService) {}
+  constructor(private formsService: FormsService) { }
 
   // ✅ Create a new form
   @UseGuards(JwtAuthGuard)
@@ -124,8 +126,18 @@ export class FormsController {
 
   // ✅ Submit public response with file upload
   @Post('public/:slug/submit')
-  @UseInterceptors(AnyFilesInterceptor())
-  @ApiOperation({ summary: 'Submit a public form (supports file upload)' })
+  @UseInterceptors(
+    AnyFilesInterceptor({
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, callback) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          const ext = extname(file.originalname);
+          callback(null, `${uniqueSuffix}${ext}`);
+        },
+      }),
+    }),
+  ) @ApiOperation({ summary: 'Submit a public form (supports file upload)' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {

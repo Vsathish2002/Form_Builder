@@ -97,37 +97,104 @@ export class FormsService {
   }
 
   // --- ✏️ Update Form ---
+  // work well async updateForm(id: string, dto: UpdateFormDto, user: User): Promise<Form> {
+  //   const form = await this.formsRepo.findOne({
+  //     where: { id },
+  //     relations: ['fields', 'owner'],
+  //   });
+  //   if (!form) throw new NotFoundException('Form not found');
+  //   if (form.owner?.id !== user.id && user.role.name !== 'admin')
+  //     throw new NotFoundException('Form not found');
+
+  //   form.title = dto.title ?? form.title;
+  //   form.description = dto.description ?? form.description;
+  //   form.isPublic = dto.isPublic ?? form.isPublic;
+  //   form.status = dto.status ?? form.status;
+
+  //   // 🔹 Update existing fields and add new ones
+  //   const incomingFields = dto.fields || [];
+  //   const existingFields = form.fields || [];
+
+  //   // Map existing fields by id
+  //   const existingMap = new Map();
+  //   existingFields.forEach((ef) => {
+  //     existingMap.set(ef.id, ef);
+  //   });
+
+  //   const updatedFields: FormField[] = [];
+
+  //   for (const incoming of incomingFields) {
+  //     const existing = existingMap.get(incoming.id);
+
+  //     if (existing) {
+  //       // Update existing field
+  //       existing.label = incoming.label;
+  //       existing.type = this.normalizeFieldType(incoming.type);
+  //       existing.required = incoming.required ?? false;
+  //       existing.options = incoming.options || [];
+  //       existing.order = incoming.order || 0;
+  //       existing.validation = incoming.validation || null;
+  //       existing.extraValue = incoming.extraValue ?? undefined;
+  //       existing.subtype = incoming.subtype ?? undefined;
+  //       updatedFields.push(existing);
+  //       existingMap.delete(incoming.id); // Remove from map to avoid deletion
+  //     } else {
+  //       // Create new field
+  //       const newField = this.fieldsRepo.create({
+  //         label: incoming.label,
+  //         type: this.normalizeFieldType(incoming.type),
+  //         required: incoming.required ?? false,
+  //         options: incoming.options || [],
+  //         order: incoming.order || 0,
+  //         validation: incoming.validation || null,
+  //         extraValue: incoming.extraValue ?? undefined,
+  //         subtype: incoming.subtype ?? undefined,
+  //         form,
+  //       });
+  //       updatedFields.push(newField);
+  //     }
+  //   }
+
+  //   // Delete fields not in incoming
+  //   const toDelete = Array.from(existingMap.values());
+  //   if (toDelete.length > 0) {
+  //     await this.fieldsRepo.remove(toDelete);
+  //   }
+
+  //   // Save updated and new fields
+  //   form.fields = await this.fieldsRepo.save(updatedFields);
+  //   return this.formsRepo.save(form);
+  // }
   async updateForm(id: string, dto: UpdateFormDto, user: User): Promise<Form> {
     const form = await this.formsRepo.findOne({
       where: { id },
       relations: ['fields', 'owner'],
     });
+
     if (!form) throw new NotFoundException('Form not found');
     if (form.owner?.id !== user.id && user.role.name !== 'admin')
       throw new NotFoundException('Form not found');
 
+    // ✅ Update simple properties safely
     form.title = dto.title ?? form.title;
     form.description = dto.description ?? form.description;
     form.isPublic = dto.isPublic ?? form.isPublic;
     form.status = dto.status ?? form.status;
 
-    // 🔹 Update existing fields and add new ones
     const incomingFields = dto.fields || [];
     const existingFields = form.fields || [];
 
-    // Map existing fields by id
     const existingMap = new Map();
-    existingFields.forEach((ef) => {
-      existingMap.set(ef.id, ef);
-    });
+    existingFields.forEach((ef) => existingMap.set(ef.id, ef));
 
     const updatedFields: FormField[] = [];
 
     for (const incoming of incomingFields) {
+      if (!incoming?.id || !incoming?.label) continue; // ✅ Skip invalid field entries
+
       const existing = existingMap.get(incoming.id);
 
       if (existing) {
-        // Update existing field
         existing.label = incoming.label;
         existing.type = this.normalizeFieldType(incoming.type);
         existing.required = incoming.required ?? false;
@@ -136,10 +203,10 @@ export class FormsService {
         existing.validation = incoming.validation || null;
         existing.extraValue = incoming.extraValue ?? undefined;
         existing.subtype = incoming.subtype ?? undefined;
+
         updatedFields.push(existing);
-        existingMap.delete(incoming.id); // Remove from map to avoid deletion
+        existingMap.delete(incoming.id);
       } else {
-        // Create new field
         const newField = this.fieldsRepo.create({
           label: incoming.label,
           type: this.normalizeFieldType(incoming.type),
@@ -155,16 +222,21 @@ export class FormsService {
       }
     }
 
-    // Delete fields not in incoming
+    // ✅ Delete old fields only if there are any to delete
     const toDelete = Array.from(existingMap.values());
     if (toDelete.length > 0) {
       await this.fieldsRepo.remove(toDelete);
     }
 
-    // Save updated and new fields
-    form.fields = await this.fieldsRepo.save(updatedFields);
-    return this.formsRepo.save(form);
+    // ✅ Save updated fields only if there are any valid ones
+    if (updatedFields.length > 0) {
+      form.fields = await this.fieldsRepo.save(updatedFields);
+    }
+
+    // ✅ Finally, save the form
+    return await this.formsRepo.save(form);
   }
+
 
   // --- 🗑 Delete Form ---
   async deleteForm(id: string, user: User): Promise<void> {
@@ -191,10 +263,15 @@ export class FormsService {
 
     // 2️⃣ Handle uploaded files (convert to URLs)
     if (files && files.length > 0) {
-      for (const file of files) {
-        formData[file.fieldname] = `/uploads/${file.filename}`;
-      }
+      files.forEach((file) => {
+        if (file && file.filename) {
+          formData[file.fieldname] = `/uploads/${file.filename}`;
+        } else {
+          console.warn('⚠️ Skipped file with no filename:', file);
+        }
+      });
     }
+
 
     // 3️⃣ Save as JSON
     const newResponse = this.responsesRepo.create({

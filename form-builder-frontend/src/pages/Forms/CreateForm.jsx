@@ -116,9 +116,15 @@ export default function CreateForm() {
           className="mt-6 text-center text-gray-500 text-sm"
         >
           Need help?{" "}
-          <span className="text-blue-600 font-semibold cursor-pointer hover:underline">
-            See documentation
-          </span>{" "}
+          <a
+  href="https://formbuilder.online/"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="text-blue-600 font-semibold hover:underline"
+>
+  See documentation
+</a>
+{" "}
           for tips on creating effective forms.
         </motion.div>
       </motion.div>

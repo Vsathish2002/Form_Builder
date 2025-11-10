@@ -6,10 +6,10 @@ import { UsersModule } from './users/users.module';
 import { RolesModule } from './roles/roles.module';
 import { FormsModule } from './forms/forms.module';
 import { QrcodeModule } from './qrcode/qrcode.module';
-import { RealtimeModule } from './realtime/realtime.module';
+// import { RealtimeModule } from './realtime/realtime.module';
 import { GatewayModule } from './gateway/gateway.module';
 import { typeOrmConfig } from './database/typeorm.config';
-import { AppController } from './app.controller';
+// import { AppController } from './app.controller';
 import { RolesSeeder } from './roles/roles.seed';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
@@ -23,7 +23,7 @@ import { join } from 'path';
     RolesModule,
     FormsModule,
     QrcodeModule,
-    RealtimeModule,
+    // RealtimeModule,
     GatewayModule,
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'uploads'),
@@ -31,6 +31,6 @@ import { join } from 'path';
     }),
   ],
   providers: [RolesSeeder],
-  controllers: [AppController],
+  // controllers: [AppController],
 })
 export class AppModule {}

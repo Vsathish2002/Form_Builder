@@ -15,8 +15,12 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { BadRequestException } from '@nestjs/common';
+import { ApiExcludeController,ApiExcludeEndpoint } from '@nestjs/swagger';
+
+
 
 @UseGuards(JwtAuthGuard, RolesGuard)
+@ApiExcludeController()
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) { }
@@ -46,7 +50,7 @@ export class UsersController {
 
     return this.usersService.sendEmailChangeOtp(id, newEmail);
   }
-
+  @ApiExcludeEndpoint()
   @Post('verify-email-otp/:id')
   async verifyEmailOtp(@Param('id') id: string, @Body() body: any) {
     const { newEmail, otp } = body;
@@ -55,5 +59,4 @@ export class UsersController {
 
     return this.usersService.verifyEmailChangeOtp(id, newEmail, otp);
   }
-
 }

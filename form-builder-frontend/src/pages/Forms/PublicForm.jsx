@@ -4,7 +4,7 @@ import { getFormBySlug, submitPublicResponse } from '../../api/forms';
 import FormRenderer from '../../components/FormRenderer';
 import { FiCheckCircle } from 'react-icons/fi';
 import io from 'socket.io-client';
-
+ 
 export default function PublicForm() {
   const { slug } = useParams();
   const [form, setForm] = useState(null);
@@ -102,7 +102,7 @@ export default function PublicForm() {
           <p className="text-gray-600 mb-6">
             Thank you! Your response has been recorded successfully.
           </p>
-        </div>
+        </div> 
       </div>
     );
   }

@@ -1,29 +1,27 @@
+import { join } from 'path';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
-import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  // ✅ Use NestExpressApplication for static asset serving
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // ✅ Enable CORS for React frontend (Form Builder UI)
+  // ✅ Allow frontend access
   app.enableCors({
-    origin: 'http://localhost:5173', // your React frontend
-    credentials: true, // allow cookies, tokens, etc.
+    origin: 'http://localhost:5173',
+    credentials: true,
   });
 
-  // ✅ Helmet adds extra security headers
   app.use(helmet());
 
-  // ✅ Serve static assets (uploads folder)
+  // ✅ Serve the uploads folder statically
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
-    prefix: '/uploads', // Access via http://localhost:4000/uploads/filename.png
+    prefix: '/uploads',
   });
 
-  // ✅ Swagger setup
+  // ✅ Swagger setup (keep your existing)
   const config = new DocumentBuilder()
     .setTitle('Form Builder API')
     .setDescription('API documentation for Form Builder system')
@@ -34,13 +32,8 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  // ✅ Start the NestJS server
   const PORT = process.env.PORT || 4000;
   await app.listen(PORT);
-
   console.log(`🚀 Server running at http://localhost:${PORT}`);
-  console.log(`👉 Swagger docs: http://localhost:${PORT}/api/docs`);
-  console.log(`📂 Uploads served from: http://localhost:${PORT}/uploads/`);
 }
-
 bootstrap();
