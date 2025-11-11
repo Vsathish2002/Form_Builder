@@ -22,6 +22,8 @@ import { User } from '../users/user.entity';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
+import { Roles } from '../auth/roles.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import {
   ApiTags,
   ApiOperation,
@@ -182,6 +184,21 @@ export class FormsController {
       throw new HttpException('Failed to fetch responses', HttpStatus.BAD_REQUEST);
     }
   }
+
+  // ✅ ADMIN: Get all forms from all users for admn dashboard
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @Get('admin/all')
+  @ApiOperation({ summary: 'Admin: Get all forms from all users' })
+  @ApiResponse({ status: 200, description: 'List of all forms (admin only)' })
+  async getAllFormsForAdmin() {
+    try {
+      return await this.formsService.findAllAdmin();
+    } catch (error) {
+      throw new HttpException('Failed to fetch admin forms', HttpStatus.BAD_REQUEST);
+    }
+  }
+
 
   // ✅ Get forms by current user
   @UseGuards(JwtAuthGuard)

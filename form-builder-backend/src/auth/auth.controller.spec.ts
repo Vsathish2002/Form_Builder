@@ -95,3 +95,4 @@ describe('AuthController', () => {
     expect(result.message).toBe('OTP sent successfully');
   });
 });
+ 

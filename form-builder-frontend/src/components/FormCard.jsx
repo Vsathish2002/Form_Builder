@@ -9,7 +9,7 @@ import {
   FiLink,
   FiEdit,
   FiTrash2,
-  FiEye, 
+  FiEye,
   FiCopy,
   FiPower,
 } from "react-icons/fi";
@@ -112,7 +112,9 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
     {
       name: "Twitter",
       icon: <BsTwitter />,
-      url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(formUrl)}`,
+      url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(
+        formUrl
+      )}`,
       bg: "bg-blue-400 hover:bg-blue-500",
     },
     {
@@ -278,55 +280,66 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
                           </th>
                         </tr>
                       </thead>
-                     <tbody>
-  {submittedData
-    .filter(
-      (field) =>
-        field.type !== "header" &&
-        field.type !== "paragraph" &&
-        field.value
-    )
-    .map((a, i) => {
-      let displayValue = a.value;
+                      <tbody>
+                        {submittedData
+                          .filter(
+                            (field) =>
+                              field.type !== "header" &&
+                              field.type !== "paragraph" &&
+                              field.value
+                          )
+                          .map((a, i) => {
+                            let displayValue = a.value;
 
-      // ✅ If it's an array (checkbox or multi-select)
-      if (Array.isArray(displayValue)) {
-        displayValue = displayValue.join(", ");
-      }
+                            // ✅ If it's an array (checkbox or multi-select)
+                            if (Array.isArray(displayValue)) {
+                              displayValue = displayValue.join(", ");
+                            }
 
-      // ✅ If it's a stringified array like '["indoor","cricket"]'
-      if (typeof displayValue === "string" && displayValue.startsWith("[")) {
-        try {
-          const parsed = JSON.parse(displayValue);
-          if (Array.isArray(parsed)) displayValue = parsed.join(", ");
-        } catch {
-          // ignore parsing error
-        }
-      }
+                            // ✅ If it's a stringified array like '["indoor","cricket"]'
+                            if (
+                              typeof displayValue === "string" &&
+                              displayValue.startsWith("[")
+                            ) {
+                              try {
+                                const parsed = JSON.parse(displayValue);
+                                if (Array.isArray(parsed))
+                                  displayValue = parsed.join(", ");
+                              } catch {
+                                // ignore parsing error
+                              }
+                            }
 
-      // ✅ If it's an uploaded file — show only filename as clickable link
-      if (typeof displayValue === "string" && displayValue.startsWith("/uploads/")) {
-        const filename = displayValue.split("/").pop();
-        displayValue = (
-          <a
-            href={`http://localhost:4000${displayValue}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:underline font-medium"
-          >
-            {filename}
-          </a>
-        );
-      }
+                            // ✅ If it's an uploaded file — show only filename as clickable link
+                            if (
+                              typeof displayValue === "string" &&
+                              displayValue.startsWith("/uploads/")
+                            ) {
+                              const filename = displayValue.split("/").pop();
+                              displayValue = (
+                                <a
+                                  href={`http://localhost:4000${displayValue}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:underline font-medium"
+                                >
+                                  {filename}
+                                </a>
+                              );
+                            }
 
-      return (
-        <tr key={i} className="hover:bg-gray-50 transition">
-          <td className="border px-3 py-2 text-gray-700">{displayValue}</td>
-        </tr>
-      );
-    })}
-</tbody>
-
+                            return (
+                              <tr
+                                key={i}
+                                className="hover:bg-gray-50 transition"
+                              >
+                                <td className="border px-3 py-2 text-gray-700">
+                                  {displayValue}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
                     </table>
                   </div>
                 </div>

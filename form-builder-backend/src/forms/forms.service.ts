@@ -71,6 +71,15 @@ export class FormsService {
       relations: ['fields', 'owner'],
     });
   }
+  // -------
+  // 👑 ADMIN: Get all forms from all users //new for admin_dashboard
+  async findAllAdmin(): Promise<Form[]> {
+    return this.formsRepo.find({
+      relations: ['fields', 'owner'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+// -------------------
 
   // --- 🔍 Find Form by Slug ---
   async findOne(slug: string): Promise<Form> {

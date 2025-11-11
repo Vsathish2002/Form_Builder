@@ -24,6 +24,7 @@
     "framer-motion": "^12.23.24",
     "jquery": "^3.7.1",
     "jquery-ui-sortable": "^1.0.0",
+    "lucide-react": "^0.553.0",
     "prop-types": "^15.8.1",
     "qrcode.react": "^4.2.0",
     "rateyo": "^3.0.0-alpha.2",

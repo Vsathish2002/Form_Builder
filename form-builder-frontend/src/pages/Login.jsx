@@ -25,11 +25,18 @@ export default function Login() {
     try {
       const data = await loginUser(email, password);
       setLoading(false);
-
       if (data.access_token) {
         login(data.user, data.access_token);
         toast.success("✅ Login successful!");
-        setTimeout(() => navigate("/"), 1200);
+
+        // ✅ Redirect based on role
+        setTimeout(() => {
+          if (data.user.role === "admin") {
+            navigate("/admin/dashboard");
+          } else {
+            navigate("/user/dashboard");
+          }
+        }, 1200);
       } else {
         toast.error(data.message || "Invalid credentials. Please try again.");
       }

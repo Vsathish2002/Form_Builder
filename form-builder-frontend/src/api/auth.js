@@ -84,3 +84,4 @@ export async function verifyRegisterOtp(name, email, password, otp) {
   }
 }
 
+
