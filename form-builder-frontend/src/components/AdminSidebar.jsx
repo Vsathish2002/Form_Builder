@@ -3,11 +3,11 @@ import { NavLink } from "react-router-dom";
 import { LayoutDashboard, Users, FileText, LogOut, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
-export default function AdminSidebar({ onClose }) {
+export default function AdminSidebar({ onClose, isOpen }) {
   const { logout } = useAuth();
 
   return (
-    <aside className="fixed left-0 top-0 z-50 w-64 h-full bg-gradient-to-b from-indigo-900 via-indigo-800 to-blue-700 text-white flex flex-col shadow-xl transition-all duration-300">
+    <aside className={`fixed left-0 top-0 z-50 w-64 h-full bg-gradient-to-b from-indigo-900 via-indigo-800 to-blue-700 text-white flex flex-col shadow-xl transition-all duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
       {/* Header */}
       <div className="flex items-center justify-between p-5 border-b border-indigo-700">
         <h1 className="text-xl font-bold tracking-wide">Admin Panel</h1>

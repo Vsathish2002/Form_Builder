@@ -94,6 +94,7 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
     navigator.clipboard.writeText(formUrl);
     setShowShareModal(false);
     toast.success("Link copied to clipboard!");
+    
   };
 
   const handleToggleStatus = () => {
@@ -170,13 +171,18 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
           >
             <FiEdit /> Edit
           </Link>
-
           <button
             onClick={() => onDelete(form.id)}
             className="flex items-center gap-2 px-3 md:px-4 py-2 text-xs md:text-sm rounded-full bg-red-50 text-red-700 font-medium hover:bg-red-100 transition"
           >
             <FiTrash2 /> Delete
-          </button>
+          </button> 
+          {/* <button
+            onClick={(e) => onDelete(form.id, e)} // ✅ pass e too
+            className="flex items-center gap-2 px-3 md:px-4 py-2 text-xs md:text-sm rounded-full bg-red-50 text-red-700 font-medium hover:bg-red-100 transition"
+          >
+            <FiTrash2 /> Delete
+          </button> */}
 
           <button
             onClick={handleToggleStatus}

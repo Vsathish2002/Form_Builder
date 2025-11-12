@@ -104,7 +104,7 @@ export default function PublicForm() {
           </p>
         </div> 
       </div>
-    );
+    );  
   }
 
   // 🧩 Error Message

@@ -23,7 +23,7 @@ export default function Footer() {
           variants={fadeInUp}
           className="flex flex-col space-y-4"
         >
-          <h1 className="text-2xl font-bold text-white">FormBuilder</h1>
+          <h1 className="text-2xl font-bold text-white">Formify</h1>
           <p className="text-gray-400 text-sm">
             Build, share, and analyze forms effortlessly. Modern, fast, and professional.
           </p>

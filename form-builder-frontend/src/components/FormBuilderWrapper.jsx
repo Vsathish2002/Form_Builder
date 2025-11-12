@@ -92,8 +92,16 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
           icon: "📎",
           fields: [
             { label: "Label", name: "label", type: "text" },
-            { label: "Allow Multiple Files", name: "multiple", type: "checkbox" },
-            { label: "Accepted Types (e.g. image/*, .pdf)", name: "accept", type: "text" },
+            {
+              label: "Allow Multiple Files",
+              name: "multiple",
+              type: "checkbox",
+            },
+            {
+              label: "Accepted Types (e.g. image/*, .pdf)",
+              name: "accept",
+              type: "text",
+            },
           ],
           onRender: (field) => {
             const multiple = field.multiple ? "multiple" : "";
@@ -101,7 +109,9 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
             const fieldName = field.name || `file-${Date.now()}`;
             return `
               <div class="mb-3">
-                <label class="form-label">${field.label || "Upload File"}</label>
+                <label class="form-label">${
+                  field.label || "Upload File"
+                }</label>
                 <input 
                   type="file" 
                   name="${fieldName}" 
@@ -119,30 +129,6 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
           onRender: () =>
             `<div class="text-center text-primary my-3">--- Page Break ---</div>`,
         },
-
-        autocomplete: {
-          label: "Autocomplete",
-          icon: "🔍",
-          fields: [
-            { label: "Label", name: "label", type: "text" },
-            {
-              label: "Options (comma separated)",
-              name: "options",
-              type: "text",
-            },
-          ],
-          onRender: (field) => `
-            <div class="mb-3">
-              <label class="form-label">${field.label}</label>
-              <input list="opt-${field.name}" class="form-control" />
-              <datalist id="opt-${field.name}">
-                ${(field.options || "")
-                  .split(",")
-                  .map((o) => `<option value="${o.trim()}"/>`)
-                  .join("")}
-              </datalist>
-            </div>`,
-        },
       };
 
       /** ✅ Register custom controls */
@@ -156,7 +142,7 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
 
       /** ✅ Options setup */
       const options = {
-        disableFields: ["button", "hidden"],
+        disableFields: ["button", "hidden", "autocomplete"],
         controlOrder: [
           "header",
           "paragraph",
@@ -169,8 +155,7 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
           "radio-group",
           "checkbox-group",
           "date",
-          "fileUpload", // ✅ renamed & added correctly
-          "autocomplete",
+          "fileUpload",
         ],
         controlConfig: controlPlugins,
 
@@ -181,10 +166,13 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
             const liveData = fb?.actions?.getData("json");
             const parsed = JSON.parse(liveData);
 
+            // ✅ Preserve IDs and names from existing fieldsJson
             const parsedWithId = parsed.map((f, i) => {
               let options = [];
 
-              if (["select", "radio-group", "checkbox-group"].includes(f.type)) {
+              if (
+                ["select", "radio-group", "checkbox-group"].includes(f.type)
+              ) {
                 options = (f.values || [])
                   .map((opt) => {
                     const label = (opt.label || "").trim();
@@ -195,14 +183,19 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
                     return label ? { label, value } : null;
                   })
                   .filter(Boolean);
-              } else if (f.type === "autocomplete") {
-                options = f.options
-                  ? f.options.split(",").map((o) => o.trim())
-                  : [];
               }
 
+              const existingField = fieldsJson.find(
+                (old) =>
+                  old.label === f.label &&
+                  old.type === f.type
+              );
+
               return {
-                id: f.id || `field-${i}`,
+                id: existingField
+                  ? existingField.id
+                  : f.id || f.name || `field-${i}-${Date.now()}`,
+                name: f.name || f.id || `field-${i}-${Date.now()}`,
                 label: f.label,
                 type: f.type,
                 required: !!f.required,
@@ -213,10 +206,13 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
               };
             });
 
-            console.log("✅ Final Saved Fields:", parsedWithId);
+            console.log(
+              "✅ Final Saved Fields (with stable IDs):",
+              parsedWithId
+            );
             onSave(parsedWithId);
 
-            // ✅ Force UI refresh to show latest options immediately
+            // ✅ Refresh builder UI
             fb.promise.then(() => {
               fb.actions.clearFields();
               fb.actions.setData(
@@ -247,14 +243,18 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
             const transformed = fieldsJson.map((f) => {
               const newField = { ...f };
 
-              if (["select", "radio-group", "checkbox-group"].includes(f.type)) {
+              // ✅ Keep ID & Name consistent for stable submissions
+              newField.name = f.id;
+              newField.id = f.id;
+
+              if (
+                ["select", "radio-group", "checkbox-group"].includes(f.type)
+              ) {
                 newField.values = (f.options || []).map((opt) =>
                   typeof opt === "object"
                     ? { label: opt.label, value: opt.value }
                     : { label: opt, value: opt }
                 );
-              } else if (f.type === "autocomplete") {
-                newField.options = (f.options || []).join(", ");
               }
 
               if (f.type === "header" && !f.subtype) newField.subtype = "h3";

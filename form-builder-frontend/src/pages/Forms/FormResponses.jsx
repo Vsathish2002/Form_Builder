@@ -44,15 +44,13 @@ export default function FormResponses() {
 
   const columnHelper = createColumnHelper();
 
-  // ---------------- WebSocket: real-time updates ----------------
+  /** ---------------- WebSocket: Real-time updates ---------------- */
   useEffect(() => {
     const socket = io("http://localhost:4000", {
-    // const socket = io("http://192.168.0.105:4000", {
       transports: ["websocket", "polling"],
     });
 
     socket.on("connect", () => {
-      console.log("Socket connected:", socket.id);
       socket.emit("joinFormRoom", id);
     });
 
@@ -67,11 +65,11 @@ export default function FormResponses() {
         }
       }
     });
- 
+
     return () => socket.disconnect();
   }, [id, token]);
 
-  // ---------------- Fetch form & responses ----------------
+  /** ---------------- Fetch form & responses ---------------- */
   useEffect(() => {
     if (!token) return;
     const fetchData = async () => {
@@ -91,7 +89,7 @@ export default function FormResponses() {
     fetchData();
   }, [id, token]);
 
-  // ---------------- Delete response ----------------
+  /** ---------------- Delete response ---------------- */
   const handleDeleteResponse = async (responseId) => {
     if (!window.confirm("Are you sure you want to delete this response?"))
       return;
@@ -105,78 +103,79 @@ export default function FormResponses() {
     }
   };
 
-  // ---------------- Build table data ----------------
-const data = useMemo(() => {
-  if (!responses.length || !form) return [];
-
-  return responses.map((r) => {
-    const row = { submittedAt: new Date(r.createdAt).toLocaleString() };
-
-    form.fields.forEach((field) => {
-      let val = r.responseData?.[field.id];
-
-      // ✅ Handle one-level nested object { fieldId: "/uploads/file.png" }
-      if (val && typeof val === "object" && !Array.isArray(val)) {
-        const innerValue = Object.values(val)[0];
-        if (typeof innerValue === "string") val = innerValue;
-        else val = JSON.stringify(val);
-      }
-
-      // ✅ Parse stringified arrays (checkbox values)
-      if (typeof val === "string" && val.startsWith("[")) {
-        try {
-          val = JSON.parse(val);
-        } catch {
-          // ignore invalid JSON
-        }
-      }
-
-      // ✅ Handle checkbox or multi-select
-      if (Array.isArray(val)) {
-        row[field.label] = val.join(", ");
-      }
-
-      // ✅ Handle uploaded files (images or docs)
-     // ✅ Handle uploaded file paths (show only name)
-else if (typeof val === "string" && val.startsWith("/uploads/")) {
-  const filename = val.split("/").pop();
-
-  row[field.label] = (
-    <a
-      href={`http://localhost:4000${val}`}
-      download={filename}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-blue-600 underline hover:text-blue-800"
-    >
-      {filename}
-    </a>
-  );
-}
-
-      // ✅ Normal text, numbers, etc.
-      else if (val) {
-        row[field.label] = String(val);
-      }
-
-      // ✅ Empty
-      else {
-        row[field.label] = "-";
-      }
-    });
-
-    return row;
-  });
-}, [responses, form]);
-
-
-  // ---------------- CSV Export ----------------
-  const csvData = useMemo(() => {
+  /** ---------------- Build table data ---------------- */
+  const data = useMemo(() => {
     if (!responses.length || !form) return [];
+
+    const filteredFields = form.fields.filter(
+      (f) => !["header", "paragraph"].includes(f.type)
+    );
+
     return responses.map((r) => {
       const row = { submittedAt: new Date(r.createdAt).toLocaleString() };
-      form.fields.forEach((field) => {
-        const val = r.responseData?.[field.id];
+
+      filteredFields.forEach((field) => {
+        let val =
+          r.responseData?.[field.id] ??
+          r.responseData?.[field.name] ??
+          r.responseData?.[field.label] ??
+          "-";
+
+        if (val && typeof val === "object" && !Array.isArray(val)) {
+          const innerValue = Object.values(val)[0];
+          val = typeof innerValue === "string" ? innerValue : JSON.stringify(val);
+        }
+
+        if (typeof val === "string" && val.startsWith("[")) {
+          try {
+            val = JSON.parse(val);
+          } catch {
+            /* ignore invalid JSON */
+          }
+        }
+
+        if (Array.isArray(val)) {
+          row[field.label] = val.join(", ");
+        } else if (typeof val === "string" && val.startsWith("/uploads/")) {
+          const filename = val.split("/").pop();
+          row[field.label] = (
+            <a
+              href={`http://localhost:4000${val}`}
+              download={filename}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 underline hover:text-blue-800"
+            >
+              {filename}
+            </a>
+          );
+        } else if (val) {
+          row[field.label] = String(val);
+        } else {
+          row[field.label] = "-";
+        }
+      });
+
+      return row;
+    });
+  }, [responses, form]);
+
+  /** ---------------- CSV Export ---------------- */
+  const csvData = useMemo(() => {
+    if (!responses.length || !form) return [];
+
+    const filteredFields = form.fields.filter(
+      (f) => !["header", "paragraph"].includes(f.type)
+    );
+
+    return responses.map((r) => {
+      const row = { submittedAt: new Date(r.createdAt).toLocaleString() };
+      filteredFields.forEach((field) => {
+        const val =
+          r.responseData?.[field.id] ??
+          r.responseData?.[field.name] ??
+          r.responseData?.[field.label] ??
+          "-";
         if (Array.isArray(val)) row[field.label] = val.join(", ");
         else if (typeof val === "string" && val.startsWith("/uploads/"))
           row[field.label] = val.split("/").pop();
@@ -186,38 +185,39 @@ else if (typeof val === "string" && val.startsWith("/uploads/")) {
     });
   }, [responses, form]);
 
-  // ---------------- Table Columns ----------------
+  /** ---------------- Table Columns ---------------- */
   const columns = useMemo(() => {
-  if (!form) return [];
-  return [
-    columnHelper.accessor("submittedAt", { header: "Submitted At" }),
+    if (!form) return [];
 
-    // ✅ Use display() instead of accessor() for JSX rendering
-    ...form.fields.map((f) =>
-      columnHelper.display({
-        id: f.label,
-        header: f.label,
-        cell: (info) => info.row.original[f.label], // directly render JSX
-      })
-    ),
+    const filteredFields = form.fields.filter(
+      (f) => !["header", "paragraph"].includes(f.type)
+    );
 
-    columnHelper.display({
-      id: "actions",
-      header: "Actions",
-      cell: ({ row }) => (
-        <button
-          onClick={() => handleDeleteResponse(responses[row.index].id)}
-          className="text-red-600 hover:text-red-800"
-        >
-          Delete
-        </button>
+    return [
+      columnHelper.accessor("submittedAt", { header: "Submitted At" }),
+      ...filteredFields.map((f) =>
+        columnHelper.display({
+          id: f.label,
+          header: f.label,
+          cell: (info) => info.row.original[f.label],
+        })
       ),
-    }),
-  ];
-}, [form, responses, columnHelper]);
+      columnHelper.display({
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <button
+            onClick={() => handleDeleteResponse(responses[row.index].id)}
+            className="text-red-600 hover:text-red-800"
+          >
+            Delete
+          </button>
+        ),
+      }),
+    ];
+  }, [form, responses, columnHelper]);
 
-
-  // ---------------- React Table Setup ----------------
+  /** ---------------- React Table Setup ---------------- */
   const table = useReactTable({
     data,
     columns,
@@ -229,7 +229,7 @@ else if (typeof val === "string" && val.startsWith("/uploads/")) {
     globalFilterFn: "includesString",
   });
 
-  // ---------------- Chart Data for checkbox/radio ----------------
+  /** ---------------- Chart Data for checkbox/radio ---------------- */
   const chartFields = useMemo(() => {
     if (!form || !responses.length) return [];
 
@@ -238,7 +238,11 @@ else if (typeof val === "string" && val.startsWith("/uploads/")) {
       .map((field) => {
         const countMap = {};
         responses.forEach((r) => {
-          const val = r.responseData?.[field.id];
+          const val =
+            r.responseData?.[field.id] ??
+            r.responseData?.[field.name] ??
+            r.responseData?.[field.label];
+
           if (Array.isArray(val)) {
             val.forEach((v) => (countMap[v] = (countMap[v] || 0) + 1));
           } else if (val) {
@@ -253,13 +257,13 @@ else if (typeof val === "string" && val.startsWith("/uploads/")) {
       });
   }, [form, responses]);
 
-  // ---------------- Summary ----------------
+  /** ---------------- Summary ---------------- */
   const totalResponses = responses.length;
   const latestResponseTime = responses.length
     ? new Date(responses[responses.length - 1].createdAt).toLocaleString()
     : "No responses yet";
 
-  // ---------------- Render ----------------
+  /** ---------------- Render ---------------- */
   if (loading)
     return (
       <motion.div
@@ -315,7 +319,7 @@ else if (typeof val === "string" && val.startsWith("/uploads/")) {
         </div>
       </div>
 
-      {/* Search & Table */}
+      {/* Table */}
       <motion.div className="bg-white rounded-lg shadow-lg overflow-hidden">
         <div className="p-4 space-y-4">
           <input
@@ -405,7 +409,7 @@ else if (typeof val === "string" && val.startsWith("/uploads/")) {
         </p>
       </div>
 
-      {/* Export CSV Below Table */}
+      {/* Export CSV */}
       <div className="flex justify-center mt-4">
         <CSVLink
           data={csvData}
@@ -416,7 +420,7 @@ else if (typeof val === "string" && val.startsWith("/uploads/")) {
         </CSVLink>
       </div>
 
-      {/* Charts Section */}
+      {/* Charts */}
       {chartFields.length > 0 && (
         <motion.div
           className="grid md:grid-cols-2 gap-6 mt-8"

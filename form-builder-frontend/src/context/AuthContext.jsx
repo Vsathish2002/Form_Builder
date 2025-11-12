@@ -3,8 +3,7 @@ import axios from "axios";
 
 // ✅ Create context
 const AuthContext = createContext();
-
-export function AuthProvider({ children }) {
+ export function AuthProvider({ children }) {
   // ✅ Initialize user and token from localStorage safely
   const [user, setUser] = useState(() => {
     try {

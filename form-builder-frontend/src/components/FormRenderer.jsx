@@ -501,19 +501,19 @@ export default function FormRenderer({
   // ✅ Submit the form
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const formData = new FormData();
     (form.fields || []).forEach((f) => {
       const val = values[f.id];
       if ((f.type === "file" || f.type === "fileUpload") && val instanceof File) {
-  // ✅ Attach actual file with fieldname equal to field.id
-  formData.append(f.id, val, val.name);
-} else if (Array.isArray(val)) {
+        formData.append(f.id, val, val.name); // ✅ field.id as key
+      } else if (Array.isArray(val)) {
         formData.append(f.id, JSON.stringify(val));
       } else if (val !== undefined && val !== null) {
         formData.append(f.id, val);
       }
     });
+
+    console.log("🚀 Submitting responseData:", Object.fromEntries(formData));
 
     try {
       if (onSubmit) await onSubmit(formData);
@@ -524,7 +524,7 @@ export default function FormRenderer({
     }
   };
 
-  // ✅ Render individual field types
+  // ✅ Render each field type
   const renderField = (field) => {
     const common =
       "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none";
@@ -560,6 +560,8 @@ export default function FormRenderer({
         return (
           <input
             type="text"
+            name={field.id}
+            id={field.id}
             className={common}
             value={values[field.id] || ""}
             onChange={(e) => handleChange(field, e.target.value)}
@@ -570,6 +572,8 @@ export default function FormRenderer({
       case "textarea":
         return (
           <textarea
+            name={field.id}
+            id={field.id}
             rows="3"
             className={common}
             value={values[field.id] || ""}
@@ -582,6 +586,8 @@ export default function FormRenderer({
         return (
           <input
             type="number"
+            name={field.id}
+            id={field.id}
             className={common}
             value={values[field.id] || ""}
             onChange={(e) => handleChange(field, e.target.value)}
@@ -593,6 +599,8 @@ export default function FormRenderer({
         return (
           <input
             type="date"
+            name={field.id}
+            id={field.id}
             className={common}
             value={values[field.id] || ""}
             onChange={(e) => handleChange(field, e.target.value)}
@@ -610,6 +618,8 @@ export default function FormRenderer({
         });
         return (
           <select
+            name={field.id}
+            id={field.id}
             className={common}
             value={values[field.id] || ""}
             onChange={(e) => handleChange(field, e.target.value)}
@@ -639,6 +649,7 @@ export default function FormRenderer({
                 <input
                   type="radio"
                   name={field.id}
+                  id={`${field.id}-${opt.key}`}
                   value={opt.value}
                   checked={values[field.id] === opt.value}
                   onChange={(e) => handleChange(field, e.target.value)}
@@ -664,6 +675,8 @@ export default function FormRenderer({
               <label key={opt.key} className="inline-flex items-center">
                 <input
                   type="checkbox"
+                  name={field.id}
+                  id={`${field.id}-${opt.key}`}
                   value={opt.value}
                   checked={(values[field.id] || []).includes(opt.value)}
                   onChange={(e) =>
@@ -678,11 +691,13 @@ export default function FormRenderer({
         );
 
       case "file":
-      case "fileUpload": // ✅ Support both types
+      case "fileUpload":
         return (
           <div>
             <input
               type="file"
+              name={field.id}
+              id={field.id}
               className={common}
               onChange={(e) => handleFile(field, e)}
               required={!!field.required}
@@ -695,6 +710,31 @@ export default function FormRenderer({
                 className="mt-3 w-32 h-32 object-cover rounded-lg border shadow-sm"
               />
             )}
+          </div>
+        );
+
+      case "autocomplete":
+        return (
+          <div>
+            <input
+              name={field.id}
+              id={field.id}
+              list={`list-${field.id}`}
+              className={common}
+              placeholder={field.placeholder || "Type or select an option"}
+              value={values[field.id] || ""}
+              onChange={(e) => handleChange(field, e.target.value)}
+              required={!!field.required}
+            />
+            <datalist id={`list-${field.id}`}>
+              {(field.options || []).map((opt, i) => {
+                const val =
+                  typeof opt === "object"
+                    ? opt.label || opt.value || opt.toString()
+                    : opt;
+                return <option key={i} value={val} />;
+              })}
+            </datalist>
           </div>
         );
 
@@ -713,14 +753,6 @@ export default function FormRenderer({
         onSubmit={handleSubmit}
         className="w-full max-w-2xl bg-white/95 backdrop-blur-xl border border-gray-100 shadow-xl rounded-3xl px-8 py-10 sm:px-10 sm:py-12 transition-all duration-500 hover:shadow-2xl"
       >
-        {/* ✅ Form Title */}
-        {/* <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-800">{form.title}</h2>
-          {form.description && (
-            <p className="text-gray-500 mt-2 text-lg">{form.description}</p>
-          )}
-        </div> */}
-
         {/* ✅ Render all fields */}
         <div className="space-y-7">
           {(form.fields || []).map((field) => (
@@ -732,7 +764,10 @@ export default function FormRenderer({
                 renderField(field)
               ) : (
                 <>
-                  <label className="block text-lg font-medium text-gray-700 mb-2">
+                  <label
+                    htmlFor={field.id}
+                    className="block text-lg font-medium text-gray-700 mb-2"
+                  >
                     {field.label}
                     {field.required && (
                       <span className="text-red-500 ml-1">*</span>
@@ -745,7 +780,7 @@ export default function FormRenderer({
           ))}
         </div>
 
-        {/* ✅ Single Submit Button */}
+        {/* ✅ Submit */}
         <div className="flex justify-end mt-10">
           <button
             type="submit"

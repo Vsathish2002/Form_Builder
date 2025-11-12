@@ -5,6 +5,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import FormCard from '../../components/FormCard';
+import toast from 'react-hot-toast';
 
 export default function MyForms() {
   const [forms, setForms] = useState([]);
@@ -33,11 +34,65 @@ export default function MyForms() {
     try {
       await deleteForm(token, id);
       setForms(forms.filter(f => f.id !== id));
+      toast.success('Form deleted successfully!');
     } catch (err) {
       console.error('Failed to delete form:', err);
-      alert('Delete failed');
+      toast.error('Failed to delete form. Please try again.');
     }
   };
+  
+//   const handleDelete = (id, e) => {
+//   const rect = e.target.getBoundingClientRect(); // get button position
+//   const x = rect.left + rect.width / 2;
+//   const y = rect.top - 10; // slightly above the button
+
+//   toast.custom(
+//     (t) => (
+//       <div
+//         className="absolute bg-white shadow-xl rounded-lg px-4 py-3 text-center border border-gray-200"
+//         style={{
+//           position: "fixed",
+//           top: y,
+//           left: x,
+//           transform: "translate(-50%, -100%)",
+//           zIndex: 9999,
+//         }}
+//       >
+//         <p className="text-gray-800 text-sm mb-2 font-medium">
+//           Delete this form?
+//         </p>
+//         <div className="flex justify-center gap-2">
+//           <button
+//             onClick={async () => {
+//               toast.dismiss(t.id);
+//               try {
+//                 await deleteForm(token, id);
+//                 setForms((prev) => prev.filter((f) => f.id !== id));
+//                 toast.success("Form deleted successfully!", {
+//                   position: "top-center",
+//                 });
+//               } catch (err) {
+//                 toast.error("Failed to delete form.", {
+//                   position: "top-center",
+//                 });
+//               }
+//             }}
+//             className="bg-red-600 hover:bg-red-700 text-white text-xs font-semibold px-3 py-1 rounded-md"
+//           >
+//             Yes
+//           </button>
+//           <button
+//             onClick={() => toast.dismiss(t.id)}
+//             className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-semibold px-3 py-1 rounded-md"
+//           >
+//             No
+//           </button>
+//         </div>
+//       </div>
+//     ),
+//     { duration: 7000, style: { background: "transparent", boxShadow: "none" } }
+//   );
+// };  
 
 // ✅ Fixed version
 const handleStatusChange = async (id, newStatus) => {
@@ -55,9 +110,10 @@ const handleStatusChange = async (id, newStatus) => {
     setForms(forms.map(f =>
       f.id === id ? { ...f, status: newStatus } : f
     ));
+    toast.success(`Form ${newStatus === 'Active' ? 'activated' : 'deactivated'} successfully!`);
   } catch (err) {
     console.error('Failed to update form status:', err);
-    alert('Status update failed');
+    toast.error('Failed to update form status. Please try again.');
   }
 };
 

@@ -4,6 +4,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import FormBuilderWrapper from "../../components/FormBuilderWrapper";
 import { useAuth } from "../../context/AuthContext";
 import toast, { Toaster } from "react-hot-toast";
+import { motion } from "framer-motion";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
+
+
 
 export default function EditForm() {
   const { id } = useParams();
@@ -151,6 +155,15 @@ export default function EditForm() {
     <div className="max-w-5xl mx-auto">
       {/* Toast Container */}
       <Toaster position="top-right" reverseOrder={false} />
+      {/* <motion.button
+          onClick={() => navigate(-1)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex items-center mb-6 text-indigo-600 font-semibold hover:text-indigo-800"
+        >
+          <ArrowLeftIcon className="w-5 h-5 mr-2" />
+          Back
+        </motion.button> */}
 
       <h2 className="text-3xl font-bold mb-6 text-center">Edit Form</h2>
 
@@ -172,7 +185,7 @@ export default function EditForm() {
         {/* Description Input */}
         <div className="mb-6">
           <label className="block text-lg font-semibold mb-2">
-            Description
+            Description 
           </label>
           <textarea
             value={form.description}
