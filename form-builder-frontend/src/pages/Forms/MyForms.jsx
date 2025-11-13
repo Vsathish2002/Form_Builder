@@ -27,6 +27,7 @@ export default function MyForms() {
 
   useEffect(() => {
     fetchForms();
+    window.scrollTo(0, 0); // Scroll to top when component mounts
   }, [token]);
 
   const handleDelete = async (id) => {

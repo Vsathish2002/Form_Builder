@@ -217,6 +217,13 @@ export default function FormResponses() {
     ];
   }, [form, responses, columnHelper]);
 
+  const globalFilterFn = (row, columnId, filterValue) => {
+  const value = row.getValue(columnId);
+  return String(value || "")
+    .toLowerCase()
+    .includes(String(filterValue || "").toLowerCase());
+};
+
   /** ---------------- React Table Setup ---------------- */
   const table = useReactTable({
     data,
@@ -226,7 +233,7 @@ export default function FormResponses() {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    globalFilterFn: "includesString",
+     globalFilterFn, // ✅ fixed here
   });
 
   /** ---------------- Chart Data for checkbox/radio ---------------- */
@@ -319,98 +326,120 @@ export default function FormResponses() {
         </div>
       </div>
 
-      {/* Table */}
-      <motion.div className="bg-white rounded-lg shadow-lg overflow-hidden">
-        <div className="p-4 space-y-4">
-          <input
-            value={globalFilter || ""}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            placeholder="Search responses..."
-            className="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-          />
-        </div>
+    {/* -------------------- TABLE SECTION -------------------- */}
+<motion.div className="bg-white rounded-lg shadow-lg overflow-hidden">
+  {/* 🔍 Top Controls: Search + Page Size Selector */}
+  <div className="flex flex-col md:flex-row justify-between items-center p-4 gap-3 border-b border-gray-100">
+    <input
+      value={globalFilter || ""}
+      onChange={(e) => setGlobalFilter(e.target.value)}
+      placeholder="🔍 Search responses..."
+      className="w-full md:w-1/3 px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+    />
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-blue-600 text-white">
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <th
-                      key={header.id}
-                      className="px-3 md:px-4 py-3 text-left font-semibold cursor-pointer whitespace-nowrap"
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      {flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
-                      )}
-                      <span>
-                        {header.column.getIsSorted() === "asc"
-                          ? " 🔼"
-                          : header.column.getIsSorted() === "desc"
-                          ? " 🔽"
-                          : ""}
-                      </span>
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows.map((row) => (
-                <motion.tr
-                  key={row.id}
-                  className="border-b hover:bg-gray-100 transition"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      className="px-3 md:px-4 py-2 text-gray-700 whitespace-nowrap"
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </td>
-                  ))}
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+    <div className="flex items-center gap-2">
+      <label htmlFor="pageSize" className="text-gray-600 text-sm font-medium">
+        Rows per page:
+      </label>
+      <select
+        id="pageSize"
+        value={table.getState().pagination.pageSize}
+        onChange={(e) => table.setPageSize(Number(e.target.value))}
+        className="border px-2 py-1 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+      >
+        {[5, 10, 25, 50, 100].map((size) => (
+          <option key={size} value={size}>
+            {size}
+          </option>
+        ))}
+      </select>
+    </div>
+  </div>
 
-        {data.length === 0 && (
-          <p className="mt-4 text-gray-500 text-center">No responses yet.</p>
-        )}
-      </motion.div>
-
-      {/* Pagination */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+  {/* 🧾 Table Content */}
+  <div className="overflow-x-auto">
+    <table className="min-w-full text-sm">
+      <thead className="bg-blue-600 text-white">
+        {table.getHeaderGroups().map((headerGroup) => (
+          <tr key={headerGroup.id}>
+            {headerGroup.headers.map((header) => (
+              <th
+                key={header.id}
+                className="px-3 md:px-4 py-3 text-left font-semibold cursor-pointer whitespace-nowrap"
+                onClick={header.column.getToggleSortingHandler()}
+              >
+                {flexRender(
+                  header.column.columnDef.header,
+                  header.getContext()
+                )}
+                <span>
+                  {header.column.getIsSorted() === "asc"
+                    ? " 🔼"
+                    : header.column.getIsSorted() === "desc"
+                    ? " 🔽"
+                    : ""}
+                </span>
+              </th>
+            ))}
+          </tr>
+        ))}
+      </thead>
+      <tbody>
+        {table.getRowModel().rows.map((row) => (
+          <motion.tr
+            key={row.id}
+            className="border-b hover:bg-gray-100 transition"
           >
-            Previous
-          </button>
-          <button
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-          >
-            Next
-          </button>
-        </div>
-        <p className="text-sm text-gray-600">
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
-          {table.getPageCount()}
-        </p>
-      </div>
+            {row.getVisibleCells().map((cell) => (
+              <td
+                key={cell.id}
+                className="px-3 md:px-4 py-2 text-gray-700 whitespace-nowrap"
+              >
+                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              </td>
+            ))}
+          </motion.tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+
+  {/* 🧩 Empty State */}
+  {data.length === 0 && (
+    <p className="mt-4 text-gray-500 text-center">No responses yet.</p>
+  )}
+
+  {/* ⏩ Pagination Controls */}
+  <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-gray-100 bg-gray-50">
+    <div className="flex items-center gap-2">
+      <button
+        onClick={() => table.previousPage()}
+        disabled={!table.getCanPreviousPage()}
+        className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+      >
+        ← Previous
+      </button>
+      <button
+        onClick={() => table.nextPage()}
+        disabled={!table.getCanNextPage()}
+        className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+      >
+        Next →
+      </button>
+    </div>
+
+    <div className="text-sm text-gray-600">
+      Page{" "}
+      <span className="font-semibold">
+        {table.getState().pagination.pageIndex + 1}
+      </span>{" "}
+      of <span className="font-semibold">{table.getPageCount()}</span>
+    </div>
+  </div>
+</motion.div>
 
       {/* Export CSV */}
-      <div className="flex justify-center mt-4">
+      <div className="flex justify-end mt-4">
         <CSVLink
           data={csvData}
           filename={`${form.title}-responses.csv`}

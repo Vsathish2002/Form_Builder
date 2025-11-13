@@ -7,8 +7,6 @@ import toast, { Toaster } from "react-hot-toast";
 import { motion } from "framer-motion";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
-
-
 export default function EditForm() {
   const { id } = useParams();
   const [form, setForm] = useState({
@@ -27,9 +25,7 @@ export default function EditForm() {
     const fetchForm = async () => {
       try {
         const data = await getFormById(token, id);
-
         const fieldsWithId = (data.fields || []).map((f, i) => {
-          // ✅ Parse JSON from DB if needed
           let parsedOptions = f.options;
           if (typeof parsedOptions === "string") {
             try {
@@ -47,7 +43,7 @@ export default function EditForm() {
             : [];
 
           return {
-            id: f.id || `field-${i}`,
+            id: f.id || `field-${i}`, // ✅ Keep old ID
             label: f.label,
             type:
               f.type === "checkbox"
@@ -83,22 +79,23 @@ export default function EditForm() {
 
   /** ✅ Handle builder field updates */
   const handleFieldsUpdate = (newFields) => {
-    const fieldsWithId = newFields.map((f, i) => ({
+    // Preserve old field IDs during edit
+    const updated = newFields.map((f, i) => ({
       id: f.id || `field-${i}`,
       ...f,
     }));
-    setForm((prev) => ({ ...prev, fields: fieldsWithId }));
+    setForm((prev) => ({ ...prev, fields: updated }));
   };
 
-  /** ✅ Save changes */
+  /** ✅ Save form with preserved IDs */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.title.trim()) {
       toast.error("Form title is required!");
       return;
     }
-    setSaving(true);
 
+    setSaving(true);
     try {
       const fb = window.jQuery("#fb-editor").data("formBuilder");
       if (!fb) {
@@ -109,12 +106,18 @@ export default function EditForm() {
       const liveData = fb.actions.getData("json");
       const parsed = JSON.parse(liveData);
 
+      // ✅ Preserve IDs from current form in final payload
+      const idMap = form.fields.reduce((acc, f) => {
+        acc[f.label] = f.id;
+        return acc;
+      }, {});
+
       const payload = {
         title: form.title,
         description: form.description,
         isPublic: form.isPublic,
         fields: parsed.map((f, i) => ({
-          id: f.id || `field-${i}`,
+          id: idMap[f.label] || f.id || `field-${i}`,
           label: f.label,
           type: f.type,
           required: !!f.required,
@@ -153,22 +156,22 @@ export default function EditForm() {
 
   return (
     <div className="max-w-5xl mx-auto">
-      {/* Toast Container */}
       <Toaster position="top-right" reverseOrder={false} />
-      {/* <motion.button
+
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold">Edit Form</h2>
+        <motion.button
           onClick={() => navigate(-1)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="flex items-center mb-6 text-indigo-600 font-semibold hover:text-indigo-800"
+          className="flex items-center text-indigo-600 font-semibold hover:text-indigo-800"
         >
           <ArrowLeftIcon className="w-5 h-5 mr-2" />
           Back
-        </motion.button> */}
-
-      <h2 className="text-3xl font-bold mb-6 text-center">Edit Form</h2>
+        </motion.button>
+      </div>
 
       <div className="bg-white p-8 rounded-lg shadow-lg">
-        {/* Title Input */}
         <div className="mb-6">
           <label className="block text-lg font-semibold mb-2">
             Form Title
@@ -182,10 +185,9 @@ export default function EditForm() {
           />
         </div>
 
-        {/* Description Input */}
         <div className="mb-6">
           <label className="block text-lg font-semibold mb-2">
-            Description 
+            Description
           </label>
           <textarea
             value={form.description}
@@ -197,13 +199,11 @@ export default function EditForm() {
           ></textarea>
         </div>
 
-        {/* Form Builder Wrapper */}
         <FormBuilderWrapper
           fieldsJson={form.fields || []}
           onSave={handleFieldsUpdate}
         />
 
-        {/* Save Button */}
         <button
           onClick={handleSubmit}
           disabled={saving}

@@ -1,3 +1,4 @@
+// src/pages/Admin/Dashboard.jsx
 import React, { useEffect, useState } from "react";
 import { getForms } from "../../api/forms";
 import { getUsers } from "../../api/users";
@@ -18,6 +19,7 @@ import {
   LineChart,
   Line,
 } from "recharts";
+import io from "socket.io-client";
 
 export default function Dashboard() {
   const { token, user } = useAuth();
@@ -29,53 +31,96 @@ export default function Dashboard() {
   const [pieData, setPieData] = useState([]);
   const [lineData, setLineData] = useState([]);
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const formsRes = await getForms(token);
-        const usersRes = await getUsers(token);
+  /** ---------------- Load Data ---------------- */
+  const loadDashboardData = async () => {
+    try {
+      const formsRes = await getForms(token);
+      const usersRes = await getUsers(token);
 
-        setForms(formsRes ?? []);
-        setUsersCount(usersRes?.length ?? 0);
+      setForms(formsRes ?? []);
+      setUsersCount(usersRes?.length ?? 0);
 
-        // Bar Chart Data
-        const userCount = {};
-        formsRes?.forEach((form) => {
-          const owner = form.owner || {};
-          const name = owner.name || owner.email || "Unknown";
-          userCount[name] = (userCount[name] || 0) + 1;
-        });
-        const barArray = Object.entries(userCount).map(([name, count]) => ({
+      /** 🔹 Bar Chart Data → Forms per user */
+      const userCount = {};
+      formsRes?.forEach((form) => {
+        const owner = form.owner || {};
+        const name = owner.name || owner.email || "Unknown";
+        userCount[name] = (userCount[name] || 0) + 1;
+      });
+
+      setBarData(
+        Object.entries(userCount).map(([name, count]) => ({
           name,
           forms: count,
-        }));
-        setBarData(barArray);
+        }))
+      );
 
-        // Pie Chart
-        const active = formsRes.length;
-        const inactive = 0;
-        setPieData([
-          { name: "Active Forms", value: active },
-          { name: "Inactive Forms", value: inactive },
-        ]);
+      /** 🔹 Pie Chart → Active vs Inactive */
+      const active = formsRes.filter((f) => f.status === "Active").length;
+      const inactive = formsRes.length - active;
 
-        // Line Chart
-        const timeline = formsRes.slice(0, 7).map((f, i) => ({
-          date: f.createdAt
-            ? new Date(f.createdAt).toLocaleDateString()
-            : `Day ${i + 1}`,
-          forms: i + 1,
-        }));
-        setLineData(timeline);
+      setPieData([
+        { name: "Active Forms", value: active },
+        { name: "Inactive Forms", value: inactive },
+      ]);
 
-        setLoading(false);
-      } catch (err) {
-        console.error("Dashboard load error:", err);
-        setLoading(false);
-      }
-    };
-    load();
+      /** 🔹 Line Chart → 7 latest forms (dummy timeline) */
+      const timeline = formsRes.slice(0, 7).map((f, i) => ({
+        date: f.createdAt
+          ? new Date(f.createdAt).toLocaleDateString()
+          : `Day ${i + 1}`,
+        forms: i + 1,
+      }));
+
+      setLineData(timeline);
+
+      setLoading(false);
+    } catch (err) {
+      console.error("Dashboard load error:", err);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) loadDashboardData();
   }, [token]);
+
+  /** ---------------- Real-Time Updates via WebSocket ---------------- */
+  useEffect(() => {
+    const socket = io("http://localhost:4000", {
+      transports: ["websocket"],
+      reconnection: true,
+    });
+
+    socket.on("connect", () => {
+      console.log("🔗 Admin Dashboard Socket Connected:", socket.id);
+
+      // Join global room for admin
+      socket.emit("joinAdminDashboard");
+    });
+
+    /** 🟢 When any form is updated (activate/deactivate/edit/delete) */
+    socket.on("formUpdated", () => {
+      console.log("📡 formUpdated → refreshing admin dashboard");
+      loadDashboardData();
+    });
+
+    /** 🟢 When new form is created */
+    socket.on("formCreated", () => {
+      console.log("📡 formCreated → refreshing admin dashboard");
+      loadDashboardData();
+    });
+
+    /** 🟢 When any form is deleted */
+    socket.on("formDeleted", () => {
+      console.log("📡 formDeleted → refreshing admin dashboard");
+      loadDashboardData();
+    });
+
+    return () => socket.disconnect();
+  }, []);
+
+  const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444"];
 
   if (loading)
     return (
@@ -83,8 +128,6 @@ export default function Dashboard() {
         Loading Admin Dashboard...
       </div>
     );
-
-  const COLORS = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444"];
 
   return (
     <div className="min-h-screen space-y-10">
@@ -117,12 +160,12 @@ export default function Dashboard() {
           },
           {
             title: "Active Forms",
-            value: forms.length,
+            value: pieData[0]?.value ?? 0,
             color: "from-yellow-400 to-orange-500",
           },
           {
             title: "Inactive Forms",
-            value: 0,
+            value: pieData[1]?.value ?? 0,
             color: "from-pink-500 to-rose-600",
           },
         ].map((stat, i) => (

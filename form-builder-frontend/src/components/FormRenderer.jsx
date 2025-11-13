@@ -454,39 +454,45 @@
 //     </div>
 //   );
 // }
+
 import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-export default function FormRenderer({
-  form,
-  onSubmit,
-  submitLabel = "Submit",
-}) {
-  // ✅ Initialize default values for all fields
+export default function FormRenderer({ form, onSubmit, submitLabel = "Submit" }) {
+  /* ---------------------------------------------
+      INITIAL VALUES
+  --------------------------------------------- */
   const initialValues = {};
   (form.fields || []).forEach((f) => {
-    if (f.type === "checkbox") initialValues[f.id] = [];
-    else initialValues[f.id] = "";
+    initialValues[f.id] = f.type === "checkbox" ? [] : "";
   });
 
   const [values, setValues] = useState(initialValues);
   const [filePreviews, setFilePreviews] = useState({});
   const [showModal, setShowModal] = useState(false);
 
-  // ✅ Handle text, radio, checkbox, select inputs
+  /* ---------------------------------------------
+      REUSABLE STYLES
+  --------------------------------------------- */
+  const glassInput =
+    "w-full p-3 bg-white/10 text-white border border-white/20 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none placeholder-gray-300 shadow-inner";
+
+  const glassBox =
+    "p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl shadow";
+
+  /* ---------------------------------------------
+      HANDLE INPUTS
+  --------------------------------------------- */
   const handleChange = (field, value, checked) => {
     if (field.type === "checkbox") {
       const prev = values[field.id] || [];
-      const updated = checked
-        ? [...prev, value]
-        : prev.filter((v) => v !== value);
+      const updated = checked ? [...prev, value] : prev.filter((v) => v !== value);
       setValues({ ...values, [field.id]: updated });
     } else {
       setValues({ ...values, [field.id]: value });
     }
   };
 
-  // ✅ Handle file uploads
   const handleFile = (field, e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -498,100 +504,106 @@ export default function FormRenderer({
     }
   };
 
-  // ✅ Submit the form
+  /* ---------------------------------------------
+      SUBMIT HANDLER
+  --------------------------------------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     const formData = new FormData();
+
     (form.fields || []).forEach((f) => {
       const val = values[f.id];
+
       if ((f.type === "file" || f.type === "fileUpload") && val instanceof File) {
-        formData.append(f.id, val, val.name); // ✅ field.id as key
+        formData.append(f.id, val, val.name);
       } else if (Array.isArray(val)) {
         formData.append(f.id, JSON.stringify(val));
-      } else if (val !== undefined && val !== null) {
+      } else {
         formData.append(f.id, val);
       }
     });
-
-    console.log("🚀 Submitting responseData:", Object.fromEntries(formData));
 
     try {
       if (onSubmit) await onSubmit(formData);
       setShowModal(true);
     } catch (err) {
-      console.error("❌ Form submission failed:", err);
-      alert("Failed to submit form. Please try again.");
+      console.error("Form submission failed:", err);
+      alert("Submission failed. Please try again.");
     }
   };
 
-  // ✅ Render each field type
-  const renderField = (field) => {
-    const common =
-      "w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none";
+  /* ---------------------------------------------
+      OPTION NORMALIZER
+  --------------------------------------------- */
+  const normalizeOptions = (options) =>
+    (options || []).map((opt, i) => {
+      if (typeof opt === "object") {
+        return {
+          key: i,
+          value: opt.value ?? opt.label,
+          label: opt.label ?? opt.value,
+        };
+      }
+      return { key: i, value: opt, label: opt };
+    });
 
+  /* ---------------------------------------------
+      RENDER EACH FIELD
+  --------------------------------------------- */
+  const renderField = (field) => {
     switch (field.type) {
+      /* ---------- HEADERS ---------- */
       case "header":
-        const sizeClasses = {
-          h1: "text-4xl font-bold",
+        const size = {
+          h1: "text-4xl font-extrabold",
           h2: "text-3xl font-bold",
           h3: "text-2xl font-semibold",
           h4: "text-xl font-semibold",
           h5: "text-lg font-medium",
           h6: "text-base font-medium",
         };
-        const HeaderTag = field.subtype || "h3";
+        const Tag = field.subtype || "h3";
         return (
-          <HeaderTag
-            className={`${
-              sizeClasses[field.subtype] || sizeClasses.h3
-            } text-gray-800 mb-2`}
-          >
+          <Tag className={`${size[field.subtype]} text-indigo-300 drop-shadow-sm`}>
             {field.label}
-          </HeaderTag>
+          </Tag>
         );
 
+      /* ---------- PARAGRAPH ---------- */
       case "paragraph":
-        return <p className="text-gray-600">{field.label}</p>;
+        return <p className="text-gray-300 text-base">{field.label}</p>;
 
-      case "section":
-        return <hr className="border-2 border-blue-200 my-4" />;
-
+      /* ---------- INPUTS ---------- */
       case "text":
         return (
           <input
             type="text"
-            name={field.id}
-            id={field.id}
-            className={common}
-            value={values[field.id] || ""}
+            className={glassInput}
+            value={values[field.id]}
+            placeholder={field.placeholder || ""}
             onChange={(e) => handleChange(field, e.target.value)}
-            required={!!field.required}
           />
         );
 
       case "textarea":
         return (
           <textarea
-            name={field.id}
-            id={field.id}
             rows="3"
-            className={common}
-            value={values[field.id] || ""}
+            className={glassInput}
+            value={values[field.id]}
+            placeholder={field.placeholder || ""}
             onChange={(e) => handleChange(field, e.target.value)}
-            required={!!field.required}
-          />
+          ></textarea>
         );
 
       case "number":
         return (
           <input
             type="number"
-            name={field.id}
-            id={field.id}
-            className={common}
-            value={values[field.id] || ""}
+            className={glassInput}
+            value={values[field.id]}
             onChange={(e) => handleChange(field, e.target.value)}
-            required={!!field.required}
           />
         );
 
@@ -599,199 +611,161 @@ export default function FormRenderer({
         return (
           <input
             type="date"
-            name={field.id}
-            id={field.id}
-            className={common}
-            value={values[field.id] || ""}
+            className={glassInput}
+            value={values[field.id]}
             onChange={(e) => handleChange(field, e.target.value)}
-            required={!!field.required}
           />
         );
 
-      case "select":
-        const selectOptions = (field.options || []).map((opt, i) => {
-          const optStr =
-            typeof opt === "object"
-              ? opt.label || opt.value || opt.toString()
-              : opt;
-          return { key: optStr + i, value: optStr, label: optStr };
-        });
-        return (
-          <select
-            name={field.id}
-            id={field.id}
-            className={common}
-            value={values[field.id] || ""}
-            onChange={(e) => handleChange(field, e.target.value)}
-            required={!!field.required}
-          >
-            <option value="">Select an option</option>
-            {selectOptions.map((opt) => (
-              <option key={opt.key} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
-        );
+      /* ---------- SELECT ---------- */
+  case "select": {
+  const opts = normalizeOptions(field.options);
+  return (
+    <select
+      className={glassInput + " text-white bg-white/10"}
+      style={{ colorScheme: "dark" }} // prevents white dropdown
+      value={values[field.id]}
+      onChange={(e) => handleChange(field, e.target.value)}
+    >
+      <option value="" className="text-gray-600 bg-[#1b1c2a]">
+        Select an option
+      </option>
 
-      case "radio":
-        const radioOptions = (field.options || []).map((opt, i) => {
-          const optStr =
-            typeof opt === "object"
-              ? opt.label || opt.value || opt.toString()
-              : opt;
-          return { key: optStr + i, value: optStr, label: optStr };
-        });
+      {opts.map((opt) => (
+        <option
+          key={opt.key}
+          value={opt.value}
+          className="bg-[#1b1c2a] text-white"
+        >
+          {opt.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+
+      /* ---------- RADIO ---------- */
+      case "radio": {
+        const opts = normalizeOptions(field.options);
         return (
           <div className="flex flex-wrap gap-3">
-            {radioOptions.map((opt) => (
-              <label key={opt.key} className="inline-flex items-center">
+            {opts.map((opt) => (
+              <label
+                key={opt.key}
+                className="flex items-center gap-2 text-gray-200 cursor-pointer"
+              >
                 <input
                   type="radio"
                   name={field.id}
-                  id={`${field.id}-${opt.key}`}
                   value={opt.value}
                   checked={values[field.id] === opt.value}
                   onChange={(e) => handleChange(field, e.target.value)}
-                  className="mr-2 accent-blue-600"
+                  className="accent-indigo-500"
                 />
                 {opt.label}
               </label>
             ))}
           </div>
         );
+      }
 
-      case "checkbox":
-        const checkboxOptions = (field.options || []).map((opt, i) => {
-          const optStr =
-            typeof opt === "object"
-              ? opt.label || opt.value || opt.toString()
-              : opt;
-          return { key: optStr + i, value: optStr, label: optStr };
-        });
+      /* ---------- CHECKBOX ---------- */
+      case "checkbox": {
+        const opts = normalizeOptions(field.options);
         return (
           <div className="flex flex-wrap gap-3">
-            {checkboxOptions.map((opt) => (
-              <label key={opt.key} className="inline-flex items-center">
+            {opts.map((opt) => (
+              <label
+                key={opt.key}
+                className="flex items-center gap-2 text-gray-200 cursor-pointer"
+              >
                 <input
                   type="checkbox"
-                  name={field.id}
-                  id={`${field.id}-${opt.key}`}
                   value={opt.value}
                   checked={(values[field.id] || []).includes(opt.value)}
-                  onChange={(e) =>
-                    handleChange(field, opt.value, e.target.checked)
-                  }
-                  className="mr-2 accent-blue-600"
+                  onChange={(e) => handleChange(field, opt.value, e.target.checked)}
+                  className="accent-indigo-500"
                 />
                 {opt.label}
               </label>
             ))}
           </div>
         );
+      }
 
+      /* ---------- FILE ---------- */
       case "file":
       case "fileUpload":
         return (
           <div>
-            <input
-              type="file"
-              name={field.id}
-              id={field.id}
-              className={common}
-              onChange={(e) => handleFile(field, e)}
-              required={!!field.required}
-              multiple={!!field.multiple}
-            />
+            <input type="file" className={glassInput} onChange={(e) => handleFile(field, e)} />
             {filePreviews[field.id] && (
               <img
                 src={filePreviews[field.id]}
-                alt="Preview"
-                className="mt-3 w-32 h-32 object-cover rounded-lg border shadow-sm"
+                className="mt-3 w-32 h-32 rounded-lg border border-white/20 object-cover"
               />
             )}
           </div>
         );
 
-      case "autocomplete":
-        return (
-          <div>
-            <input
-              name={field.id}
-              id={field.id}
-              list={`list-${field.id}`}
-              className={common}
-              placeholder={field.placeholder || "Type or select an option"}
-              value={values[field.id] || ""}
-              onChange={(e) => handleChange(field, e.target.value)}
-              required={!!field.required}
-            />
-            <datalist id={`list-${field.id}`}>
-              {(field.options || []).map((opt, i) => {
-                const val =
-                  typeof opt === "object"
-                    ? opt.label || opt.value || opt.toString()
-                    : opt;
-                return <option key={i} value={val} />;
-              })}
-            </datalist>
-          </div>
-        );
-
       default:
-        return (
-          <p className="text-gray-400 italic">
-            Unsupported field type ({field.type})
-          </p>
-        );
+        return <p className="text-gray-400 italic">Unsupported field</p>;
     }
   };
 
+  /* ---------------------------------------------
+      FORM UI
+  --------------------------------------------- */
   return (
-    <div className="relative w-full flex justify-center items-center py-10 px-4">
+    <div className="relative w-full flex justify-center items-center px-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-2xl bg-white/95 backdrop-blur-xl border border-gray-100 shadow-xl rounded-3xl px-8 py-10 sm:px-10 sm:py-12 transition-all duration-500 hover:shadow-2xl"
+        className="w-full max-w-2xl bg-white/10 border border-white/20 backdrop-blur-2xl 
+                   rounded-3xl px-8 py-10 shadow-2xl text-white"
       >
-        {/* ✅ Render all fields */}
+        {/* FIELDS */}
         <div className="space-y-7">
-          {(form.fields || []).map((field) => (
-            <div
-              key={field.id}
-              className="p-4 bg-gray-50 rounded-xl hover:bg-gray-100/70 transition"
-            >
-              {["header", "paragraph", "section"].includes(field.type) ? (
-                renderField(field)
-              ) : (
-                <>
-                  <label
-                    htmlFor={field.id}
-                    className="block text-lg font-medium text-gray-700 mb-2"
-                  >
-                    {field.label}
-                    {field.required && (
-                      <span className="text-red-500 ml-1">*</span>
-                    )}
-                  </label>
-                  {renderField(field)}
-                </>
+          {form.fields.map((field) => (
+            <div key={field.id} className={glassBox}>
+              {!["header", "paragraph"].includes(field.type) && (
+                <label className="block mb-2 font-medium text-indigo-200">
+                  {field.label}
+                  {field.required && <span className="text-red-400 ml-1">*</span>}
+                </label>
               )}
+              {renderField(field)}
             </div>
           ))}
         </div>
 
-        {/* ✅ Submit */}
-        <div className="flex justify-end mt-10">
+        {/* BUTTONS */}
+        <div className="flex flex-col sm:flex-row justify-end mt-10 gap-4">
+          <button
+            type="button"
+            onClick={() => {
+              const reset = {};
+              form.fields.forEach((f) => {
+                reset[f.id] = f.type === "checkbox" ? [] : "";
+              });
+              setValues(reset);
+              setFilePreviews({});
+            }}
+            className="w-full sm:w-auto bg-red-600 hover:bg-red-700 px-8 py-3 rounded-lg font-semibold shadow-lg"
+          >
+            Clear All
+          </button>
+
           <button
             type="submit"
-            className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-lg py-3 px-8 rounded-lg font-semibold shadow-md hover:shadow-lg hover:scale-[1.02] transition duration-300"
+            className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 px-8 py-3 rounded-lg font-semibold shadow-lg"
           >
             {submitLabel}
           </button>
         </div>
       </form>
 
-      {/* ✅ Success Modal */}
+      {/* SUCCESS MODAL */}
       <AnimatePresence>
         {showModal && (
           <motion.div
@@ -801,21 +775,16 @@ export default function FormRenderer({
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="bg-white rounded-2xl shadow-2xl p-8 text-center w-96"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ type: "spring", duration: 0.4 }}
+              className="bg-white text-gray-900 rounded-2xl shadow-2xl p-8 text-center w-96"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
             >
-              <h2 className="text-2xl font-bold text-green-600 mb-2">
-                🎉 Submitted Successfully!
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Thank you for your response. Your submission has been recorded.
-              </p>
+              <h2 className="text-2xl font-bold text-green-600 mb-2">🎉 Submitted!</h2>
+              <p className="text-gray-600 mb-6">Your response has been recorded.</p>
               <button
                 onClick={() => setShowModal(false)}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg"
               >
                 Close
               </button>

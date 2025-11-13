@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { User, X } from "lucide-react";
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuth(); 
   const location = useLocation();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
