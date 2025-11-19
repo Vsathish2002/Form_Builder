@@ -53,6 +53,7 @@ export default function PublicForm() {
   useEffect(() => {
     if (!form) return;
     const socket = io("http://localhost:4000", { transports: ["websocket"] });
+    // const socket = io("http://192.168.0.105:4000", { transports: ["websocket"] });
     socket.emit("formOpened", { formId: form.id });
     return () => socket.disconnect();
   }, [form]);
@@ -62,7 +63,8 @@ export default function PublicForm() {
     setStatus({ loading: true, error: null, success: false });
 
     try {
-      const socket = io("http://localhost:4000");
+      // const socket = io("http://localhost:4000");
+      const socket = io("http://192.168.0.105:4000");
       socket.emit("formSubmitting", { formId: form.id });
       socket.disconnect();
 
@@ -72,6 +74,17 @@ export default function PublicForm() {
       for (let [key, value] of formData.entries()) {
         responseData[key] = value instanceof File ? value.name : value;
       }
+
+      // Parse checkbox arrays back from JSON strings
+      form.fields.forEach((field) => {
+        if (field.type === "checkbox" && responseData[field.id]) {
+          try {
+            responseData[field.id] = JSON.parse(responseData[field.id]);
+          } catch {
+            // ignore invalid JSON
+          }
+        }
+      });
 
       setSavedData(responseData);
       setStatus({ loading: false, success: true, error: null });
@@ -157,7 +170,9 @@ export default function PublicForm() {
                                   rounded-xl shadow hover:shadow-lg transition">
                     <p className="text-gray-300 text-sm">{field.label}</p>
                     <p className="text-white font-semibold mt-1">
-                      {savedData[field.id] || "—"}
+                      {Array.isArray(savedData[field.id])
+                        ? savedData[field.id].join(", ")
+                        : savedData[field.id] || "—"}
                     </p>
                   </div>
                 ))}

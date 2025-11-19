@@ -88,6 +88,7 @@ export default function Dashboard() {
   /** ---------------- Real-Time Updates via WebSocket ---------------- */
   useEffect(() => {
     const socket = io("http://localhost:4000", {
+    // const socket = io("http://192.168.0.105:4000", {
       transports: ["websocket"],
       reconnection: true,
     });

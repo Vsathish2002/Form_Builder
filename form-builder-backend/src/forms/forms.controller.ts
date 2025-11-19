@@ -162,7 +162,6 @@ export class FormsController {
         formData,
         uploadedFiles,
       );
-
       return response;
     } catch (error) {
       throw new HttpException(

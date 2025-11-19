@@ -3,7 +3,7 @@ import { getFormById, updateForm } from "../../api/forms";
 import { useNavigate, useParams } from "react-router-dom";
 import FormBuilderWrapper from "../../components/FormBuilderWrapper";
 import { useAuth } from "../../context/AuthContext";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 
@@ -15,16 +15,19 @@ export default function EditForm() {
     isPublic: false,
     fields: [],
   });
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
   const navigate = useNavigate();
   const { token } = useAuth();
 
-  /** ✅ Load form data */
+  /** ===================== LOAD FORM ===================== */
   useEffect(() => {
     const fetchForm = async () => {
       try {
         const data = await getFormById(token, id);
+
         const fieldsWithId = (data.fields || []).map((f, i) => {
           let parsedOptions = f.options;
           if (typeof parsedOptions === "string") {
@@ -35,24 +38,23 @@ export default function EditForm() {
             }
           }
 
-          const values = Array.isArray(parsedOptions)
-            ? parsedOptions.map((opt) => ({
-                label: opt.label || "",
-                value: opt.value || "",
-              }))
-            : [];
-
           return {
-            id: f.id || `field-${i}`, // ✅ Keep old ID
+            id: f.id || `field-${i}`,
             label: f.label,
+            /** 🔥 Convert DB → Builder format */
             type:
-              f.type === "checkbox"
-                ? "checkbox-group"
-                : f.type === "radio"
+              f.type === "radio"
                 ? "radio-group"
+                : f.type === "checkbox"
+                ? "checkbox-group"
                 : f.type,
             required: !!f.required,
-            options: values,
+            options: Array.isArray(parsedOptions)
+              ? parsedOptions.map((opt) => ({
+                  label: opt.label || "",
+                  value: opt.value || "",
+                }))
+              : [],
             order: f.order || i,
             validation: f.validation || null,
             subtype: f.subtype || undefined,
@@ -67,8 +69,7 @@ export default function EditForm() {
           fields: fieldsWithId,
         });
       } catch (err) {
-        console.error("Failed to load form:", err);
-        toast.error("Error loading form. Please try again.");
+        toast.error("Error loading form.");
       } finally {
         setLoading(false);
       }
@@ -77,36 +78,37 @@ export default function EditForm() {
     fetchForm();
   }, [id, token]);
 
-  /** ✅ Handle builder field updates */
+  /** ================== HANDLE FIELDS UPDATE ================== */
   const handleFieldsUpdate = (newFields) => {
-    // Preserve old field IDs during edit
     const updated = newFields.map((f, i) => ({
       id: f.id || `field-${i}`,
       ...f,
     }));
+
     setForm((prev) => ({ ...prev, fields: updated }));
   };
 
-  /** ✅ Save form with preserved IDs */
+  /** ================== SAVE FORM ================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!form.title.trim()) {
       toast.error("Form title is required!");
       return;
     }
 
     setSaving(true);
+
     try {
       const fb = window.jQuery("#fb-editor").data("formBuilder");
       if (!fb) {
-        toast.error("Form builder not loaded. Please try again.");
+        toast.error("Form builder not loaded.");
         return;
       }
 
       const liveData = fb.actions.getData("json");
       const parsed = JSON.parse(liveData);
 
-      // ✅ Preserve IDs from current form in final payload
       const idMap = form.fields.reduce((acc, f) => {
         acc[f.label] = f.id;
         return acc;
@@ -119,14 +121,20 @@ export default function EditForm() {
         fields: parsed.map((f, i) => ({
           id: idMap[f.label] || f.id || `field-${i}`,
           label: f.label,
-          type: f.type,
+          /** 🔥 Convert Builder → DB format */
+          type:
+            f.type === "radio-group"
+              ? "radio"
+              : f.type === "checkbox-group"
+              ? "checkbox"
+              : f.type,
           required: !!f.required,
           order: i,
           options:
             ["select", "radio-group", "checkbox-group"].includes(f.type)
               ? (f.values || []).map((opt) => ({
-                  label: (opt.label || "").trim(),
-                  value: (opt.value || "").trim(),
+                  label: opt.label?.trim() || "",
+                  value: opt.value?.trim() || "",
                 }))
               : null,
           validation: f.validation || null,
@@ -134,14 +142,12 @@ export default function EditForm() {
         })),
       };
 
-      console.log("🚀 Final payload to update:", payload);
       await updateForm(token, form.id, payload);
 
-      toast.success("✅ Form updated successfully!");
+      // toast.success("Form updated successfully!");
       setTimeout(() => navigate("/my-forms"), 1200);
     } catch (err) {
-      console.error("Failed to update form:", err);
-      toast.error("Failed to update form. Please try again.");
+      toast.error("Could not save form.");
     } finally {
       setSaving(false);
     }
@@ -149,44 +155,60 @@ export default function EditForm() {
 
   if (loading)
     return (
-      <div className="text-center p-10 text-gray-600">
+      <div className="text-center py-16 text-lg text-gray-600">
         Loading form editor...
       </div>
     );
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <Toaster position="top-right" reverseOrder={false} />
+    <div
+      className="
+        min-h-screen 
+        pt-28 pb-12 px-4 
+        bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50
+      "
+    >
 
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold">Edit Form</h2>
+      <div className="max-w-5xl mx-auto flex justify-between items-center mb-8">
         <motion.button
           onClick={() => navigate(-1)}
           whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex items-center text-indigo-600 font-semibold hover:text-indigo-800"
+          className="flex items-center px-4 py-2 bg-white/70 backdrop-blur-md shadow-md rounded-lg border border-gray-200 hover:bg-white transition"
         >
-          <ArrowLeftIcon className="w-5 h-5 mr-2" />
+          <ArrowLeftIcon className="w-5 h-5 mr-2 text-indigo-600" />
           Back
         </motion.button>
+
+        <h2 className="text-4xl font-bold text-gray-800 drop-shadow-sm">
+          Edit Form
+        </h2>
+
+        <div></div>
       </div>
 
-      <div className="bg-white p-8 rounded-lg shadow-lg">
-        <div className="mb-6">
-          <label className="block text-lg font-semibold mb-2">
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="
+          max-w-5xl mx-auto p-10 rounded-2xl shadow-2xl 
+          bg-white/80 backdrop-blur-xl border border-gray-200
+        "
+      >
+        <div className="mb-8">
+          <label className="block text-lg font-semibold mb-2 text-gray-700">
             Form Title
           </label>
           <input
             type="text"
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
-            className="w-full border p-2 rounded-md"
+            className="w-full border p-3 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500"
             placeholder="Enter form title"
           />
         </div>
 
-        <div className="mb-6">
-          <label className="block text-lg font-semibold mb-2">
+        <div className="mb-10">
+          <label className="block text-lg font-semibold mb-2 text-gray-700">
             Description
           </label>
           <textarea
@@ -194,24 +216,34 @@ export default function EditForm() {
             onChange={(e) =>
               setForm({ ...form, description: e.target.value })
             }
-            className="w-full border p-2 rounded-md"
-            placeholder="Enter description"
+            rows="4"
+            className="w-full border p-3 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500"
+            placeholder="Describe the purpose of this form..."
           ></textarea>
         </div>
 
-        <FormBuilderWrapper
-          fieldsJson={form.fields || []}
-          onSave={handleFieldsUpdate}
-        />
+        <div className="border-t pt-8">
+          <FormBuilderWrapper
+            fieldsJson={form.fields || []}
+            onSave={handleFieldsUpdate}
+          />
+        </div>
 
-        <button
-          onClick={handleSubmit}
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
           disabled={saving}
-          className="w-full mt-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-md transition disabled:bg-blue-300"
+          onClick={handleSubmit}
+          className="
+            w-full mt-10 py-3 text-white font-semibold rounded-xl 
+            bg-gradient-to-r from-indigo-600 to-purple-600 
+            shadow-lg hover:shadow-2xl transition
+            disabled:from-gray-400 disabled:to-gray-400
+          "
         >
           {saving ? "Saving..." : "Save Changes"}
-        </button>
-      </div>
+        </motion.button>
+      </motion.div>
     </div>
   );
 }

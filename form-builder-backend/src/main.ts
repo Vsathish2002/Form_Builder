@@ -4,6 +4,10 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import * as dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config();
 
 async function bootstrap() {
   // ✅ Use NestExpressApplication for static asset serving
@@ -11,7 +15,8 @@ async function bootstrap() {
 
   // ✅ Enable CORS for React frontend (Form Builder UI)
   app.enableCors({
-    origin: 'http://localhost:5173', // your React frontend
+    // origin: process.env.FRONTEND_URL || 'http://localhost:5173', // your React frontend
+    origin: process.env.FRONTEND_URL || 'http://192.168.0.105:5173', // your React frontend
     credentials: true, // allow cookies, tokens, etc.
   });
 

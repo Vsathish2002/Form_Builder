@@ -30,7 +30,6 @@ export class Form {
   @OneToMany(() => FormResponse, res => res.form, { cascade: true, onDelete: 'CASCADE' })
   responses: FormResponse[];
 
-  // NEW: status column (Active / Inactive)
   @Column({ type: 'varchar', length: 10, default: 'Active' })
   status: 'Active' | 'Inactive';
 

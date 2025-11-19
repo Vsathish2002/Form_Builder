@@ -1,35 +1,23 @@
 import React, { useEffect, useRef } from "react";
 import $ from "jquery";
-import "jquery-ui-dist/jquery-ui.min.css"; // jQuery UI visuals for drag/drop
+import "jquery-ui-dist/jquery-ui.min.css"; 
 
-// Make jQuery global for libraries expecting window.jQuery
+
+
 window.$ = window.jQuery = $;
-
-/**
- * Utility: stable UUID (uses crypto.randomUUID if available, otherwise fallback)
- */
-function generateUUID() {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
-  // fallback: simple RFC4122 v4-like generator (sufficient for client-side unique ids)
-  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-    const r = (Math.random() * 16) | 0;
-    const v = c === "x" ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
-}
 
 export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
   const builderRef = useRef(null);
   const editorContainer = useRef(null);
 
   useEffect(() => {
-    // Inject Bootstrap CSS dynamically (only on this page)
+
     const bootstrapLink = document.createElement("link");
     bootstrapLink.rel = "stylesheet";
-    bootstrapLink.href = "/libs/bootstrap.min.css"; // ensure this file exists in public/libs
+    bootstrapLink.href = "/libs/bootstrap.min.css"; 
     document.head.appendChild(bootstrapLink);
 
-    // Dynamically import dependencies
+
     Promise.all([
       import("jquery-ui-dist/jquery-ui"),
       import("formBuilder/dist/form-builder.min.js"),
@@ -44,12 +32,11 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
       });
 
     return () => {
-      // cleanup
       try {
         if (builderRef.current?.actions) {
           try {
             builderRef.current.actions.clearFields();
-          } catch (e) {
+          } catch {
             // ignore
           }
         }
@@ -61,24 +48,20 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
       bootstrapLink.remove();
       console.log("🧹 Removed bootstrap link and cleaned up form builder");
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fieldsJson]); // re-init when fieldsJson changes (rehydration will run inside init)
+  }, [fieldsJson]); 
 
   function initFormBuilder($) {
-    // If there's already an instance, clear it first
     if (builderRef.current?.actions) {
       try {
         builderRef.current.actions.clearFields();
         $(editorContainer.current).empty();
-      } catch (e) {
-        console.warn("Could not clear previous builder instance", e);
+      } catch {
+        console.warn("Could not clear previous builder instance");
       }
       builderRef.current = null;
     }
 
-    /* -------------------------
-       Custom Controls / Plugins
-       ------------------------- */
+
     const controlPlugins = {
       header: {
         label: "Header",
@@ -136,7 +119,7 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
         onRender: (field) => {
           const multiple = field.multiple ? "multiple" : "";
           const accept = field.accept ? `accept="${field.accept}"` : "";
-          const fieldName = field.name || `file-${generateUUID()}`;
+          const fieldName = field.name;
           return `
             <div class="mb-3">
               <label class="form-label">${field.label || "Upload File"}</label>
@@ -152,7 +135,7 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
       },
     };
 
-    // Register custom controls safely
+
     Object.entries(controlPlugins).forEach(([key, plugin]) => {
       try {
         $.fn.formBuilder.controls.register(key, plugin);
@@ -161,9 +144,7 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
       }
     });
 
-    /* -------------------------
-       Builder Options
-       ------------------------- */
+ 
     const options = {
       disableFields: ["button", "hidden", "autocomplete"],
       controlOrder: [
@@ -182,28 +163,27 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
       ],
       controlConfig: controlPlugins,
 
-      // Stable onSave implementation
       onSave: (evt, formData) => {
         try {
           const fb = builderRef.current;
           const raw = fb?.actions?.getData("json") || formData || "[]";
           const parsed = JSON.parse(raw);
 
-          // Build final fields with stable IDs
+    
           const finalFields = parsed.map((f, i) => {
-            // Try to find matching old field by id (prefer this)
+           
             const old = fieldsJson.find((x) => x.id === f.id);
 
-            // stable id: reuse old.id if exists, else use f.id if provided, else create uuid
-            const stableId = old?.id || f.id || generateUUID();
+         
+            const stableId = old?.id || f.id;
 
-            // Normalize options (values) for select/radio/checkbox
+   
             let options = [];
             if (["select", "radio-group", "checkbox-group"].includes(f.type)) {
               options = (f.values || [])
                 .map((opt) => {
                   const label = (opt.label || "").trim();
-                  // If value is missing or auto-generated like "option-1", use label
+              
                   const value =
                     opt.value && String(opt.value).startsWith("option-")
                       ? label
@@ -229,19 +209,19 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
           console.log("✅ onSave final fields:", finalFields);
           onSave(finalFields);
 
-          // rehydrate builder with stable finalFields
+       
           fb.promise.then(() => {
             try {
               fb.actions.clearFields();
               fb.actions.setData(
                 finalFields.map((fld) => ({
                   ...fld,
-                  // formBuilder expects 'values' for option fields
+               
                   values: fld.options || [],
                 }))
               );
             } catch (e) {
-              console.warn("Error re-setting data after save:", e);
+              console.warn("Error re-setting data after save");
             }
           });
         } catch (err) {
@@ -250,16 +230,12 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
       },
     };
 
-    /* -------------------------
-       Initialize builder
-       ------------------------- */
+
     const fbEditor = $(editorContainer.current).formBuilder(options);
     builderRef.current = fbEditor;
     window._formBuilderInstance = fbEditor;
 
-    /* -------------------------
-       Rehydrate saved fields (stable)
-       ------------------------- */
+
     fbEditor.promise.then((fbInstance) => {
       try {
         const actions = fbInstance?.actions || fbEditor.actions;
@@ -269,7 +245,7 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
         }
 
         if (fieldsJson.length > 0) {
-          // transform saved fields into formBuilder format
+     
           const transformed = fieldsJson.map((f) => {
             const field = { ...f };
             field.id = f.id;
@@ -288,8 +264,8 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
           actions.setData(transformed);
           console.log("✅ Rehydration completed: fields loaded into builder");
         }
-      } catch (e) {
-        console.warn("Rehydrate failed:", e);
+      } catch {
+        console.warn("Rehydrate failed");
       }
     });
   }

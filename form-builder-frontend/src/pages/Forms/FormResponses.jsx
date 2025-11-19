@@ -30,7 +30,7 @@ import {
 } from "recharts";
 import { CSVLink } from "react-csv";
 import { motion } from "framer-motion";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 export default function FormResponses() {
   const { id } = useParams();
@@ -46,7 +46,8 @@ export default function FormResponses() {
 
   /** ---------------- WebSocket: Real-time updates ---------------- */
   useEffect(() => {
-    const socket = io("http://localhost:4000", {
+    // const socket = io("http://localhost:4000", {
+    const socket = io("http://192.168.0.105:4000", {
       transports: ["websocket", "polling"],
     });
 
@@ -141,6 +142,7 @@ export default function FormResponses() {
           row[field.label] = (
             <a
               href={`http://localhost:4000${val}`}
+              // href={`http://192.168.0.105:4000${val}`}
               download={filename}
               target="_blank"
               rel="noopener noreferrer"
@@ -217,12 +219,34 @@ export default function FormResponses() {
     ];
   }, [form, responses, columnHelper]);
 
-  const globalFilterFn = (row, columnId, filterValue) => {
-  const value = row.getValue(columnId);
-  return String(value || "")
-    .toLowerCase()
-    .includes(String(filterValue || "").toLowerCase());
-};
+  const formatCellValueForFilter = (value) => {
+    if (value === null || value === undefined) return "";
+    if (typeof value === "string" || typeof value === "number")
+      return String(value);
+    if (Array.isArray(value)) return value.join(", ");
+    if (React.isValidElement(value)) {
+      return React.Children.toArray(value.props.children)
+        .map((child) =>
+          typeof child === "string" || typeof child === "number"
+            ? String(child)
+            : ""
+        )
+        .join(" ");
+    }
+    if (typeof value === "object") return JSON.stringify(value);
+    return String(value);
+  };
+
+  const globalFilterFn = (_row, _columnId, filterValue) => {
+    const search = String(filterValue || "").toLowerCase();
+    if (!search) return true;
+
+    const combined = Object.values(_row.original)
+      .map((value) => formatCellValueForFilter(value).toLowerCase())
+      .join(" ");
+
+    return combined.includes(search);
+  };
 
   /** ---------------- React Table Setup ---------------- */
   const table = useReactTable({
@@ -300,7 +324,6 @@ export default function FormResponses() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
-      <Toaster position="top-right" reverseOrder={false} />
 
       {/* Back button */}
       <div className="flex justify-end">
@@ -308,7 +331,7 @@ export default function FormResponses() {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => navigate(-1)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow transition"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 mt-3 rounded-lg shadow transition"
         >
           &larr; Back
         </motion.button>

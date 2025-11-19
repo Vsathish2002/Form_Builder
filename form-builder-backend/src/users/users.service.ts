@@ -6,7 +6,6 @@ import * as bcrypt from 'bcryptjs';
 import { Role } from '../roles/role.entity';
 import { EmailService } from '../auth/email.service';
 
-
 @Injectable()
 export class UsersService {
   constructor(
@@ -65,22 +64,26 @@ export class UsersService {
   // ✅ NEW: Update profile (name/email)
   async updateUser(id: string, updateData: Partial<User>) {
     const user = await this.userRepo.findOne({
-      where: { id }, // id is UUID string
+      where: { id },
       relations: ['role'],
     });
 
     if (!user) throw new NotFoundException('User not found');
 
-    user.name = updateData.name || user.name;
-    user.email = updateData.email || user.email;
+    user.name = updateData.name ?? user.name;
+    user.email = updateData.email ?? user.email;
+
+    // ⭐ NEW FIELDS ⭐
+    user.gender = updateData.gender ?? user.gender;
+    user.address = updateData.address ?? user.address;
+    user.phone = updateData.phone ?? user.phone;
+    user.bio = updateData.bio ?? user.bio;
 
     await this.userRepo.save(user);
 
-    return {
-      message: 'Profile updated successfully',
-      user,
-    };
+    return { message: 'Profile updated', user };
   }
+
   // For profile email update OTP flow
   async sendEmailChangeOtp(userId: string, newEmail: string) {
     const existing = await this.findByEmail(newEmail);

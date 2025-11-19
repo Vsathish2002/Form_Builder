@@ -3,16 +3,6 @@ import axios from 'axios';
 const BASE_URL = 'http://localhost:4000/auth'; // your NestJS backend URL
 // const BASE_URL = ' http://192.168.0.105:4000/auth'; 
 
-export async function registerUser(name, email, password) {
-  try {
-    const res = await axios.post(`${BASE_URL}/register`, { name, email, password });
-    return res.data;
-  } catch (err) {
-    console.error('Registration error:', err.response?.data || err.message);
-    return err.response?.data || { message: 'Network error during registration' };
-  }
-}
-
 export async function loginUser(email, password) {
   try {
     const res = await axios.post(`${BASE_URL}/login`, { email, password });
@@ -43,6 +33,7 @@ export async function verifyOtp(email, otp) {
   }
 }
 
+
 export async function resetPassword(email, otp, newPassword) {
   try {
     const res = await axios.post(`${BASE_URL}/reset-password`, { email, otp, newPassword });
@@ -53,7 +44,7 @@ export async function resetPassword(email, otp, newPassword) {
   }
 }
 
-// ✅ Request OTP before registration
+
 export async function requestRegisterOtp(name, email, password) {
   try {
     const res = await axios.post(`${BASE_URL}/register-request-otp`, {
@@ -68,7 +59,6 @@ export async function requestRegisterOtp(name, email, password) {
   }
 }
 
-// ✅ Verify OTP and create user
 export async function verifyRegisterOtp(name, email, password, otp) {
   try {
     const res = await axios.post(`${BASE_URL}/register-verify-otp`, {

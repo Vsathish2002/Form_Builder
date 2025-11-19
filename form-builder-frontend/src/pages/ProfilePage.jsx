@@ -1,164 +1,151 @@
-  import React, { useState } from "react";
-  import axios from "axios";
-  import toast, { Toaster } from "react-hot-toast";
-  import { useAuth } from "../context/AuthContext";
-  import { requestEmailOtp, verifyEmailOtp } from "../api/users";
-  import OtpModal from "../components/OtpModal";
+import React, { useState } from "react";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { useAuth } from "../context/AuthContext";
+import { motion } from "framer-motion";
+import { User, Edit3, Check, X } from "lucide-react";
 
-  export default function ProfilePage() {
-    const { user, setUser } = useAuth();
-    const [name, setName] = useState(user?.name || "");
-    const [email, setEmail] = useState(user?.email || "");
-    const [loading, setLoading] = useState(false);
-    const [otpModal, setOtpModal] = useState(false);
-    const [pendingEmail, setPendingEmail] = useState("");
+export default function ProfilePage() {
+  const { user, setUser } = useAuth();
 
-    if (!user) {
-      return (
-        <div className="min-h-screen flex justify-center items-center bg-blue-50">
-          <p className="text-lg text-gray-700 font-medium">
-            Please login to view your profile.
-          </p>
-        </div>
-      );
+
+  const [formData, setFormData] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+  });
+
+  const [editMode, setEditMode] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const token = localStorage.getItem("token");
+
+
+  const handleSave = async () => {
+    setLoading(true);
+
+    if (!formData.name.trim()) {
+      toast.error("Name cannot be empty!");
+      setLoading(false);
+      return;
     }
 
-    const handleSave = async () => {
-      if (!name.trim() || !email.trim()) {
-        toast.error("Name and email cannot be empty!");
-        return;
-      }
 
-      const token = localStorage.getItem("token");
+    try {
+      const res = await axios.put(
+        `http://localhost:4000/users/update/${user.id}`,
+        // `http://192.168.0.105:4000/users/update/${user.id}`,
+        { name: formData.name },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setUser(res.data.user);
+      toast.success("Profile updated!");
 
-      // ✅ If email changed → OTP flow
-      if (email !== user.email) {
-        try {
-          await requestEmailOtp(user.id, email, token);
-          toast.success("OTP sent to new email!");
-          setPendingEmail(email);
-          setOtpModal(true);
-        } catch (err) {
-          toast.error(err.response?.data?.message || "Failed to send OTP");
-        }
-        return;
-      }
+      setEditMode(false);
+    } catch (err) {
+      toast.error("Error updating profile");
+    }
 
-      // ✅ Name-only update
-      try {
-        const res = await axios.put(
-          `http://localhost:4000/users/update/${user.id}`,
-          { name },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        setUser(res.data.user);
-        toast.success("Profile updated successfully!");
-      } catch {
-        toast.error("Something went wrong while updating profile.");
-      }
-    };
+    setLoading(false);
+  };
 
-    return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 flex justify-center items-center px-4 py-10">
-  <Toaster position="top-center" />
-  <div className="bg-white shadow-2xl rounded-2xl p-8 max-w-md w-full transition-all hover:shadow-blue-200">
-    <h2 className="text-3xl font-extrabold text-blue-700 mb-8 text-center">
-      My Profile
-    </h2>
+  const cancelEditing = () => {
+    setFormData({
+      name: user.name,
+      email: user.email,
+    });
+    setEditMode(false);
+  };
 
-    <div className="space-y-5">
-      {/* Full Name */}
-      <div>
-        <label className="text-gray-500 text-sm">Full Name</label>
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-        />
-      </div>
 
-      {/* Gender */}
-      <div>
-        <label className="text-gray-500 text-sm">Gender</label>
-        <select
-          value={user.gender || ""}
-          onChange={(e) => setUser({ ...user, gender: e.target.value })}
-          className="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-        >
-          <option value="">Select gender</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
+  const updateField = (key, value) =>
+    setFormData({ ...formData, [key]: value });
 
-      {/* Address */}
-      <div>
-        <label className="text-gray-500 text-sm">Address</label>
-        <textarea
-          rows="2"
-          value={user.address || ""}
-          onChange={(e) => setUser({ ...user, address: e.target.value })}
-          className="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-        ></textarea>
-      </div>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-100 via-white to-indigo-200 flex justify-center items-center px-4 py-12">
 
-      {/* Phone */}
-      <div>
-        <label className="text-gray-500 text-sm">Phone</label>
-        <input
-          type="text"
-          value={user.phone || ""}
-          onChange={(e) => setUser({ ...user, phone: e.target.value })}
-          className="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-        />
-      </div>
-
-      {/* Bio */}
-      <div>
-        <label className="text-gray-500 text-sm">Bio</label>
-        <textarea
-          rows="2"
-          value={user.bio || ""}
-          onChange={(e) => setUser({ ...user, bio: e.target.value })}
-          placeholder="Write a short description about yourself..."
-          className="w-full mt-1 px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
-        ></textarea>
-      </div>
-
-      {/* Role */}
-      <div>
-        <label className="text-gray-500 text-sm">Role</label>
-        <input
-          type="text"
-          value={
-            typeof user.role === "object"
-              ? user.role.name || "User"
-              : user.role || "User"
-          }
-          readOnly
-          className="w-full mt-1 px-4 py-2 border rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
-        />
-      </div>
-    </div>
-
-    {/* Save Button */}
-    <div className="mt-8 flex flex-col gap-3">
-      <button
-        onClick={handleSave}
-        disabled={loading}
-        className={`w-full py-2 rounded-lg font-semibold text-white transition ${
-          loading
-            ? "bg-blue-400 cursor-not-allowed"
-            : "bg-blue-600 hover:bg-blue-700"
-        }`}
+      <motion.div
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.4 }}
+        className="bg-white shadow-xl rounded-3xl p-10 max-w-3xl w-full border border-indigo-100"
       >
-        {loading ? "Saving..." : "Save Changes"}
-      </button>
-    </div>
-  </div>
-</div>
+        {/* Header */}
+        <div className="flex items-center gap-6 mb-10">
+          <div className="w-20 h-20 rounded-full bg-indigo-600 flex justify-center items-center shadow-md">
+            <User size={42} className="text-white" />
+          </div>
+          <div>
+            <h2 className="text-3xl font-extrabold text-indigo-700">My Profile</h2>
+            <p className="text-gray-500 text-sm">Manage your personal details</p>
+          </div>
 
-    );
-  }
+          {!editMode && (
+            <button
+              onClick={() => setEditMode(true)}
+              className="ml-auto flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-700 transition"
+            >
+              <Edit3 size={18} /> Edit
+            </button>
+          )}
+        </div>
+
+  
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+         
+            <div>
+              <label className="text-gray-500 text-sm font-medium">Full Name</label>
+              <input
+                type="text"
+                readOnly={!editMode}
+                value={formData.name}
+                onChange={(e) => updateField("name", e.target.value)}
+                className={`w-full mt-1 px-4 py-2 rounded-lg border ${
+                  editMode
+                    ? "bg-white border-gray-300 focus:ring-indigo-500"
+                    : "bg-gray-100 text-gray-600 cursor-not-allowed"
+                }`}
+              />
+            </div>
+
+     
+            <div>
+              <label className="text-gray-500 text-sm font-medium flex items-center justify-between">
+                Email
+                <span className="text-xs text-gray-400">Read only</span>
+              </label>
+              <input
+                type="email"
+                readOnly
+                value={formData.email}
+                className="w-full mt-1 px-4 py-2 rounded-lg border bg-gray-100 text-gray-600 cursor-not-allowed"
+              />
+            </div>
+          </div>
+        </div>
+
+    
+        {editMode && (
+          <div className="flex justify-end gap-4 mt-10">
+            <button
+              onClick={cancelEditing}
+              className="px-5 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300"
+            >
+              <X size={18} className="inline mr-1" /> Cancel
+            </button>
+
+            <button
+              onClick={handleSave}
+              disabled={loading}
+              className="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700"
+            >
+              <Check size={18} className="inline mr-1" />
+              {loading ? "Saving..." : "Save"}
+            </button>
+          </div>
+        )}
+      </motion.div>
+
+    </div>
+  );
+}

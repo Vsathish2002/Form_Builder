@@ -5,8 +5,9 @@ import {
   OnGatewayDisconnect,
   SubscribeMessage,
   MessageBody,
-  ConnectedSocket,
+  ConnectedSocket, 
 } from '@nestjs/websockets';
+
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 
@@ -38,7 +39,7 @@ export class ResponseGateway implements OnGatewayConnection, OnGatewayDisconnect
     this.logger.log(`Client ${client.id} joined room: form-${formId}`);
   }
 
-  /** 🚀 When someone opens the public form (via QR) */
+  /**  When someone opens the public form (via QR) */
   @SubscribeMessage('formOpened')
   handleFormOpened(@MessageBody() data: { formId: string }) {
     const { formId } = data;

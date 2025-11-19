@@ -6,4 +6,3 @@ import { QrCodeService } from './qrcode.service';
   exports: [QrCodeService],
 })
 export class QrcodeModule {}
- 

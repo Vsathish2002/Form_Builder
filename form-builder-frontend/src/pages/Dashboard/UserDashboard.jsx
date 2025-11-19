@@ -66,6 +66,7 @@ export default function UserDashboard() {
 
         // ✅ WebSocket for real-time updates
         const socket = io("http://localhost:4000", {
+        // const socket = io("http://192.168.0.105:4000", {
           transports: ["websocket"],
           reconnection: true,
         });
@@ -154,7 +155,7 @@ export default function UserDashboard() {
         >
           My Dashboard
         </motion.h1>
-
+{/* 
         <motion.div whileHover={{ scale: 1.05 }}>
           <Link
             to="/create"
@@ -162,7 +163,7 @@ export default function UserDashboard() {
           >
             + Create Form
           </Link>
-        </motion.div>
+        </motion.div> */}
       </div>
 
       {/* Stats Cards */}
@@ -215,61 +216,7 @@ export default function UserDashboard() {
           </motion.div>
         ))}
       </div>
-
-      {/* Charts and Table */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Pie Chart */}
-        <motion.div
-          whileInView={{ opacity: 1, y: 0 }}
-          initial={{ opacity: 0, y: 40 }}
-          transition={{ duration: 0.6 }}
-          className="bg-white rounded-xl shadow-md p-6"
-        >
-          <h2 className="text-xl font-bold text-gray-700 mb-4">
-            🥧 Active vs Inactive Forms
-          </h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={pieData}
-                dataKey="value"
-                nameKey="name"
-                outerRadius={100}
-                label
-              >
-                {pieData.map((entry, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </motion.div>
-
-        {/* Bar Chart */}
-        <motion.div
-          whileInView={{ opacity: 1, y: 0 }}
-          initial={{ opacity: 0, y: 40 }}
-          transition={{ duration: 0.6 }}
-          className="bg-white rounded-xl shadow-md p-6"
-        >
-          <h2 className="text-xl font-bold text-gray-700 mb-4">
-            📊 Responses per Form
-          </h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={barData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis allowDecimals={false} />
-              <Tooltip />
-              <Bar dataKey="responses" fill="#4f46e5" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </motion.div>
-
-        {/* ✅ Updated Forms Table with Search and Real Counts */}
-        <motion.div
+      <motion.div
           whileInView={{ opacity: 1, y: 0 }}
           initial={{ opacity: 0, y: 40 }}
           transition={{ duration: 0.7 }}
@@ -345,6 +292,61 @@ export default function UserDashboard() {
             </table>
           </div>
         </motion.div>
+
+      {/* Charts and Table */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Pie Chart */}
+        <motion.div
+          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 40 }}
+          transition={{ duration: 0.6 }}
+          className="bg-white rounded-xl shadow-md p-6"
+        >
+          <h2 className="text-xl font-bold text-gray-700 mb-4">
+            🥧 Active vs Inactive Forms
+          </h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={pieData}
+                dataKey="value"
+                nameKey="name"
+                outerRadius={100}
+                label
+              >
+                {pieData.map((entry, i) => (
+                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* Bar Chart */}
+        <motion.div
+          whileInView={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, y: 40 }}
+          transition={{ duration: 0.6 }}
+          className="bg-white rounded-xl shadow-md p-6"
+        >
+          <h2 className="text-xl font-bold text-gray-700 mb-4">
+            📊 Responses per Form
+          </h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={barData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis allowDecimals={false} />
+              <Tooltip />
+              <Bar dataKey="responses" fill="#4f46e5" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </motion.div>
+
+        {/* ✅ Updated Forms Table with Search and Real Counts */}
+   
       </div>
     </div>
   );

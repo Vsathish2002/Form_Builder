@@ -45,25 +45,19 @@ export class AuthService {
     return user;
   }
 
-  // Forgot password - generate OTP and send email
   async forgotPassword(email: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user) throw new BadRequestException('User not found');
 
-    // Generate a 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Hash the OTP for storage
     const hashedOtp = await bcrypt.hash(otp, 10);
 
-    // Set expiry to 10 minutes from now
     const expiry = new Date();
     expiry.setMinutes(expiry.getMinutes() + 10);
 
-    // Update user with reset token and expiry
     await this.usersService.updateUserResetToken(user.id, hashedOtp, expiry);
 
-    // Send email with OTP
     await this.emailService.sendOtpEmail(email, otp);
 
     return { message: 'OTP sent to your email' };
@@ -132,9 +126,7 @@ export class AuthService {
     const expiry = new Date();
     expiry.setMinutes(expiry.getMinutes() + 10);
 
-    // Temporarily reuse User reset fields for pending registration
-    // You could store this in a temp map if user doesn’t exist yet
-    // For simplicity, we’ll keep a static in-memory store
+
     (global as any).pendingOtps = (global as any).pendingOtps || {};
     (global as any).pendingOtps[email] = { otp: hashedOtp, expiry };
 
@@ -174,7 +166,7 @@ export class AuthService {
     };
   }
 
-
+ 
   // Login user and return JWT
   async login(user: User) {
     const payload = { email: user.email, sub: user.id, role: user.role.name };

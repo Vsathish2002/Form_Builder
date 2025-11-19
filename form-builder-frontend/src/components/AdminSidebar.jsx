@@ -8,7 +8,7 @@ export default function AdminSidebar({ onClose, isOpen }) {
 
   return (
     <aside className={`fixed left-0 top-0 z-50 w-64 h-full bg-gradient-to-b from-indigo-900 via-indigo-800 to-blue-700 text-white flex flex-col shadow-xl transition-all duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
-      {/* Header */}
+
       <div className="flex items-center justify-between p-5 border-b border-indigo-700">
         <h1 className="text-xl font-bold tracking-wide">Admin Panel</h1>
         <button
@@ -19,7 +19,6 @@ export default function AdminSidebar({ onClose, isOpen }) {
         </button>
       </div>
 
-      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-5 space-y-2">
         <NavLink
           to="/admin/dashboard"
@@ -67,7 +66,7 @@ export default function AdminSidebar({ onClose, isOpen }) {
         </NavLink>
       </nav>
 
-      {/* Logout */}
+
       <div className="p-4 border-t border-indigo-700">
         <button
           onClick={logout}

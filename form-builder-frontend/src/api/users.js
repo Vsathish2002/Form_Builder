@@ -1,5 +1,6 @@
 import axios from "axios";
 const BASE_URL = "http://localhost:4000/users";
+//  const BASE_URL = ' http://192.168.0.105:4000/users';
 
 export async function getUsers(token) {
   try {
@@ -11,7 +12,7 @@ export async function getUsers(token) {
     console.error("Error fetching users:", err.response?.data || err.message);
     return [];
   }
-}
+} 
 
 export async function requestEmailOtp(userId, newEmail, token) {
   const res = await axios.post(

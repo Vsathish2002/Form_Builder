@@ -26,11 +26,9 @@
     "jquery": "^3.7.1",
     "jquery-ui-dist": "^1.13.3",
     "jquery-ui-sortable": "^1.0.0",
-    "jspdf": "^3.0.3",
     "lucide-react": "^0.553.0",
     "prop-types": "^15.8.1",
     "qrcode.react": "^4.2.0",
-    "rateyo": "^3.0.0-alpha.2",
     "react": "^19.1.1",
     "react-csv": "^2.2.2",
     "react-dom": "^19.1.1",
@@ -39,8 +37,6 @@
     "react-router-dom": "^7.9.4",
     "recharts": "^3.3.0",
     "socket.io-client": "^4.8.1",
-    "survey-creator-core": "^2.3.13",
-    "survey-react-ui": "^2.3.13",
     "tailwindcss": "^4.1.16"
   },
   "devDependencies": {

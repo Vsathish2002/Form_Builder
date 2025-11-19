@@ -263,14 +263,12 @@ export class FormsService {
     formData: Record<string, any>,
     files: Express.Multer.File[],
   ) {
-    // 1️⃣ Find the form by slug
     const form = await this.formsRepo.findOne({
       where: { slug },
       relations: ['fields'],
     });
     if (!form) throw new BadRequestException('Form not found');
 
-    // 2️⃣ Handle uploaded files (convert to URLs)
     if (files && files.length > 0) {
       files.forEach((file) => {
         if (file && file.filename) {
@@ -281,15 +279,13 @@ export class FormsService {
       });
     }
 
-
-    // 3️⃣ Save as JSON
     const newResponse = this.responsesRepo.create({
       form,
       responseData: formData,
     });
     await this.responsesRepo.save(newResponse);
 
-    // 4️⃣ 🔥 Broadcast real-time update
+    //Broadcast real-time update
     this.responseGateway.broadcastNewResponse({
       formId: form.id,
       formTitle: form.title,
@@ -334,7 +330,7 @@ export class FormsService {
       relations: ['fields'],
     });
   }
-
+z
   // --- 🗑 Delete Response ---
   async deleteResponse(responseId: string, user: User): Promise<void> {
     const response = await this.responsesRepo.findOne({
@@ -354,9 +350,10 @@ export class FormsService {
     if (form.owner?.id !== user.id && user.role.name !== 'admin')
       throw new NotFoundException('Form not found');
 
-    const formUrl = `http://localhost:5173/public/${form.slug}`;
-    // const formUrl = `http://192.168.0.105:5173/public/${form.slug}`;
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const formUrl = `${frontendUrl}/public/${form.slug}`;
     return this.qrCodeService.generateQrCode(formUrl);
+  // "qrCode": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
   }
 
 }

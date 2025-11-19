@@ -76,7 +76,7 @@ export class AuthController {
       return await this.authService.verifyRegisterOtp(
         body.name,
         body.email,
-        body.password,
+        body.password, 
         body.otp,
       );
     } catch (error) {
@@ -181,21 +181,18 @@ export class AuthController {
     }
   }
 
-  // @UseGuards(JwtAuthGuard)
-  // @Post('me')
-  // @ApiOperation({ summary: 'Get currently authenticated user profile' })
-  // @ApiResponse({ status: 200, description: 'User profile fetched successfully' })
-  // async getProfile(@Request() req) {
-  //   try {
-  //     return req.user;
-  //   } catch (error) {
-  //     throw new HttpException(
-  //       'Unable to fetch user profile',
-  //       HttpStatus.INTERNAL_SERVER_ERROR,
-  //     );
-  //   }
-  // }
-
-  
-
+  @UseGuards(JwtAuthGuard)
+  @Post('me')
+  @ApiOperation({ summary: 'Get currently authenticated user profile' })
+  @ApiResponse({ status: 200, description: 'User profile fetched successfully' })
+  async getProfile(@Request() req) {
+    try {
+      return req.user;
+    } catch (error) {
+      throw new HttpException(
+        'Unable to fetch user profile',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }

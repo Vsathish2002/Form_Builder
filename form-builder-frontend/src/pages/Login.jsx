@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { loginUser } from "../api/auth";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; 
 import { useAuth } from "../context/AuthContext";
 import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -30,13 +30,11 @@ export default function Login() {
         toast.success("✅ Login successful!");
 
         // ✅ Redirect based on role
-        setTimeout(() => {
-          if (data.user.role === "admin") {
-            navigate("/admin/dashboard");
-          } else {
-            navigate("/user/dashboard");
-          }
-        }, 1200);
+        if (data.user.role === "admin") {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/user/dashboard");
+        }
       } else {
         toast.error(data.message || "Invalid credentials. Please try again.");
       }
@@ -49,8 +47,6 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 flex items-center justify-center px-4 py-12">
-      {/* Toast Notifications */}
-      <Toaster position="top-right" reverseOrder={false} />
 
       <motion.form
         onSubmit={handleSubmit}

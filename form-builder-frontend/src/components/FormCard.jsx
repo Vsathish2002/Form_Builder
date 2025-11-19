@@ -27,15 +27,32 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
 
   const formUrl = `${window.location.origin}/public/${form.slug}`;
 
-  // ✅ WebSocket Setup
+  const showToast = (type, message, opts = {}) => {
+    const config = { duration: 2500, position: "top-right", ...opts };
+    switch (type) {
+      case "success":
+        return toast.success(message, config);
+      case "error":
+        return toast.error(message, config);
+      case "loading":
+        return toast.loading(message, config);
+      default:
+        return toast(message, config);
+    }
+  };
+
   useEffect(() => {
-    const socket = io("http://localhost:4000", {
+    setIsActive(form.status !== "Inactive");
+  }, [form.status]);
+
+  useEffect(() => {
+    // const socket = io("http://localhost:4000", {
+    const socket = io("http://192.168.0.105:4000", {
       transports: ["websocket"],
       reconnection: true,
     });
 
     socket.on("connect", () => {
-      console.log("✅ Socket connected:", socket.id);
       socket.emit("joinFormRoom", form.id);
     });
 
@@ -51,8 +68,9 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
         toast.success(`New response received for "${form.title}"`);
         setIsLoading(false);
         setStatusMessage("Form submitted!");
+        
         setSubmittedData(data.answers || []);
-      }
+      } 
     });
 
     return () => {
@@ -60,21 +78,25 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
     };
   }, [form.id]);
 
-  // ✅ Generate QR
+
   const handleGenerateQr = async () => {
     if (!isActive) {
-      toast.error("Form is inactive. Activate it to generate QR.");
+      showToast("error", "Form is inactive. Activate it to generate QR.");
       return;
     }
-
+    const toastId = showToast("loading", "Generating QR code...");
     try {
       const qr = await generateFormQrCode(token, form.id);
       setQrCode(qr);
-      setShowQrModal(true);
+      setShowQrModal(true); 
       setSubmittedData(null);
       setIsLoading(false);
+      toast.dismiss(toastId);
+      showToast("success", "QR code ready!", { id: toastId });
     } catch (error) {
+      toast.dismiss(toastId);
       console.error("Error generating QR code:", error);
+      showToast("error", "Failed to generate QR. Please try again.");
     }
   };
 
@@ -86,15 +108,30 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
     link.click();
   };
 
-  const handleCopyLink = () => {
+  const handleCopyLink = async () => {
     if (!isActive) {
-      toast.error("Form is inactive. Activate it to share.");
+      showToast("error", "Form is inactive. Activate it to share.");
       return;
     }
-    navigator.clipboard.writeText(formUrl);
-    setShowShareModal(false);
-    toast.success("Link copied to clipboard!");
-    
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(formUrl);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = formUrl;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setShowShareModal(false);
+      showToast("success", "Link copied to clipboard!");
+    } catch (error) {
+      console.error("Failed to copy link to clipboard:", error);
+      showToast("error", "Failed to copy link. Please try again.");
+    }
   };
 
   const handleToggleStatus = () => {
@@ -130,15 +167,12 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
 
   return (
     <>
-      {/* ===================== Form Card ===================== */}
-    {/* ===================== Form Card (Redesigned Dark Theme) ===================== */}
+        {/* ===================== Form Card (Redesigned Dark Theme) ===================== */}
 <motion.div
-  whileHover={{ scale: 1.03, rotate: 0.5 }}
-  transition={{ type: "spring", stiffness: 200, damping: 10 }}
-  className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 
+  className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900
              border border-white/10 rounded-2xl p-6 shadow-[0_0_20px_rgba(0,0,0,0.4)]
              backdrop-blur-lg hover:shadow-[0_0_30px_rgba(99,102,241,0.3)]
-             transition-all duration-300 flex flex-col justify-between 
+             transition-all duration-300 flex flex-col justify-between
              w-full max-w-sm sm:max-w-md mx-auto overflow-hidden"
 >
   {/* Neon Border Effect */}
@@ -250,81 +284,167 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
                hover:from-indigo-500/40 hover:to-blue-600/40 hover:shadow-[0_0_20px_rgba(99,102,241,0.5)]
                transition-all duration-300"
   >
-    <FiLink className="group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300" />
+    <FiLink className="group-hover:scale-110 group-hover:rotate-3 transition-transform duration-100" />
     Share
   </button>
 
 </div>
 
 </motion.div>
-
-
-      {/* ===================== QR Modal ===================== */}
+      {/* ===================== QR Modal (Amazing Design) ===================== */}
       <AnimatePresence>
         {showQrModal && qrCode && (
           <motion.div
-            className="fixed inset-0 bg-black/60 flex justify-center items-center z-50"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowQrModal(false)}
           >
+            {/* Animated Background Effects */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
+              <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/5 rounded-full blur-2xl animate-ping"></div>
+            </div>
+
             <motion.div
-              className="bg-gradient-to-b from-white to-gray-100 rounded-3xl shadow-2xl p-8 w-[90%] sm:w-[420px] flex flex-col items-center text-center relative"
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900
+                         border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.8)]
+                         backdrop-blur-xl p-8 w-[95%] sm:w-[480px] flex flex-col items-center text-center
+                         overflow-hidden"
+              initial={{ scale: 0.8, opacity: 0, rotateY: -15 }}
+              animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+              exit={{ scale: 0.8, opacity: 0, rotateY: 15 }}
+              transition={{ duration: 0.4, type: "spring", stiffness: 200 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                {isLoading
-                  ? "Form is being filled..."
-                  : submittedData
-                  ? "Response Received!"
-                  : "Scan QR to Open Form"}
-              </h2>
+              {/* Neon Border Glow */}
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-indigo-500/20 via-purple-500/15 to-blue-500/20 opacity-60 blur-xl pointer-events-none"></div>
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-cyan-500/10 to-transparent opacity-40 pointer-events-none"></div>
+
+              {/* Header */}
+              <motion.div
+                className="relative z-10 mb-6"
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent mb-2">
+                  {isLoading
+                    ? " Form Activity"
+                    : submittedData
+                    ? " Response Received!"
+                    : "Scan QR Code"}
+                </h2>
+                <div className="w-24 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full mx-auto"></div>
+              </motion.div>
 
               {!isLoading && !submittedData && (
-                <>
-                  <img
-                    src={qrCode}
-                    alt="QR Code"
-                    className="w-52 h-52 rounded-2xl shadow-lg mb-4 border border-gray-300"
-                  />
-                  <p className="text-gray-600 mb-4">
-                    Scan this QR with any device to open your form.
-                  </p>
-                  <button
-                    onClick={handleDownloadQr}
-                    className="px-5 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-full hover:opacity-90 transition font-medium shadow-md"
+                <motion.div
+                  className="flex flex-col items-center relative z-10"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  {/* QR Code Container with Glow */}
+                  <div className="relative mb-6">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/30 to-purple-500/30 rounded-3xl blur-xl scale-110 animate-pulse"></div>
+                    <motion.img
+                      src={qrCode}
+                      alt="QR Code"
+                      className="relative w-56 h-56 rounded-3xl shadow-[0_0_30px_rgba(99,102,241,0.4)]
+                                 border-2 border-white/20 backdrop-blur-sm"
+                      whileHover={{ scale: 1.05, rotate: 2 }}
+                      transition={{ type: "spring", stiffness: 300 }}
+                    />
+                    {/* Corner Decorations */}
+                    <div className="absolute -top-2 -left-2 w-6 h-6 border-l-4 border-t-4 border-indigo-400 rounded-tl-lg"></div>
+                    <div className="absolute -top-2 -right-2 w-6 h-6 border-r-4 border-t-4 border-purple-400 rounded-tr-lg"></div>
+                    <div className="absolute -bottom-2 -left-2 w-6 h-6 border-l-4 border-b-4 border-blue-400 rounded-bl-lg"></div>
+                    <div className="absolute -bottom-2 -right-2 w-6 h-6 border-r-4 border-b-4 border-cyan-400 rounded-br-lg"></div>
+                  </div>
+
+                  <motion.p
+                    className="text-gray-300 mb-6 text-sm md:text-base leading-relaxed max-w-xs"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
                   >
-                    Download QR
-                  </button>
-                </>
+                    Scan this QR code with any device to instantly access and fill out your form
+                  </motion.p>
+
+                  <motion.button
+                    onClick={handleDownloadQr}
+                    className="group relative px-8 py-3 bg-gradient-to-r from-green-500/20 to-emerald-500/20
+                               text-green-300 border border-green-500/30 rounded-full font-semibold
+                               shadow-[0_0_20px_rgba(16,185,129,0.3)] backdrop-blur-sm
+                               hover:from-green-500/40 hover:to-emerald-500/40 hover:shadow-[0_0_30px_rgba(16,185,129,0.5)]
+                               transition-all duration-300 overflow-hidden"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-r from-green-400 to-emerald-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                    <span className="relative flex items-center gap-2">
+                      <BsQrCode className="group-hover:rotate-12 transition-transform duration-300" />
+                      Download QR
+                    </span>
+                  </motion.button>
+                </motion.div>
               )}
 
               {isLoading && (
-                <div className="flex flex-col items-center">
-                  <div className="animate-spin rounded-full h-14 w-14 border-b-4 border-blue-500 mb-4"></div>
-                  <p className="text-gray-700 font-medium text-lg">
+                <motion.div
+                  className="flex flex-col items-center relative z-10"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <div className="relative mb-6">
+                    <div className="w-20 h-20 border-4 border-indigo-500/20 rounded-full"></div>
+                    <div className="absolute inset-0 w-20 h-20 border-4 border-transparent border-t-indigo-500 rounded-full animate-spin"></div>
+                    <div className="absolute inset-2 w-16 h-16 border-4 border-transparent border-t-purple-500 rounded-full animate-spin animation-delay-300"></div>
+                  </div>
+                  <motion.p
+                    className="text-white font-semibold text-lg md:text-xl"
+                    animate={{ opacity: [0.7, 1, 0.7] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
                     {statusMessage}
-                  </p>
-                </div>
+                  </motion.p>
+                </motion.div>
               )}
 
               {submittedData && (
-                <div className="w-full flex flex-col items-center">
-                  <div className="text-green-500 text-5xl mb-3">✅</div>
-                  <p className="text-gray-800 font-semibold text-lg mb-3">
+                <motion.div
+                  className="w-full flex flex-col items-center relative z-10"
+                  initial={{ scale: 0.9, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <motion.div
+                    className="text-6xl mb-4"
+                    animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 0.8 }}
+                  >
+                    
+                  </motion.div>
+                  <h3 className="text-white font-bold text-xl md:text-2xl mb-4">
                     Form Submitted Successfully!
-                  </p>
-                  <div className="w-full max-h-[300px] overflow-y-auto border border-gray-200 rounded-lg bg-white shadow-inner p-3">
+                  </h3>
+
+                  <motion.div
+                    className="w-full max-h-[300px] overflow-y-auto border border-white/10 rounded-2xl
+                               bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm shadow-inner p-4"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.5 }}
+                  >
                     <table className="w-full text-sm border-collapse">
-                      <thead className="bg-gray-100 text-gray-700">
+                      <thead className="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 text-white">
                         <tr>
-                          <th className="text-left px-3 py-2 border">
-                            Responses
+                          <th className="text-left px-4 py-3 border-b border-white/10 font-semibold">
+                            📝 Form Responses
                           </th>
                         </tr>
                       </thead>
@@ -367,94 +487,163 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
                               displayValue = (
                                 <a
                                   href={`http://localhost:4000${displayValue}`}
+                                  // href={`http://192.168.0.105:4000${displayValue}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="text-blue-600 hover:underline font-medium"
+                                  className="text-blue-400 hover:text-blue-300 underline font-medium transition-colors"
                                 >
-                                  {filename}
+                                  📎 {filename}
                                 </a>
                               );
                             }
 
                             return (
-                              <tr
+                              <motion.tr
                                 key={i}
-                                className="hover:bg-gray-50 transition"
+                                className="hover:bg-white/5 transition-colors border-b border-white/5"
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.6 + i * 0.1 }}
                               >
-                                <td className="border px-3 py-2 text-gray-700">
+                                <td className="px-4 py-3 text-gray-300 text-left">
                                   {displayValue}
                                 </td>
-                              </tr>
+                              </motion.tr>
                             );
                           })}
                       </tbody>
                     </table>
-                  </div>
-                </div>
+                  </motion.div>
+                </motion.div>
               )}
 
-              <button
+              <motion.button
                 onClick={() => {
                   setShowQrModal(false);
                   setIsLoading(false);
                   setSubmittedData(null);
                 }}
-                className="mt-6 px-6 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition font-semibold shadow-md"
+                className="relative mt-8 px-8 py-3 bg-gradient-to-r from-indigo-500/20 to-blue-600/20
+                           text-indigo-300 border border-indigo-500/30 rounded-full font-semibold
+                           shadow-[0_0_20px_rgba(99,102,241,0.3)] backdrop-blur-sm
+                           hover:from-indigo-500/40 hover:to-blue-600/40 hover:shadow-[0_0_30px_rgba(99,102,241,0.5)]
+                           transition-all duration-300 group overflow-hidden"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                Close
-              </button>
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-blue-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                <span className="relative">✕ Close</span>
+              </motion.button>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Share Modal */}
+      {/* ===================== Share Modal (Amazing Design) ===================== */}
       <AnimatePresence>
         {showShareModal && (
           <motion.div
-            className="fixed inset-0 bg-black/50 flex justify-center items-center z-50"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setShowShareModal(false)}
           >
+            {/* Animated Background Effects */}
+            <div className="absolute inset-0 overflow-hidden">
+              <div className="absolute top-1/3 left-1/3 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl animate-pulse"></div>
+              <div className="absolute bottom-1/3 right-1/3 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-56 h-56 bg-blue-500/5 rounded-full blur-2xl animate-ping"></div>
+            </div>
+
             <motion.div
-              className="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center space-y-4 w-80"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ duration: 0.3 }}
+              className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900
+                         border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.8)]
+                         backdrop-blur-xl p-8 w-[95%] sm:w-[400px] flex flex-col items-center text-center
+                         overflow-hidden"
+              initial={{ scale: 0.8, opacity: 0, rotateY: -15 }}
+              animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+              exit={{ scale: 0.8, opacity: 0, rotateY: 15 }}
+              transition={{ duration: 0.4, type: "spring", stiffness: 200 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-xl font-bold mb-2">Share Form</h3>
+              {/* Neon Border Glow */}
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-indigo-500/20 via-purple-500/15 to-blue-500/20 opacity-60 blur-xl pointer-events-none"></div>
+              <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-cyan-500/10 to-transparent opacity-40 pointer-events-none"></div>
 
-              <div className="flex flex-col gap-3 w-full">
-                <button
+              {/* Header */}
+              <motion.div
+                className="relative z-10 mb-6"
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+              >
+                <h3 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-white via-blue-100 to-purple-200 bg-clip-text text-transparent mb-2">
+                  🚀 Share Your Form
+                </h3>
+                <div className="w-24 h-1 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full mx-auto"></div>
+              </motion.div>
+
+              <motion.div
+                className="flex flex-col gap-4 w-full relative z-10"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+              >
+                {/* Copy Link Button */}
+                <motion.button
                   onClick={handleCopyLink}
-                  className="flex items-center justify-center gap-2 px-4 py-2 rounded-full bg-gray-800 text-white font-semibold hover:bg-gray-900 transition transform shadow-md"
+                  className="group relative flex items-center justify-center gap-3 px-6 py-4 rounded-2xl
+                             bg-gradient-to-r from-gray-700/50 to-gray-800/50 text-white font-semibold
+                             border border-gray-600/30 backdrop-blur-sm shadow-[0_0_20px_rgba(75,85,99,0.3)]
+                             hover:from-gray-600/60 hover:to-gray-700/60 hover:shadow-[0_0_30px_rgba(75,85,99,0.5)]
+                             transition-all duration-300 overflow-hidden"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
                 >
-                  <FiCopy /> Copy Link
-                </button>
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-500 to-gray-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                  <FiCopy className="text-xl group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300" />
+                  <span className="relative">📋 Copy Link</span>
+                </motion.button>
 
-                {socialButtons.map((btn) => (
-                  <a
+                {/* Social Media Buttons */}
+                {socialButtons.map((btn, index) => (
+                  <motion.a
                     key={btn.name}
                     href={btn.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex items-center justify-center gap-2 px-4 py-2 rounded-full text-white font-semibold ${btn.bg} hover:scale-105 transition transform shadow-md`}
+                    className={`group relative flex items-center justify-center gap-3 px-6 py-4 rounded-2xl
+                               text-white font-semibold border backdrop-blur-sm transition-all duration-300 overflow-hidden
+                               ${btn.bg} hover:scale-105 shadow-[0_0_20px_rgba(59,130,246,0.3)]`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4 + index * 0.1 }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    {btn.icon} {btn.name}
-                  </a>
+                    <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <span className="text-xl group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300">
+                      {btn.icon}
+                    </span>
+                    <span className="relative">{btn.name}</span>
+                  </motion.a>
                 ))}
-              </div>
+              </motion.div>
 
-              <button
+              <motion.button
                 onClick={() => setShowShareModal(false)}
-                className="px-6 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition mt-4 shadow-md"
+                className="relative mt-8 px-8 py-3 bg-gradient-to-r from-indigo-500/20 to-blue-600/20
+                           text-indigo-300 border border-indigo-500/30 rounded-full font-semibold
+                           shadow-[0_0_20px_rgba(99,102,241,0.3)] backdrop-blur-sm
+                           hover:from-indigo-500/40 hover:to-blue-600/40 hover:shadow-[0_0_30px_rgba(99,102,241,0.5)]
+                           transition-all duration-300 group overflow-hidden"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                Close
-              </button>
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-400 to-blue-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
+                <span className="relative">✕ Close</span>
+              </motion.button>
             </motion.div>
           </motion.div>
         )}

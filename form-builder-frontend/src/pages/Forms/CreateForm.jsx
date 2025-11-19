@@ -1,4 +1,4 @@
-// src/pages/Forms/CreateForm.jsx
+
 import React, { useState } from "react";
 import { createForm } from "../../api/forms";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import FormEditor from "../../components/FormEditor";
 import { motion } from "framer-motion";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
-import toast, { Toaster } from "react-hot-toast";
+import toast from "react-hot-toast";
 
 export default function CreateForm() {
   const [form, setForm] = useState({ title: "", description: "", fields: [] });
@@ -31,10 +31,8 @@ export default function CreateForm() {
         isPublic: false,
       });
 
-      // ✅ Show success toast
       toast.success("🎉 Form created successfully!");
-      
-      // ✅ Optional delay for better UX before redirect
+
       setTimeout(() => navigate(`/edit/${newForm.id}`), 1000);
     } catch (error) {
       console.error("Failed to create form:", error);
@@ -43,7 +41,6 @@ export default function CreateForm() {
     }
   };
 
-  // Animations
   const fadeUp = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
@@ -51,10 +48,7 @@ export default function CreateForm() {
 
   return (
     <div className="min-h-screen bg-gradient-to-tr from-blue-50 via-purple-50 to-pink-50 relative flex flex-col items-center justify-start py-12 px-4 md:px-8 overflow-hidden">
-      {/* Toast Notification */}
-      <Toaster position="top-right" reverseOrder={false} />
 
-      {/* Decorative floating circles */}
       <div className="absolute top-0 left-1/2 w-96 h-96 bg-purple-200 rounded-full opacity-30 -translate-x-1/2 -translate-y-1/2 animate-pulse"></div>
       <div className="absolute bottom-0 right-0 w-72 h-72 bg-pink-200 rounded-full opacity-30 animate-pulse"></div>
 
@@ -64,7 +58,6 @@ export default function CreateForm() {
         variants={fadeUp}
         className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-10 md:p-12 relative z-10"
       >
-        {/* Back Button */}
         <motion.button
           onClick={() => navigate(-1)}
           whileHover={{ scale: 1.05 }}
@@ -117,14 +110,13 @@ export default function CreateForm() {
         >
           Need help?{" "}
           <a
-  href="https://formbuilder.online/"
-  target="_blank"
-  rel="noopener noreferrer"
-  className="text-blue-600 font-semibold hover:underline"
->
-  See documentation
-</a>
-{" "}
+            href="https://formbuilder.online/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 font-semibold hover:underline"
+          >
+            See documentation
+          </a>{" "}
           for tips on creating effective forms.
         </motion.div>
       </motion.div>

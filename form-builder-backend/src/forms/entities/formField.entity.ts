@@ -55,9 +55,8 @@ export class FormField {
   @Column({ type: 'json', nullable: true })
   options: any;
 
-
   @Column({ type: 'text', nullable: true })
-  extraValue?: string; // For video/link URLs etc.
+  extraValue?: string;
 
   @Column({ type: 'int', default: 0 })
   order: number;

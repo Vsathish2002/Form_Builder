@@ -1,4 +1,3 @@
-// src/forms/entities/formResponse.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,
