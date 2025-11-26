@@ -44,7 +44,6 @@ export async function resetPassword(email, otp, newPassword) {
   }
 }
 
-
 export async function requestRegisterOtp(name, email, password) {
   try {
     const res = await axios.post(`${BASE_URL}/register-request-otp`, {

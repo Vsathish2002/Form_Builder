@@ -8,6 +8,7 @@ html, body, #root {
   background: #f9fafb url("/img/noise.png") repeat fixed;
 }
 
+/* 
 .tailwind-navbar a,
 .tailwind-navbar button {
   text-decoration: none !important;
@@ -39,4 +40,4 @@ html, body, #root {
 .tailwind-footer button:focus {
   outline: none;
   box-shadow: none;
-}
+} */

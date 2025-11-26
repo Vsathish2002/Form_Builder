@@ -6,6 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
+import editPageBg from "../../assets/editpagebg.jpg";
 
 export default function EditForm() {
   const { id } = useParams();
@@ -109,37 +110,54 @@ export default function EditForm() {
       const liveData = fb.actions.getData("json");
       const parsed = JSON.parse(liveData);
 
-      const idMap = form.fields.reduce((acc, f) => {
-        acc[f.label] = f.id;
-        return acc;
-      }, {});
+      // Create a more reliable ID mapping using both label and type
+      const idMap = {};
+      form.fields.forEach((f) => {
+        const key = `${f.label}-${f.type}`;
+        idMap[key] = f.id;
+      });
 
       const payload = {
         title: form.title,
         description: form.description,
         isPublic: form.isPublic,
-        fields: parsed.map((f, i) => ({
-          id: idMap[f.label] || f.id || `field-${i}`,
-          label: f.label,
-          /** 🔥 Convert Builder → DB format */
-          type:
-            f.type === "radio-group"
-              ? "radio"
-              : f.type === "checkbox-group"
-              ? "checkbox"
-              : f.type,
-          required: !!f.required,
-          order: i,
-          options:
-            ["select", "radio-group", "checkbox-group"].includes(f.type)
+        fields: parsed.map((f, i) => {
+          // Try multiple strategies to find the correct ID
+          const labelTypeKey = `${f.label}-${f.type}`;
+          const existingField = form.fields.find((old) => old.id === f.id);
+
+          let fieldId = f.id;
+          if (!fieldId || !form.fields.find((old) => old.id === fieldId)) {
+            fieldId =
+              idMap[labelTypeKey] ||
+              existingField?.id ||
+              `field-${Date.now()}-${i}`;
+          }
+
+          return {
+            id: fieldId,
+            label: f.label,
+            /** 🔥 Convert Builder → DB format */
+            type:
+              f.type === "radio-group"
+                ? "radio"
+                : f.type === "checkbox-group"
+                ? "checkbox"
+                : f.type,
+            required: !!f.required,
+            order: i,
+            options: ["select", "radio-group", "checkbox-group"].includes(
+              f.type
+            )
               ? (f.values || []).map((opt) => ({
                   label: opt.label?.trim() || "",
                   value: opt.value?.trim() || "",
                 }))
               : null,
-          validation: f.validation || null,
-          className: f.className || "",
-        })),
+            validation: f.validation || null,
+            className: f.className || "",
+          };
+        }),
       };
 
       await updateForm(token, form.id, payload);
@@ -165,85 +183,105 @@ export default function EditForm() {
       className="
         min-h-screen 
         pt-28 pb-12 px-4 
-        bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50
+        relative
       "
+      style={{
+        backgroundImage: `url("${editPageBg}")`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+      }}
     >
+      {/* Background image opacity overlay */}
+      <div className="absolute inset-0 bg-black/85"></div>
 
-      <div className="max-w-5xl mx-auto flex justify-between items-center mb-8">
-        <motion.button
-          onClick={() => navigate(-1)}
-          whileHover={{ scale: 1.05 }}
-          className="flex items-center px-4 py-2 bg-white/70 backdrop-blur-md shadow-md rounded-lg border border-gray-200 hover:bg-white transition"
-        >
-          <ArrowLeftIcon className="w-5 h-5 mr-2 text-indigo-600" />
-          Back
-        </motion.button>
+      <div className="relative z-10">
+        <div className="max-w-5xl mx-auto flex justify-between items-center mb-8">
+          <motion.button
+            onClick={() => navigate(-1)}
+            whileHover={{ scale: 1.05 }}
+            className="!flex !items-center !px-3 !py-2 sm:!px-6 sm:!py-3 !bg-gradient-to-r !from-yellow-400 !to-yellow-500 !shadow-xl !rounded-full !border-2 !border-yellow-300 hover:!from-yellow-500 hover:!to-yellow-600 hover:!shadow-2xl !transition-all !duration-300 !no-underline"
+          >
+            <ArrowLeftIcon className="!w-4 !h-4 sm:!w-6 sm:!h-6 !mr-1 sm:!mr-2 !text-white !drop-shadow-lg" />
+            <span className="!text-white !font-bold !text-xs sm:!text-lg !drop-shadow-lg">
+              Back
+            </span>
+          </motion.button>
 
-        <h2 className="text-4xl font-bold text-gray-800 drop-shadow-sm">
-          Edit Form
-        </h2>
+          <h2
+            className="text-3xl sm:text-5xl font-black text-white drop-shadow-2xl bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 bg-clip-text text-transparent shadow-2xl text-center flex-1 inline-block tracking-widest"
+            style={{
+              fontFamily: "Playfair Display, Georgia, serif",
+              textShadow:
+                "0 0 30px rgba(251, 191, 36, 0.8), 0 0 60px rgba(251, 191, 36, 0.4)",
+              filter: "drop-shadow(0 0 10px rgba(251, 191, 36, 0.3))",
+            }}
+          >
+            EDIT FORM
+          </h2>
 
-        <div></div>
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="
-          max-w-5xl mx-auto p-10 rounded-2xl shadow-2xl 
-          bg-white/80 backdrop-blur-xl border border-gray-200
-        "
-      >
-        <div className="mb-8">
-          <label className="block text-lg font-semibold mb-2 text-gray-700">
-            Form Title
-          </label>
-          <input
-            type="text"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-            className="w-full border p-3 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500"
-            placeholder="Enter form title"
-          />
+          <div></div>
         </div>
 
-        <div className="mb-10">
-          <label className="block text-lg font-semibold mb-2 text-gray-700">
-            Description
-          </label>
-          <textarea
-            value={form.description}
-            onChange={(e) =>
-              setForm({ ...form, description: e.target.value })
-            }
-            rows="4"
-            className="w-full border p-3 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500"
-            placeholder="Describe the purpose of this form..."
-          ></textarea>
-        </div>
-
-        <div className="border-t pt-8">
-          <FormBuilderWrapper
-            fieldsJson={form.fields || []}
-            onSave={handleFieldsUpdate}
-          />
-        </div>
-
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          disabled={saving}
-          onClick={handleSubmit}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
           className="
-            w-full mt-10 py-3 text-white font-semibold rounded-xl 
-            bg-gradient-to-r from-indigo-600 to-purple-600 
-            shadow-lg hover:shadow-2xl transition
-            disabled:from-gray-400 disabled:to-gray-400
-          "
+          max-w-5xl mx-auto p-10 rounded-3xl shadow-2xl 
+          bg-gradient-to-br from-yellow-50/90 via-white/90 to-yellow-50/90 backdrop-blur-xl border-2 border-yellow-300/50
+        "
         >
-          {saving ? "Saving..." : "Save Changes"}
-        </motion.button>
-      </motion.div>
+          <div className="!mb-8">
+            <label className="!block !text-lg !font-bold !mb-2 !text-yellow-700 !drop-shadow-sm">
+              Form Title
+            </label>
+            <input
+              type="text"
+              value={form.title}
+              onChange={(e) => setForm({ ...form, title: e.target.value })}
+              className="!w-full !border-2 !border-yellow-300/50 !p-3 !rounded-xl !shadow-lg focus:!ring-2 focus:!ring-yellow-400 focus:!border-yellow-400 !bg-white/80 !backdrop-blur-sm"
+              placeholder="Enter form title"
+            />
+          </div>
+
+          <div className="!mb-10">
+            <label className="!block !text-lg !font-bold !mb-2 !text-yellow-700 !drop-shadow-sm">
+              Description
+            </label>
+            <textarea
+              value={form.description}
+              onChange={(e) =>
+                setForm({ ...form, description: e.target.value })
+              }
+              rows="4"
+              className="!w-full !border-2 !border-yellow-300/50 !p-3 !rounded-xl !shadow-lg focus:!ring-2 focus:!ring-yellow-400 focus:!border-yellow-400 !bg-white/80 !backdrop-blur-sm"
+              placeholder="Describe the purpose of this form..."
+            ></textarea>
+          </div>
+
+          <div className="border-t pt-8">
+            <FormBuilderWrapper
+              fieldsJson={form.fields || []}
+              onSave={handleFieldsUpdate}
+            />
+          </div>
+
+          <motion.button
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            disabled={saving}
+            onClick={handleSubmit}
+            className="
+            !w-full !mt-10 !py-4 !text-white !font-bold !text-xl !rounded-xl 
+            !bg-gradient-to-r !from-amber-600 !to-orange-600 
+            !shadow-lg hover:!shadow-xl !transition-all !duration-300 !border !border-amber-500
+            disabled:!from-gray-400 disabled:!to-gray-500 disabled:!border-gray-400 !no-underline
+          "
+          >
+            {saving ? "Saving..." : "Save Changes"}
+          </motion.button>
+        </motion.div>
+      </div>
     </div>
   );
 }

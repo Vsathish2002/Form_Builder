@@ -166,7 +166,7 @@ export class AuthService {
     };
   }
 
- 
+
   // Login user and return JWT
   async login(user: User) {
     const payload = { email: user.email, sub: user.id, role: user.role.name };
@@ -184,7 +184,15 @@ export class AuthService {
         name: user.name,
         email: user.email,
         role: user.role.name,
+
+        // ADD ALL NEW FIELDS
+        gender: user.gender,
+        dob: user.dob,
+        address: user.address,
+        phone: user.phone,
+        bio: user.bio,
       },
     };
+
   }
 }

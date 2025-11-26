@@ -29,14 +29,14 @@ export default function Navbar() {
   const linkClass = (path) =>
     `flex items-center gap-2 px-4 py-2 rounded-md text-xl font-medium border transition-all duration-200 ${
       location.pathname === path
-        ? "bg-white/15 text-white border-white/30 shadow-md"
+        ? "bg-white/15 text-white border-white/30 shadow-md border-b-2 border-white"
         : "text-indigo-100/80 border-transparent hover:text-white hover:bg-white/10"
     }`;
 
   const mobileLinkClass = (path) =>
     `flex items-center gap-3 text-lg ${
       location.pathname === path
-        ? "text-indigo-300 font-semibold"
+        ? "text-indigo-300 font-semibold underline"
         : "text-white hover:text-indigo-300"
     }`;
 

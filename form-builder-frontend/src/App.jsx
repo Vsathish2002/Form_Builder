@@ -5,17 +5,21 @@ import AppRoutes from "./routes/AppRoutes";
 import Footer from "./components/Footer";
 import { Toaster } from "react-hot-toast";
 
+import VoiceNavigation from "../src/components/VoiceNavigation";
+
+
 function App() {
 
   const location = useLocation();
 
   const isPublicFormPage = location.pathname.startsWith("/public/");
   const isAdminPage = location.pathname.startsWith("/admin/");
+  const isEditPage = location.pathname.startsWith("/edit/");
 
-  const hideNavbar = isPublicFormPage || isAdminPage;
-  const hideFooter = isPublicFormPage || isAdminPage;
-
-  const removePadding = isPublicFormPage || isAdminPage;
+  const hideNavbar = isPublicFormPage || isAdminPage || isEditPage;
+  const hideFooter = isPublicFormPage || isAdminPage || isEditPage;
+  const hideVoiceNav = isPublicFormPage || isAdminPage;
+  const removePadding = isPublicFormPage || isAdminPage || isEditPage;
 
   return (
     <div className="w-full min-h-screen flex flex-col bg-gray-50 font-sans text-gray-800">
@@ -28,6 +32,7 @@ function App() {
       </main>
 
       {!hideFooter && <Footer />}
+      {!hideVoiceNav && <VoiceNavigation />}
     </div>
   );
 }

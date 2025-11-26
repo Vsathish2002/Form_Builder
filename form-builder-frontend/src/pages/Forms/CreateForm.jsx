@@ -7,6 +7,7 @@ import FormEditor from "../../components/FormEditor";
 import { motion } from "framer-motion";
 import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import toast from "react-hot-toast";
+import createPageBg from "../../assets/createbg.png";
 
 export default function CreateForm() {
   const [form, setForm] = useState({ title: "", description: "", fields: [] });
@@ -47,31 +48,39 @@ export default function CreateForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-tr from-blue-50 via-purple-50 to-pink-50 relative flex flex-col items-center justify-start py-12 px-4 md:px-8 overflow-hidden">
-
-      <div className="absolute top-0 left-1/2 w-96 h-96 bg-purple-200 rounded-full opacity-30 -translate-x-1/2 -translate-y-1/2 animate-pulse"></div>
-      <div className="absolute bottom-0 right-0 w-72 h-72 bg-pink-200 rounded-full opacity-30 animate-pulse"></div>
+    <div 
+      className="min-h-screen relative flex flex-col items-center justify-start py-12 px-4 md:px-8 overflow-hidden"
+      style={{
+        backgroundImage: `url("${createPageBg}")`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundAttachment: 'fixed'
+      }}
+    >
+      {/* Background image opacity overlay */}
+      <div className="absolute inset-0 bg-blue-900/85"></div>
 
       <motion.div
         initial="hidden"
         animate="visible"
         variants={fadeUp}
-        className="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-10 md:p-12 relative z-10"
+        className="w-full max-w-2xl bg-gradient-to-br from-blue-50/95 via-white/95 to-indigo-50/95 backdrop-blur-xl rounded-3xl shadow-2xl p-10 md:p-12 relative z-10 border-2 border-blue-300/60"
       >
         <motion.button
           onClick={() => navigate(-1)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="flex items-center mb-6 text-indigo-600 font-semibold hover:text-indigo-800"
+          className="!flex !items-center mb-6 !px-3 !py-2 sm:!px-6 sm:!py-3 !bg-gradient-to-r !from-blue-500 !to-indigo-500 !shadow-xl !rounded-full !border-2 !border-blue-300 hover:!from-blue-600 hover:!to-indigo-600 hover:!shadow-2xl !transition-all !duration-300 !no-underline"
         >
-          <ArrowLeftIcon className="w-5 h-5 mr-2" />
-          Back
+          <ArrowLeftIcon className="!w-4 !h-4 sm:!w-6 sm:!h-6 !mr-1 sm:!mr-2 !text-white !drop-shadow-lg" />
+          <span className="!text-white !font-bold !text-sm sm:!text-lg !drop-shadow-lg">Back</span>
         </motion.button>
 
         <motion.h2
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0, transition: { duration: 0.6 } }}
-          className="text-4xl md:text-5xl font-extrabold text-center text-blue-700 mb-4"
+          className="text-4xl md:text-5xl !font-black text-center bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 bg-clip-text text-transparent mb-6 tracking-wide"
+          style={{ fontFamily: 'Playfair Display, Georgia, serif', textShadow: '0 0 20px rgba(59, 130, 246, 0.3)' }}
         >
           Create a New Form
         </motion.h2>
@@ -79,10 +88,9 @@ export default function CreateForm() {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, transition: { delay: 0.2 } }}
-          className="text-center text-gray-500 mb-8"
+          className="text-center !text-blue-600/80 mb-10 !text-lg !font-medium"
         >
-          Add a title and description, then start building your custom form
-          using the editor below. It's fast, responsive, and flexible!
+          Fast, responsive, and professional results.
         </motion.p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -93,7 +101,7 @@ export default function CreateForm() {
             disabled={loading}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-3 rounded-2xl shadow-lg transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:bg-gray-300"
+            className="!w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:via-indigo-700 hover:to-blue-800 !text-white !font-bold !py-4 !rounded-2xl !shadow-xl transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-blue-300 disabled:from-gray-400 disabled:to-gray-500 !text-lg !border !border-blue-500/30"
           >
             {loading ? "Creating..." : "Create Form & Add Fields"}
           </motion.button>
@@ -106,14 +114,14 @@ export default function CreateForm() {
             y: 0,
             transition: { delay: 0.4 },
           }}
-          className="mt-6 text-center text-gray-500 text-sm"
+          className="mt-8 text-center !text-blue-600/70 !text-sm"
         >
           Need help?{" "}
           <a
             href="https://formbuilder.online/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 font-semibold hover:underline"
+            className="!text-blue-700 !font-bold hover:!underline transition-colors"
           >
             See documentation
           </a>{" "}

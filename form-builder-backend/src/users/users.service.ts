@@ -77,6 +77,7 @@ export class UsersService {
     user.gender = updateData.gender ?? user.gender;
     user.address = updateData.address ?? user.address;
     user.phone = updateData.phone ?? user.phone;
+    user.dob = updateData.dob ?? user.dob;
     user.bio = updateData.bio ?? user.bio;
 
     await this.userRepo.save(user);

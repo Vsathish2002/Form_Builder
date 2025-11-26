@@ -12,7 +12,7 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
 
   useEffect(() => {
 
-    const bootstrapLink = document.createElement("link");
+    const bootstrapLink = document.createElement("link");  
     bootstrapLink.rel = "stylesheet";
     bootstrapLink.href = "/libs/bootstrap.min.css"; 
     document.head.appendChild(bootstrapLink);

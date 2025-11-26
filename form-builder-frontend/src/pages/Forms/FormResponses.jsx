@@ -116,17 +116,16 @@ export default function FormResponses() {
       const row = { submittedAt: new Date(r.createdAt).toLocaleString() };
 
       filteredFields.forEach((field) => {
-        let val =
-          r.responseData?.[field.id] ??
-          r.responseData?.[field.name] ??
-          r.responseData?.[field.label] ??
-          "-";
+        // The response data is stored with field IDs as keys (UUIDs)
+        let val = r.responseData?.[field.id] ?? "-";
 
+        // Handle different data types
         if (val && typeof val === "object" && !Array.isArray(val)) {
           const innerValue = Object.values(val)[0];
           val = typeof innerValue === "string" ? innerValue : JSON.stringify(val);
         }
 
+        // Handle JSON strings (like arrays from checkboxes)
         if (typeof val === "string" && val.startsWith("[")) {
           try {
             val = JSON.parse(val);
@@ -151,7 +150,7 @@ export default function FormResponses() {
               {filename}
             </a>
           );
-        } else if (val) {
+        } else if (val && val !== "-") {
           row[field.label] = String(val);
         } else {
           row[field.label] = "-";
@@ -173,12 +172,18 @@ export default function FormResponses() {
     return responses.map((r) => {
       const row = { submittedAt: new Date(r.createdAt).toLocaleString() };
       filteredFields.forEach((field) => {
-        const val =
-          r.responseData?.[field.id] ??
-          r.responseData?.[field.name] ??
-          r.responseData?.[field.label] ??
-          "-";
+        // The response data is stored with field IDs as keys (UUIDs)
+        let val = r.responseData?.[field.id] ?? "-";
+        
         if (Array.isArray(val)) row[field.label] = val.join(", ");
+        else if (typeof val === "string" && val.startsWith("[")) {
+          try {
+            const parsed = JSON.parse(val);
+            row[field.label] = Array.isArray(parsed) ? parsed.join(", ") : val;
+          } catch {
+            row[field.label] = val;
+          }
+        }
         else if (typeof val === "string" && val.startsWith("/uploads/"))
           row[field.label] = val.split("/").pop();
         else row[field.label] = val || "-";
