@@ -116,7 +116,10 @@ export default function ManageUsers() {
                       {/* Name */}
                       <td className="p-3 truncate">
                         <div className="flex items-center gap-2">
-                          <User size={18} className="text-indigo-600 flex-shrink-0" />
+                          <User
+                            size={18}
+                            className="text-indigo-600 flex-shrink-0"
+                          />
                           <span className="font-semibold text-gray-800 truncate">
                             {u.name || "—"}
                           </span>
@@ -126,7 +129,10 @@ export default function ManageUsers() {
                       {/* Email */}
                       <td className="p-3 truncate">
                         <div className="flex items-center gap-2 text-gray-700">
-                          <Mail size={16} className="text-gray-500 flex-shrink-0" />
+                          <Mail
+                            size={16}
+                            className="text-gray-500 flex-shrink-0"
+                          />
                           <span className="truncate">{u.email}</span>
                         </div>
                       </td>
@@ -134,7 +140,10 @@ export default function ManageUsers() {
                       {/* Role */}
                       <td className="p-3 truncate">
                         <div className="flex items-center gap-2 text-gray-700">
-                          <Shield size={16} className="text-gray-500 flex-shrink-0" />
+                          <Shield
+                            size={16}
+                            className="text-gray-500 flex-shrink-0"
+                          />
                           <span className="truncate">
                             {u.role?.name || u.role || "—"}
                           </span>

@@ -1,8 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import $ from "jquery";
-import "jquery-ui-dist/jquery-ui.min.css"; 
-
-
+import "jquery-ui-dist/jquery-ui.min.css";
 
 window.$ = window.jQuery = $;
 
@@ -11,12 +9,10 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
   const editorContainer = useRef(null);
 
   useEffect(() => {
-
-    const bootstrapLink = document.createElement("link");  
+    const bootstrapLink = document.createElement("link");
     bootstrapLink.rel = "stylesheet";
-    bootstrapLink.href = "/libs/bootstrap.min.css"; 
+    bootstrapLink.href = "/libs/bootstrap.min.css";
     document.head.appendChild(bootstrapLink);
-
 
     Promise.all([
       import("jquery-ui-dist/jquery-ui"),
@@ -48,7 +44,7 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
       bootstrapLink.remove();
       console.log("🧹 Removed bootstrap link and cleaned up form builder");
     };
-  }, [fieldsJson]); 
+  }, [fieldsJson]);
 
   function initFormBuilder($) {
     if (builderRef.current?.actions) {
@@ -60,7 +56,6 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
       }
       builderRef.current = null;
     }
-
 
     const controlPlugins = {
       header: {
@@ -78,7 +73,9 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
         ],
         onRender: (field) => {
           const subtype = field.subtype || "h3";
-          return `<${subtype} class="fw-bold mt-3 mb-2">${field.label || ""}</${subtype}>`;
+          return `<${subtype} class="fw-bold mt-3 mb-2">${
+            field.label || ""
+          }</${subtype}>`;
         },
       },
 
@@ -86,7 +83,8 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
         label: "Paragraph",
         icon: "📝",
         fields: [{ label: "Text", name: "label", type: "textarea" }],
-        onRender: (field) => `<p class="text-muted my-3">${field.label || ""}</p>`,
+        onRender: (field) =>
+          `<p class="text-muted my-3">${field.label || ""}</p>`,
       },
 
       section: {
@@ -114,7 +112,11 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
         fields: [
           { label: "Label", name: "label", type: "text" },
           { label: "Allow Multiple Files", name: "multiple", type: "checkbox" },
-          { label: "Accepted Types (e.g. image/*, .pdf)", name: "accept", type: "text" },
+          {
+            label: "Accepted Types (e.g. image/*, .pdf)",
+            name: "accept",
+            type: "text",
+          },
         ],
         onRender: (field) => {
           const multiple = field.multiple ? "multiple" : "";
@@ -131,10 +133,10 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
       page: {
         label: "Page Break",
         icon: "📑",
-        onRender: () => `<div class="text-center text-primary my-3">--- Page Break ---</div>`,
+        onRender: () =>
+          `<div class="text-center text-primary my-3">--- Page Break ---</div>`,
       },
     };
-
 
     Object.entries(controlPlugins).forEach(([key, plugin]) => {
       try {
@@ -144,7 +146,6 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
       }
     });
 
- 
     const options = {
       disableFields: ["button", "hidden", "autocomplete"],
       controlOrder: [
@@ -169,21 +170,17 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
           const raw = fb?.actions?.getData("json") || formData || "[]";
           const parsed = JSON.parse(raw);
 
-    
           const finalFields = parsed.map((f, i) => {
-           
             const old = fieldsJson.find((x) => x.id === f.id);
 
-         
             const stableId = old?.id || f.id;
 
-   
             let options = [];
             if (["select", "radio-group", "checkbox-group"].includes(f.type)) {
               options = (f.values || [])
                 .map((opt) => {
                   const label = (opt.label || "").trim();
-              
+
                   const value =
                     opt.value && String(opt.value).startsWith("option-")
                       ? label
@@ -209,14 +206,13 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
           console.log("✅ onSave final fields:", finalFields);
           onSave(finalFields);
 
-       
           fb.promise.then(() => {
             try {
               fb.actions.clearFields();
               fb.actions.setData(
                 finalFields.map((fld) => ({
                   ...fld,
-               
+
                   values: fld.options || [],
                 }))
               );
@@ -230,11 +226,9 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
       },
     };
 
-
     const fbEditor = $(editorContainer.current).formBuilder(options);
     builderRef.current = fbEditor;
     window._formBuilderInstance = fbEditor;
-
 
     fbEditor.promise.then((fbInstance) => {
       try {
@@ -245,7 +239,6 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
         }
 
         if (fieldsJson.length > 0) {
-     
           const transformed = fieldsJson.map((f) => {
             const field = { ...f };
             field.id = f.id;
@@ -253,7 +246,9 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
 
             if (["select", "radio-group", "checkbox-group"].includes(f.type)) {
               field.values = (f.options || []).map((opt) =>
-                typeof opt === "object" ? { label: opt.label, value: opt.value } : { label: opt, value: opt }
+                typeof opt === "object"
+                  ? { label: opt.label, value: opt.value }
+                  : { label: opt, value: opt }
               );
             }
 
@@ -272,7 +267,9 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
 
   return (
     <div className="my-8">
-      <h3 className="text-2xl font-semibold mb-4 text-gray-800">Drag & Drop Form Builder</h3>
+      <h3 className="text-2xl font-semibold mb-4 text-gray-800">
+        Drag & Drop Form Builder
+      </h3>
       <div
         ref={editorContainer}
         id="fb-editor"

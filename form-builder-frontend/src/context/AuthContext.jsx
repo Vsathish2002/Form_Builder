@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 
 const AuthContext = createContext();
 
- export function AuthProvider({ children }) {
+export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("user")) || null;
@@ -13,7 +13,9 @@ const AuthContext = createContext();
     }
   });
 
-  const [token, setToken] = useState(() => localStorage.getItem("token") || null);
+  const [token, setToken] = useState(
+    () => localStorage.getItem("token") || null
+  );
 
   useEffect(() => {
     const interceptor = axios.interceptors.request.use((config) => {

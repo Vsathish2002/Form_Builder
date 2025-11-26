@@ -68,16 +68,15 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
         toast.success(`New response received for "${form.title}"`);
         setIsLoading(false);
         setStatusMessage("Form submitted!");
-        
+
         setSubmittedData(data.answers || []);
-      } 
+      }
     });
 
     return () => {
       socket.disconnect();
     };
   }, [form.id]);
-
 
   const handleGenerateQr = async () => {
     if (!isActive) {
@@ -88,7 +87,7 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
     try {
       const qr = await generateFormQrCode(token, form.id);
       setQrCode(qr);
-      setShowQrModal(true); 
+      setShowQrModal(true);
       setSubmittedData(null);
       setIsLoading(false);
       toast.dismiss(toastId);
@@ -167,131 +166,116 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
 
   return (
     <>
-        {/* ===================== Form Card (Redesigned Dark Theme) ===================== */}
-<motion.div
-  className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900
+      <motion.div
+        className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900
              border border-white/10 rounded-2xl p-6 shadow-[0_0_20px_rgba(0,0,0,0.4)]
              backdrop-blur-lg hover:shadow-[0_0_30px_rgba(99,102,241,0.3)]
              transition-all duration-300 flex flex-col justify-between
              w-full max-w-sm sm:max-w-md mx-auto overflow-hidden"
->
-  {/* Neon Border Effect */}
-  <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-indigo-500/30 via-purple-500/20 to-transparent opacity-40 blur-3xl pointer-events-none"></div>
+      >
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-indigo-500/30 via-purple-500/20 to-transparent opacity-40 blur-3xl pointer-events-none"></div>
 
-  {/* Header */}
-  <div className="flex justify-between items-start mb-3 relative z-10">
-    <h3 className="text-lg md:text-xl font-semibold text-white line-clamp-1 drop-shadow">
-      {form.title}
-    </h3>
-    <span
-      className={`px-3 py-1 text-xs md:text-sm rounded-full shadow font-semibold ${
-        isActive
-          ? "bg-green-600/30 text-green-300 border border-green-500/30"
-          : "bg-gray-600/30 text-gray-300 border border-gray-500/30"
-      }`}
-    >
-      {isActive ? "Active" : "Inactive"}
-    </span>
-  </div>
+        <div className="flex justify-between items-start mb-3 relative z-10">
+          <h3 className="text-lg md:text-xl font-semibold text-white line-clamp-1 drop-shadow">
+            {form.title}
+          </h3>
+          <span
+            className={`px-3 py-1 text-xs md:text-sm rounded-full shadow font-semibold ${
+              isActive
+                ? "bg-green-600/30 text-green-300 border border-green-500/30"
+                : "bg-gray-600/30 text-gray-300 border border-gray-500/30"
+            }`}
+          >
+            {isActive ? "Active" : "Inactive"}
+          </span>
+        </div>
 
-  {/* Description */}
-  <p className="text-gray-300 mb-5 text-sm md:text-base leading-relaxed line-clamp-3 relative z-10">
-    {form.description || "No description provided."}
-  </p>
+        <p className="text-gray-300 mb-5 text-sm md:text-base leading-relaxed line-clamp-3 relative z-10">
+          {form.description || "No description provided."}
+        </p>
 
-  {/* Buttons */}
- {/* Action Buttons (Futuristic Style) */}
-<div className="flex flex-wrap gap-2 mt-auto justify-center md:justify-start relative z-10">
-
-  {/* Responses */}
-  <Link
-    to={`/forms/${form.id}/responses`}
-    className="group flex items-center gap-2 px-4 py-2 text-xs md:text-sm font-medium rounded-full 
+        <div className="flex flex-wrap gap-2 mt-auto justify-center md:justify-start relative z-10">
+          <Link
+            to={`/forms/${form.id}/responses`}
+            className="group flex items-center gap-2 px-4 py-2 text-xs md:text-sm font-medium rounded-full 
                bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-blue-300 
                border border-blue-500/30 backdrop-blur-sm shadow-[0_0_10px_rgba(37,99,235,0.3)]
                hover:from-blue-500/40 hover:to-blue-600/40 hover:shadow-[0_0_20px_rgba(37,99,235,0.5)]
                transition-all duration-300"
-  >
-    <FiEye className="group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300" />
-    Responses
-  </Link>
+          >
+            <FiEye className="group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300" />
+            Responses
+          </Link>
 
-  {/* Edit */}
-  <Link
-    to={`/edit/${form.id}`}
-    className="group flex items-center gap-2 px-4 py-2 text-xs md:text-sm font-medium rounded-full 
+          <Link
+            to={`/edit/${form.id}`}
+            className="group flex items-center gap-2 px-4 py-2 text-xs md:text-sm font-medium rounded-full 
                bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 
                border border-green-500/30 backdrop-blur-sm shadow-[0_0_10px_rgba(16,185,129,0.3)]
                hover:from-green-500/40 hover:to-emerald-500/40 hover:shadow-[0_0_20px_rgba(16,185,129,0.5)]
                transition-all duration-300"
-  >
-    <FiEdit className="group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300" />
-    Edit
-  </Link>
+          >
+            <FiEdit className="group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-300" />
+            Edit
+          </Link>
 
-  {/* Delete */}
-  <button
-    onClick={() => onDelete(form.id)}
-    className="group flex items-center gap-2 px-4 py-2 text-xs md:text-sm font-medium rounded-full 
+          <button
+            onClick={() => onDelete(form.id)}
+            className="group flex items-center gap-2 px-4 py-2 text-xs md:text-sm font-medium rounded-full 
                bg-gradient-to-r from-red-500/20 to-rose-500/20 text-red-300 
                border border-red-500/30 backdrop-blur-sm shadow-[0_0_10px_rgba(239,68,68,0.3)]
                hover:from-red-500/40 hover:to-rose-500/40 hover:shadow-[0_0_20px_rgba(239,68,68,0.5)]
                transition-all duration-300"
-  >
-    <FiTrash2 className="group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300" />
-    Delete
-  </button>
+          >
+            <FiTrash2 className="group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300" />
+            Delete
+          </button>
 
-  {/* Activate / Deactivate */}
-  <button
-    onClick={handleToggleStatus}
-    className={`group flex items-center gap-2 px-4 py-2 text-xs md:text-sm font-medium rounded-full 
+          <button
+            onClick={handleToggleStatus}
+            className={`group flex items-center gap-2 px-4 py-2 text-xs md:text-sm font-medium rounded-full 
                 border backdrop-blur-sm transition-all duration-300 ${
-      isActive
-        ? "bg-gradient-to-r from-yellow-400/20 to-amber-500/20 text-yellow-300 border-yellow-500/30 hover:from-yellow-400/40 hover:to-amber-500/40 hover:shadow-[0_0_20px_rgba(234,179,8,0.5)]"
-        : "bg-gradient-to-r from-green-400/20 to-emerald-500/20 text-green-300 border-green-500/30 hover:from-green-400/40 hover:to-emerald-500/40 hover:shadow-[0_0_20px_rgba(16,185,129,0.5)]"
-    }`}
-  >
-    <FiPower className="group-hover:scale-110 transition-transform duration-300" />
-    {isActive ? "Deactivate" : "Activate"}
-  </button>
+                  isActive
+                    ? "bg-gradient-to-r from-yellow-400/20 to-amber-500/20 text-yellow-300 border-yellow-500/30 hover:from-yellow-400/40 hover:to-amber-500/40 hover:shadow-[0_0_20px_rgba(234,179,8,0.5)]"
+                    : "bg-gradient-to-r from-green-400/20 to-emerald-500/20 text-green-300 border-green-500/30 hover:from-green-400/40 hover:to-emerald-500/40 hover:shadow-[0_0_20px_rgba(16,185,129,0.5)]"
+                }`}
+          >
+            <FiPower className="group-hover:scale-110 transition-transform duration-300" />
+            {isActive ? "Deactivate" : "Activate"}
+          </button>
 
-  {/* QR */}
-  <button
-    onClick={handleGenerateQr}
-    className="group flex items-center gap-2 px-4 py-2 text-xs md:text-sm font-medium rounded-full 
+          <button
+            onClick={handleGenerateQr}
+            className="group flex items-center gap-2 px-4 py-2 text-xs md:text-sm font-medium rounded-full 
                bg-gradient-to-r from-purple-500/20 to-violet-500/20 text-purple-300 
                border border-purple-500/30 backdrop-blur-sm shadow-[0_0_10px_rgba(168,85,247,0.3)]
                hover:from-purple-500/40 hover:to-violet-500/40 hover:shadow-[0_0_20px_rgba(168,85,247,0.5)]
                transition-all duration-300"
-  >
-    <BsQrCode className="group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300" />
-    QR
-  </button>
+          >
+            <BsQrCode className="group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300" />
+            QR
+          </button>
 
-  {/* Share */}
-  <button
-    onClick={() => {
-      if (!isActive) {
-        toast.error("Form is inactive. Activate it to share.");
-        return;
-      }
-      setShowShareModal(true);
-    }}
-    className="group flex items-center gap-2 px-4 py-2 text-xs md:text-sm font-medium rounded-full 
+          <button
+            onClick={() => {
+              if (!isActive) {
+                toast.error("Form is inactive. Activate it to share.");
+                return;
+              }
+              setShowShareModal(true);
+            }}
+            className="group flex items-center gap-2 px-4 py-2 text-xs md:text-sm font-medium rounded-full 
                bg-gradient-to-r from-indigo-500/20 to-blue-600/20 text-indigo-300 
                border border-indigo-500/30 backdrop-blur-sm shadow-[0_0_10px_rgba(99,102,241,0.3)]
                hover:from-indigo-500/40 hover:to-blue-600/40 hover:shadow-[0_0_20px_rgba(99,102,241,0.5)]
                transition-all duration-300"
-  >
-    <FiLink className="group-hover:scale-110 group-hover:rotate-3 transition-transform duration-100" />
-    Share
-  </button>
+          >
+            <FiLink className="group-hover:scale-110 group-hover:rotate-3 transition-transform duration-100" />
+            Share
+          </button>
+        </div>
+      </motion.div>
 
-</div>
-
-</motion.div>
-      {/* ===================== QR Modal (Amazing Design) ===================== */}
       <AnimatePresence>
         {showQrModal && qrCode && (
           <motion.div
@@ -301,7 +285,6 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
             exit={{ opacity: 0 }}
             onClick={() => setShowQrModal(false)}
           >
-            {/* Animated Background Effects */}
             <div className="absolute inset-0 overflow-hidden">
               <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse"></div>
               <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
@@ -319,11 +302,9 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
               transition={{ duration: 0.4, type: "spring", stiffness: 200 }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Neon Border Glow */}
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-indigo-500/20 via-purple-500/15 to-blue-500/20 opacity-60 blur-xl pointer-events-none"></div>
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-cyan-500/10 to-transparent opacity-40 pointer-events-none"></div>
 
-              {/* Header */}
               <motion.div
                 className="relative z-10 mb-6"
                 initial={{ y: -20, opacity: 0 }}
@@ -347,7 +328,6 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
                   animate={{ scale: 1, opacity: 1 }}
                   transition={{ delay: 0.3 }}
                 >
-                  {/* QR Code Container with Glow */}
                   <div className="relative mb-6">
                     <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/30 to-purple-500/30 rounded-3xl blur-xl scale-110 animate-pulse"></div>
                     <motion.img
@@ -358,7 +338,7 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
                       whileHover={{ scale: 1.05, rotate: 2 }}
                       transition={{ type: "spring", stiffness: 300 }}
                     />
-                    {/* Corner Decorations */}
+
                     <div className="absolute -top-2 -left-2 w-6 h-6 border-l-4 border-t-4 border-indigo-400 rounded-tl-lg"></div>
                     <div className="absolute -top-2 -right-2 w-6 h-6 border-r-4 border-t-4 border-purple-400 rounded-tr-lg"></div>
                     <div className="absolute -bottom-2 -left-2 w-6 h-6 border-l-4 border-b-4 border-blue-400 rounded-bl-lg"></div>
@@ -371,7 +351,8 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.4 }}
                   >
-                    Scan this QR code with any device to instantly access and fill out your form
+                    Scan this QR code with any device to instantly access and
+                    fill out your form
                   </motion.p>
 
                   <motion.button
@@ -426,9 +407,7 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
                     className="text-6xl mb-4"
                     animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
                     transition={{ duration: 0.8 }}
-                  >
-                    
-                  </motion.div>
+                  ></motion.div>
                   <h3 className="text-white font-bold text-xl md:text-2xl mb-4">
                     Form Submitted Successfully!
                   </h3>
@@ -459,12 +438,10 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
                           .map((a, i) => {
                             let displayValue = a.value;
 
-                            // ✅ If it's an array (checkbox or multi-select)
                             if (Array.isArray(displayValue)) {
                               displayValue = displayValue.join(", ");
                             }
 
-                            // ✅ If it's a stringified array like '["indoor","cricket"]'
                             if (
                               typeof displayValue === "string" &&
                               displayValue.startsWith("[")
@@ -478,7 +455,6 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
                               }
                             }
 
-                            // ✅ If it's an uploaded file — show only filename as clickable link
                             if (
                               typeof displayValue === "string" &&
                               displayValue.startsWith("/uploads/")
@@ -539,7 +515,6 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
         )}
       </AnimatePresence>
 
-      {/* ===================== Share Modal (Amazing Design) ===================== */}
       <AnimatePresence>
         {showShareModal && (
           <motion.div
@@ -549,7 +524,6 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
             exit={{ opacity: 0 }}
             onClick={() => setShowShareModal(false)}
           >
-            {/* Animated Background Effects */}
             <div className="absolute inset-0 overflow-hidden">
               <div className="absolute top-1/3 left-1/3 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl animate-pulse"></div>
               <div className="absolute bottom-1/3 right-1/3 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
@@ -567,11 +541,9 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
               transition={{ duration: 0.4, type: "spring", stiffness: 200 }}
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Neon Border Glow */}
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-indigo-500/20 via-purple-500/15 to-blue-500/20 opacity-60 blur-xl pointer-events-none"></div>
               <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-cyan-500/10 to-transparent opacity-40 pointer-events-none"></div>
 
-              {/* Header */}
               <motion.div
                 className="relative z-10 mb-6"
                 initial={{ y: -20, opacity: 0 }}
@@ -590,7 +562,6 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
                 animate={{ scale: 1, opacity: 1 }}
                 transition={{ delay: 0.3 }}
               >
-                {/* Copy Link Button */}
                 <motion.button
                   onClick={handleCopyLink}
                   className="group relative flex items-center justify-center gap-3 px-6 py-4 rounded-2xl
@@ -606,7 +577,6 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
                   <span className="relative">📋 Copy Link</span>
                 </motion.button>
 
-                {/* Social Media Buttons */}
                 {socialButtons.map((btn, index) => (
                   <motion.a
                     key={btn.name}

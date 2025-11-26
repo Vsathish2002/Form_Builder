@@ -17,7 +17,6 @@ export default function PublicForm() {
   const [showSummary, setShowSummary] = useState(false);
   const [showResponseData, setShowResponseData] = useState(false);
 
-  /** 🧩 Load Form */
   useEffect(() => {
     (async () => {
       try {
@@ -32,12 +31,15 @@ export default function PublicForm() {
           return;
         }
 
-        const fieldsWithId = (data.fields || []).map((f, i) => ({
+        const fieldsWithId = (data.fields?.[0]?.fields || []).map((f, i) => ({
           id: f.id || `field-${i}`,
           ...f,
         }));
 
-        setForm({ ...data, fields: fieldsWithId });
+        setForm({ 
+          ...data, 
+          fields: fieldsWithId 
+        });
         setStatus({ loading: false, error: null, success: false });
       } catch {
         setStatus({
@@ -49,7 +51,6 @@ export default function PublicForm() {
     })();
   }, [slug]);
 
-  /** 📡 WebSocket setup */
   useEffect(() => {
     if (!form) return;
     const socket = io("http://localhost:4000", { transports: ["websocket"] });
@@ -58,7 +59,6 @@ export default function PublicForm() {
     return () => socket.disconnect();
   }, [form]);
 
-  /** 📨 Submit Handler */
   const handleSubmit = async (formData) => {
     setStatus({ loading: true, error: null, success: false });
 
@@ -75,8 +75,7 @@ export default function PublicForm() {
         responseData[key] = value instanceof File ? value.name : value;
       }
 
-      // Parse checkbox arrays back from JSON strings
-      form.fields.forEach((field) => {
+      (form.fields || []).forEach((field) => {
         if (field.type === "checkbox" && responseData[field.id]) {
           try {
             responseData[field.id] = JSON.parse(responseData[field.id]);
@@ -100,7 +99,6 @@ export default function PublicForm() {
     }
   };
 
-  /** 🔄 Submit Another */
   const handleSubmitAnother = () => {
     setShowSummary(false);
     setSavedData(null);
@@ -108,20 +106,16 @@ export default function PublicForm() {
     setStatus({ loading: false, error: null, success: false });
   };
 
-  /** 👁 Toggle Response */
   const toggleViewResponse = () => {
     setShowResponseData(!showResponseData);
   };
 
-  /* ------------------------------------------- */
-  /*  UI SECTIONS BELOW — FULL DARK GLASS DESIGN */
-  /* ------------------------------------------- */
-
-  /** 🧩 Loading UI */
   if (status.loading) {
     return (
-      <div className="min-h-screen flex flex-col justify-center items-center 
-                      bg-gradient-to-br from-[#0a0a1a] via-[#0f1025] to-[#151632] text-white">
+      <div
+        className="min-h-screen flex flex-col justify-center items-center 
+                      bg-gradient-to-br from-[#0a0a1a] via-[#0f1025] to-[#151632] text-white"
+      >
         <div className="w-14 h-14 border-4 border-indigo-400/30 border-t-indigo-500 rounded-full animate-spin mb-6"></div>
         <p className="text-gray-300 font-medium text-lg animate-pulse">
           Loading form...
@@ -130,13 +124,16 @@ export default function PublicForm() {
     );
   }
 
-  /** ❌ Error UI */
   if (status.error) {
     return (
-      <div className="min-h-screen flex items-center justify-center 
-                      bg-gradient-to-br from-[#0a0a1a] via-[#0f1025] to-[#151632] px-6">
-        <div className="bg-[rgba(255,255,255,0.05)] backdrop-blur-xl border border-white/10 
-                        p-10 rounded-3xl max-w-md text-center shadow-[0_0_25px_rgba(255,0,0,0.3)]">
+      <div
+        className="min-h-screen flex items-center justify-center 
+                      bg-gradient-to-br from-[#0a0a1a] via-[#0f1025] to-[#151632] px-6"
+      >
+        <div
+          className="bg-[rgba(255,255,255,0.05)] backdrop-blur-xl border border-white/10 
+                        p-10 rounded-3xl max-w-md text-center shadow-[0_0_25px_rgba(255,0,0,0.3)]"
+        >
           <h2 className="text-3xl font-bold text-red-400 mb-3">Oops!</h2>
           <p className="text-gray-300">{status.error}</p>
         </div>
@@ -144,16 +141,17 @@ export default function PublicForm() {
     );
   }
 
-  /** 🟢 Success Summary Page */
   if (showSummary && savedData) {
     return (
-      <div className="min-h-screen flex flex-col items-center 
+      <div
+        className="min-h-screen flex flex-col items-center 
                       bg-gradient-to-br from-[#0a0a1a] via-[#0f1025] to-[#151632] 
-                      text-white py-10 px-4">
-
-        <div className="w-full max-w-4xl bg-[rgba(255,255,255,0.06)] border border-white/10 
-                        backdrop-blur-xl rounded-3xl p-8 shadow-[0_0_30px_rgba(99,102,241,0.2)]">
-
+                      text-white py-10 px-4"
+      >
+        <div
+          className="w-full max-w-4xl bg-[rgba(255,255,255,0.06)] border border-white/10 
+                        backdrop-blur-xl rounded-3xl p-8 shadow-[0_0_30px_rgba(99,102,241,0.2)]"
+        >
           <div className="text-center mb-8">
             <FiCheckCircle size={52} className="text-green-400 mx-auto mb-3" />
             <h2 className="text-3xl font-bold">Response Submitted 🎉</h2>
@@ -162,12 +160,14 @@ export default function PublicForm() {
 
           {showResponseData && (
             <div className="space-y-5">
-              {form.fields
+              {(form.fields || [])
                 .filter((f) => !["header", "paragraph"].includes(f.type))
                 .map((field, idx) => (
-                  <div key={idx} 
-                       className="p-4 bg-[rgba(255,255,255,0.05)] border border-white/10 
-                                  rounded-xl shadow hover:shadow-lg transition">
+                  <div
+                    key={idx}
+                    className="p-4 bg-[rgba(255,255,255,0.05)] border border-white/10 
+                                  rounded-xl shadow hover:shadow-lg transition"
+                  >
                     <p className="text-gray-300 text-sm">{field.label}</p>
                     <p className="text-white font-semibold mt-1">
                       {Array.isArray(savedData[field.id])
@@ -179,22 +179,21 @@ export default function PublicForm() {
             </div>
           )}
 
-        <div className="flex flex-col sm:flex-row justify-center w-full gap-4 mt-10">
-  <button
-    onClick={toggleViewResponse}
-    className="w-full sm:w-auto px-6 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 shadow-lg text-center"
-  >
-    {showResponseData ? "Hide Response" : "View Response"}
-  </button>
+          <div className="flex flex-col sm:flex-row justify-center w-full gap-4 mt-10">
+            <button
+              onClick={toggleViewResponse}
+              className="w-full sm:w-auto px-6 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 shadow-lg text-center"
+            >
+              {showResponseData ? "Hide Response" : "View Response"}
+            </button>
 
-  <button
-    onClick={handleSubmitAnother}
-    className="w-full sm:w-auto px-6 py-3 rounded-lg bg-green-600 hover:bg-green-700 shadow-lg text-center"
-  >
-    Submit Another Response
-  </button>
-</div>
-
+            <button
+              onClick={handleSubmitAnother}
+              className="w-full sm:w-auto px-6 py-3 rounded-lg bg-green-600 hover:bg-green-700 shadow-lg text-center"
+            >
+              Submit Another Response
+            </button>
+          </div>
         </div>
 
         <footer className="mt-10 text-gray-400 text-sm text-center">
@@ -204,17 +203,15 @@ export default function PublicForm() {
     );
   }
 
-  /** 📄 Public Form (Default) */
   return (
-    <div className="min-h-screen flex flex-col items-center 
+    <div
+      className="min-h-screen flex flex-col items-center 
                     bg-gradient-to-br from-[#0a0a1a] via-[#0f1025] to-[#151632] 
-                    text-white py-10 px-4 relative overflow-hidden">
-
-      {/* Glow accents */}
+                    text-white py-10 px-4 relative overflow-hidden"
+    >
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.15),transparent_70%)]"></div>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(139,92,246,0.15),transparent_70%)]"></div>
 
-      {/* Main Form */}
       <div className="relative w-full max-w-4xl">
         {form && (
           <FormRenderer

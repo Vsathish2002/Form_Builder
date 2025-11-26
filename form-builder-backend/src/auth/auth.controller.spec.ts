@@ -10,7 +10,6 @@ describe('AuthController', () => {
   let controller: AuthController;
   let service: AuthService;
 
-  // 🧩 Mock implementations for AuthService methods used in controller
   const mockAuthService = {
     register: jest.fn(),
     login: jest.fn(),
@@ -39,7 +38,7 @@ describe('AuthController', () => {
     service = module.get<AuthService>(AuthService);
   });
 
-  // 🧪 Basic test
+
   it('should be defined', () => {
     expect(controller).toBeDefined();
   });

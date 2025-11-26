@@ -1,28 +1,32 @@
-import React, { useState } from 'react';
-import { forgotPassword, verifyOtp, resetPassword } from '../api/auth';
-import { Link } from 'react-router-dom';
-import { EnvelopeIcon, LockClosedIcon, ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { motion } from 'framer-motion';
+import React, { useState } from "react";
+import { forgotPassword, verifyOtp, resetPassword } from "../api/auth";
+import { Link } from "react-router-dom";
+import {
+  EnvelopeIcon,
+  LockClosedIcon,
+  ArrowLeftIcon,
+} from "@heroicons/react/24/outline";
+import { motion } from "framer-motion";
 
 export default function ForgotPassword() {
   const [step, setStep] = useState(1); // 1: email, 2: otp, 3: new password
-  const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     const data = await forgotPassword(email);
     setLoading(false);
-    if (data.message === 'OTP sent to your email') {
+    if (data.message === "OTP sent to your email") {
       setStep(2);
-      setMessage('OTP sent to your email. Check your inbox.');
+      setMessage("OTP sent to your email. Check your inbox.");
     } else {
-      setMessage(data.message || 'Failed to send OTP');
+      setMessage(data.message || "Failed to send OTP");
     }
   };
 
@@ -31,30 +35,30 @@ export default function ForgotPassword() {
     setLoading(true);
     const data = await verifyOtp(email, otp);
     setLoading(false);
-    if (data.message === 'OTP verified successfully') {
+    if (data.message === "OTP verified successfully") {
       setStep(3);
-      setMessage('OTP verified. Enter your new password.');
+      setMessage("OTP verified. Enter your new password.");
     } else {
-      setMessage(data.message || 'Invalid OTP');
+      setMessage(data.message || "Invalid OTP");
     }
   };
 
   const handlePasswordSubmit = async (e) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      setMessage('Passwords do not match');
+      setMessage("Passwords do not match");
       return;
     }
     setLoading(true);
     const data = await resetPassword(email, otp, newPassword);
     setLoading(false);
-    if (data.message === 'Password reset successfully') {
-      setMessage('Password reset successfully. You can now login.');
+    if (data.message === "Password reset successfully") {
+      setMessage("Password reset successfully. You can now login.");
       setTimeout(() => {
-        window.location.href = '/login';
+        window.location.href = "/login";
       }, 2000);
     } else {
-      setMessage(data.message || 'Failed to reset password');
+      setMessage(data.message || "Failed to reset password");
     }
   };
 
@@ -67,16 +71,24 @@ export default function ForgotPassword() {
         transition={{ duration: 0.8 }}
       >
         <div className="text-center">
-          <h2 className="text-3xl font-extrabold text-green-700">Forgot Password</h2>
+          <h2 className="text-3xl font-extrabold text-green-700">
+            Forgot Password
+          </h2>
           <p className="text-gray-500 mt-2">
-            {step === 1 && 'Enter your email to receive OTP'}
-            {step === 2 && 'Enter the OTP sent to your email'}
-            {step === 3 && 'Enter your new password'}
+            {step === 1 && "Enter your email to receive OTP"}
+            {step === 2 && "Enter the OTP sent to your email"}
+            {step === 3 && "Enter your new password"}
           </p>
         </div>
 
         {message && (
-          <div className={`text-center p-3 rounded-md ${message.includes('success') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+          <div
+            className={`text-center p-3 rounded-md ${
+              message.includes("success")
+                ? "bg-green-100 text-green-700"
+                : "bg-red-100 text-red-700"
+            }`}
+          >
             {message}
           </div>
         )}
@@ -101,7 +113,7 @@ export default function ForgotPassword() {
               className="w-full bg-green-600 hover:bg-green-700 rounded-md text-white font-semibold py-3 transition focus:outline-none focus:ring-4 focus:ring-green-300 shadow"
               whileHover={{ scale: 1.05 }}
             >
-              {loading ? 'Sending...' : 'Send OTP'}
+              {loading ? "Sending..." : "Send OTP"}
             </motion.button>
           </form>
         )}
@@ -125,7 +137,7 @@ export default function ForgotPassword() {
               className="w-full bg-green-600 hover:bg-green-700 rounded-md text-white font-semibold py-3 transition focus:outline-none focus:ring-4 focus:ring-green-300 shadow"
               whileHover={{ scale: 1.05 }}
             >
-              {loading ? 'Verifying...' : 'Verify OTP'}
+              {loading ? "Verifying..." : "Verify OTP"}
             </motion.button>
           </form>
         )}
@@ -162,13 +174,16 @@ export default function ForgotPassword() {
               className="w-full bg-green-600 hover:bg-green-700 rounded-md text-white font-semibold py-3 transition focus:outline-none focus:ring-4 focus:ring-green-300 shadow"
               whileHover={{ scale: 1.05 }}
             >
-              {loading ? 'Resetting...' : 'Reset Password'}
+              {loading ? "Resetting..." : "Reset Password"}
             </motion.button>
           </form>
         )}
 
         <div className="text-center">
-          <Link to="/login" className="text-green-600 hover:underline flex items-center justify-center">
+          <Link
+            to="/login"
+            className="text-green-600 hover:underline flex items-center justify-center"
+          >
             <ArrowLeftIcon className="w-4 h-4 mr-2" />
             Back to Login
           </Link>

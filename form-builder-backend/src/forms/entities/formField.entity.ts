@@ -3,6 +3,7 @@ import {
   PrimaryGeneratedColumn,
   Column,
   ManyToOne,
+  Unique,
 } from 'typeorm';
 import { Form } from './form.entity';
 
@@ -21,51 +22,26 @@ export type FieldType =
   | 'page'
   | 'autocomplete';
 
+export interface FieldDefinition {
+  id: string;
+  label: string;
+  type: FieldType;
+  required: boolean;
+  options?: any;
+  extraValue?: string;
+  order: number;
+  validation?: any;
+  subtype?: string;
+}
+
 @Entity()
+@Unique(['form'])
 export class FormField {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  label: string;
-
-  @Column({
-    type: 'enum',
-    enum: [
-      'text',
-      'textarea',
-      'number',
-      'checkbox',
-      'radio',
-      'select',
-      'header',
-      'date',
-      'section',
-      'file',
-      'paragraph',
-      'page',
-      'autocomplete',
-    ],
-  })
-  type: FieldType;
-
-  @Column({ default: false })
-  required: boolean;
-
-  @Column({ type: 'json', nullable: true })
-  options: any;
-
-  @Column({ type: 'text', nullable: true })
-  extraValue?: string;
-
-  @Column({ type: 'int', default: 0 })
-  order: number;
-
-  @Column({ type: 'json', nullable: true })
-  validation: any;
-
-  @Column({ nullable: true })
-  subtype?: string;
+  @Column({ type: 'jsonb', nullable: true })
+  fields: FieldDefinition[];
 
   @ManyToOne(() => Form, (form) => form.fields, {
     onDelete: 'CASCADE',

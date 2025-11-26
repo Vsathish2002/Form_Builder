@@ -8,14 +8,12 @@ export default function FormBuilderWrapper({ fieldsJson, onSave }) {
   useEffect(() => {
     const $ = window.$;
 
-    // Check if formBuilder is available
     if (!$.fn.formBuilder) {
       console.error("formBuilder not loaded — check index.html");
       toast.error("⚠️ Form builder plugin not loaded. Please check setup!");
       return;
     }
 
-    // Prevent multiple initializations
     if (builderRef.current) return;
 
     const options = {
@@ -33,7 +31,6 @@ export default function FormBuilderWrapper({ fieldsJson, onSave }) {
       controlOrder: ["text", "textarea", "select", "checkbox", "radio"],
       showActionButtons: true,
 
-      // ✅ onSave callback with toast feedback
       onSave: (evt, formData) => {
         try {
           const parsed = JSON.parse(formData);
@@ -57,7 +54,6 @@ export default function FormBuilderWrapper({ fieldsJson, onSave }) {
       },
     };
 
-    // Initialize form builder
     const fbEditor = $(editorContainer.current).formBuilder(options);
     builderRef.current = fbEditor;
 
@@ -72,7 +68,6 @@ export default function FormBuilderWrapper({ fieldsJson, onSave }) {
       }
     });
 
-    // Cleanup on unmount
     return () => {
       if (builderRef.current?.actions) {
         builderRef.current.actions.clearFields();
@@ -80,7 +75,7 @@ export default function FormBuilderWrapper({ fieldsJson, onSave }) {
       }
       $(editorContainer.current).empty();
     };
-  }, []); // initialize only once
+  }, []);
 
   return (
     <div className="my-8">

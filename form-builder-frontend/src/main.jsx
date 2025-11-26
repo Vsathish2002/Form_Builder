@@ -7,7 +7,6 @@ import { AuthProvider } from "./context/AuthContext";
 import { tolgee } from "./tolgee";
 import { TolgeeProvider } from "@tolgee/react";
 
-
 ReactDOM.createRoot(document.getElementById("root")).render(
   // <React.StrictMode>
   <AuthProvider>

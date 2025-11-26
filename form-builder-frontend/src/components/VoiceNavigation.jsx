@@ -80,10 +80,9 @@ const VoiceNavigation = () => {
     };
 
     rec.onresult = (event) => {
-      const transcript =
-        event.results[event.results.length - 1][0].transcript
-          .toLowerCase()
-          .trim();
+      const transcript = event.results[event.results.length - 1][0].transcript
+        .toLowerCase()
+        .trim();
       console.log("Command:", transcript);
       handleCommand(transcript);
     };
@@ -159,7 +158,10 @@ const VoiceNavigation = () => {
     }
 
     // ------------------- PASSWORD FIELD -----------------------
-    if (command.startsWith("password is") || command.startsWith("set password")) {
+    if (
+      command.startsWith("password is") ||
+      command.startsWith("set password")
+    ) {
       const value = command.replace(/password is|set password/i, "").trim();
       const ok = fillInput(["input[type='password']"], value);
       speak(ok ? "Password updated" : "password field not found");
@@ -172,9 +174,7 @@ const VoiceNavigation = () => {
       command.startsWith("write") ||
       command.startsWith("set")
     ) {
-      const value = command
-        .replace(/^(type|write|set)/i, "")
-        .trim();
+      const value = command.replace(/^(type|write|set)/i, "").trim();
 
       if (!value) {
         speak("Please say something to type");

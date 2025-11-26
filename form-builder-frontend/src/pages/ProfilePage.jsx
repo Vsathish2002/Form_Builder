@@ -18,7 +18,6 @@ export default function ProfilePage() {
     bio: user?.bio || "",
   });
 
-
   useEffect(() => {
     if (user) {
       setFormData({
@@ -71,7 +70,6 @@ export default function ProfilePage() {
 
     setLoading(false);
   };
-
 
   const cancelEditing = () => {
     setFormData({

@@ -6,7 +6,7 @@ import { EmailService } from './email.service';
 import { User } from '../users/user.entity';
 import { UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
 
-// Mock bcryptjs
+
 jest.mock('bcryptjs', () => ({
   hash: jest.fn(),
   compare: jest.fn(),
@@ -141,7 +141,7 @@ describe('AuthService', () => {
       mockUsersService.updateUserResetToken.mockResolvedValue(undefined);
       mockEmailService.sendOtpEmail.mockResolvedValue(undefined);
 
-      // Mock Math.random to control OTP generation
+    
       jest.spyOn(Math, 'random').mockReturnValue(0.123456);
 
       const result = await service.forgotPassword(email);
@@ -152,7 +152,7 @@ describe('AuthService', () => {
       expect(mockEmailService.sendOtpEmail).toHaveBeenCalledWith(email, otp);
       expect(result).toEqual({ message: 'OTP sent to your email' });
 
-      // Restore mocks
+   
       jest.restoreAllMocks();
     });
 

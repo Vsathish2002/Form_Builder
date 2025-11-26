@@ -11,15 +11,13 @@ import OtpModal from "../components/OtpModal";
 import { requestRegisterOtp, verifyRegisterOtp } from "../api/auth";
 
 export default function Register() {
-
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [otpModal, setOtpModal] = useState(false);
-  
-  const navigate = useNavigate();
 
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -86,10 +84,11 @@ export default function Register() {
           <h2 className="text-3xl font-extrabold text-blue-700">
             Create Your Account
           </h2>
-          <p className="text-gray-500 mt-2">Join us and get started instantly</p>
+          <p className="text-gray-500 mt-2">
+            Join us and get started instantly
+          </p>
         </div>
 
-  
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="relative">
             <UserIcon className="w-5 h-5 text-blue-500 absolute left-3 top-3.5" />
@@ -136,7 +135,6 @@ export default function Register() {
           </motion.button>
         </form>
 
-      
         <p className="text-center text-gray-600 text-sm">
           Already have an account?{" "}
           <button
@@ -148,7 +146,6 @@ export default function Register() {
         </p>
       </motion.div>
 
-   
       <OtpModal
         email={email}
         open={otpModal}

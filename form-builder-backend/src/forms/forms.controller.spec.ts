@@ -41,7 +41,7 @@ describe('FormsController', () => {
     jest.clearAllMocks();
   });
 
-  // ✅ Controller existence
+
   it('should be defined', () => {
     expect(controller).toBeDefined();
   });
@@ -68,7 +68,7 @@ describe('FormsController', () => {
     });
   });
 
-  // ✅ findAll
+
   describe('findAll', () => {
     it('should return all forms for user', async () => {
       const req = { user: { id: 1 } };
@@ -82,7 +82,7 @@ describe('FormsController', () => {
     });
   });
 
-  // ✅ findOneBySlug
+
   describe('findOneBySlug', () => {
     it('should return form by slug', async () => {
       const form = { id: 1, slug: 'test-form' };
@@ -99,7 +99,7 @@ describe('FormsController', () => {
     });
   });
 
-  // ✅ findOneById
+
   describe('findOneById', () => {
     it('should return form by id', async () => {
       const form = { id: '1', title: 'Sample' };
@@ -111,7 +111,7 @@ describe('FormsController', () => {
     });
   });
 
-  // ✅ update form
+ 
   describe('update', () => {
     it('should update form successfully', async () => {
       const id = '1';
@@ -127,7 +127,7 @@ describe('FormsController', () => {
     });
   });
 
-  // ✅ delete form
+
   describe('remove', () => {
     it('should delete form successfully', async () => {
       const id = '1';
@@ -141,7 +141,7 @@ describe('FormsController', () => {
     });
   });
 
-  // ✅ submitPublic
+  
   describe('submitPublic', () => {
     it('should submit form with files successfully', async () => {
       const slug = 'public-form';
@@ -165,7 +165,7 @@ describe('FormsController', () => {
     });
   });
 
-  // ✅ getResponses
+
   describe('getResponses', () => {
     it('should return form responses', async () => {
       const req = { user: { id: 1 } };
@@ -178,7 +178,7 @@ describe('FormsController', () => {
     });
   });
 
-  // ✅ getUserForms
+
   describe('getUserForms', () => {
     it('should return user-created forms', async () => {
       const req = { user: { id: 1 } };
@@ -190,7 +190,7 @@ describe('FormsController', () => {
     });
   });
 
-  // ✅ deleteResponse
+
   describe('deleteResponse', () => {
     it('should delete specific response', async () => {
       const response = { message: 'Deleted' };
@@ -202,7 +202,7 @@ describe('FormsController', () => {
     });
   });
 
-  // ✅ generateQrCode
+
   describe('generateQrCode', () => {
     it('should generate QR code', async () => {
       const req = { user: { id: 1 } };

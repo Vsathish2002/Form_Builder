@@ -1,20 +1,27 @@
 // src/pages/Forms/MyForms.jsx
-import React, { useEffect, useState } from 'react';
-import { getUserForms, deleteForm, updateForm } from '../../api/forms';
-import { useAuth } from '../../context/AuthContext';
-import { Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import FormCard from '../../components/FormCard';
-import toast from 'react-hot-toast';
-import { LayoutGrid, List, ArrowDownAZ, ArrowUpZA, ChevronLeft, ChevronRight } from 'lucide-react';
+import React, { useEffect, useState } from "react";
+import { getUserForms, deleteForm, updateForm } from "../../api/forms";
+import { useAuth } from "../../context/AuthContext";
+import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import FormCard from "../../components/FormCard";
+import toast from "react-hot-toast";
+import {
+  LayoutGrid,
+  List,
+  ArrowDownAZ,
+  ArrowUpZA,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 
 export default function MyForms() {
   const [forms, setForms] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const { token } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('grid');
-  const [sortOrder, setSortOrder] = useState('asc');
+  const [viewMode, setViewMode] = useState("grid");
+  const [sortOrder, setSortOrder] = useState("asc");
   const [pageSize, setPageSize] = useState(6);
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -25,63 +32,71 @@ export default function MyForms() {
       setForms(data);
       setLoading(false);
     } catch (err) {
-      console.error('Failed to fetch forms:', err);
+      console.error("Failed to fetch forms:", err);
       setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchForms();
-    window.scrollTo(0, 0); // Scroll to top when component mounts
+    window.scrollTo(0, 0);
   }, [token]);
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this form?')) return;
+    if (!window.confirm("Are you sure you want to delete this form?")) return;
     try {
       await deleteForm(token, id);
-      setForms(forms.filter(f => f.id !== id));
-      toast.success('Form deleted successfully!');
+      setForms(forms.filter((f) => f.id !== id));
+      toast.success("Form deleted successfully!");
     } catch (err) {
-      console.error('Failed to delete form:', err);
-      toast.error('Failed to delete form. Please try again.');
+      console.error("Failed to delete form:", err);
+      toast.error("Failed to delete form. Please try again.");
     }
   };
-  
-const handleStatusChange = async (id, newStatus) => {
-  try {
-    const form = forms.find(f => f.id === id);
 
-    await updateForm(token, id, {
-      status: newStatus,
-      title: form.title,
-      description: form.description,
-      isPublic: form.isPublic,
-      fields: form.fields || [],
-    });
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      const form = forms.find((f) => f.id === id);
 
-    setForms(forms.map(f =>
-      f.id === id ? { ...f, status: newStatus } : f
-    ));
-    toast.success(`Form ${newStatus === 'Active' ? 'activated' : 'deactivated'} successfully!`);
-  } catch (err) {
-    console.error('Failed to update form status:', err);
-    toast.error('Failed to update form status. Please try again.');
-  }
-};
+      await updateForm(token, id, {
+        status: newStatus,
+        title: form.title,
+        description: form.description,
+        isPublic: form.isPublic,
+        fields: form.fields || [],
+      });
 
+      setForms(
+        forms.map((f) => (f.id === id ? { ...f, status: newStatus } : f))
+      );
+      toast.success(
+        `Form ${
+          newStatus === "Active" ? "activated" : "deactivated"
+        } successfully!`
+      );
+    } catch (err) {
+      console.error("Failed to update form status:", err);
+      toast.error("Failed to update form status. Please try again.");
+    }
+  };
 
   const filteredForms = forms
-    .filter(form => form.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter((form) =>
+      form.title.toLowerCase().includes(searchQuery.toLowerCase())
+    )
     .sort((a, b) => {
       const titleA = a.title.toLowerCase();
       const titleB = b.title.toLowerCase();
-      if (titleA < titleB) return sortOrder === 'asc' ? -1 : 1;
-      if (titleA > titleB) return sortOrder === 'asc' ? 1 : -1;
+      if (titleA < titleB) return sortOrder === "asc" ? -1 : 1;
+      if (titleA > titleB) return sortOrder === "asc" ? 1 : -1;
       return 0;
     });
 
   const totalPages = Math.max(1, Math.ceil(filteredForms.length / pageSize));
-  const paginatedForms = filteredForms.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const paginatedForms = filteredForms.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   useEffect(() => {
     setCurrentPage(1);
@@ -89,8 +104,6 @@ const handleStatusChange = async (id, newStatus) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-indigo-100 p-6 md:p-10">
-      
-      {/* Header */}
       <motion.div
         className="flex flex-col gap-4 md:flex-row md:gap-0 justify-between items-center mb-8"
         initial={{ opacity: 0, y: -30 }}
@@ -114,22 +127,22 @@ const handleStatusChange = async (id, newStatus) => {
           <div className="hidden md:flex items-center bg-white/70 rounded-full shadow-inner p-1">
             <button
               type="button"
-              onClick={() => setViewMode('grid')}
+              onClick={() => setViewMode("grid")}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition ${
-                viewMode === 'grid'
-                  ? 'bg-indigo-600 text-white shadow'
-                  : 'text-indigo-600 hover:bg-indigo-100'
+                viewMode === "grid"
+                  ? "bg-indigo-600 text-white shadow"
+                  : "text-indigo-600 hover:bg-indigo-100"
               }`}
             >
               <LayoutGrid size={16} /> Grid
             </button>
             <button
               type="button"
-              onClick={() => setViewMode('list')}
+              onClick={() => setViewMode("list")}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-sm font-medium transition ${
-                viewMode === 'list'
-                  ? 'bg-indigo-600 text-white shadow'
-                  : 'text-indigo-600 hover:bg-indigo-100'
+                viewMode === "list"
+                  ? "bg-indigo-600 text-white shadow"
+                  : "text-indigo-600 hover:bg-indigo-100"
               }`}
             >
               <List size={16} /> List
@@ -138,18 +151,22 @@ const handleStatusChange = async (id, newStatus) => {
           <div className="flex items-center bg-white/70 rounded-full shadow-inner p-1 text-sm font-medium">
             <button
               type="button"
-              onClick={() => setSortOrder('asc')}
+              onClick={() => setSortOrder("asc")}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-full transition ${
-                sortOrder === 'asc' ? 'bg-indigo-600 text-white shadow' : 'text-indigo-600 hover:bg-indigo-100'
+                sortOrder === "asc"
+                  ? "bg-indigo-600 text-white shadow"
+                  : "text-indigo-600 hover:bg-indigo-100"
               }`}
             >
               <ArrowDownAZ size={16} /> A-Z
             </button>
             <button
               type="button"
-              onClick={() => setSortOrder('desc')}
+              onClick={() => setSortOrder("desc")}
               className={`flex items-center gap-1 px-3 py-1.5 rounded-full transition ${
-                sortOrder === 'desc' ? 'bg-indigo-600 text-white shadow' : 'text-indigo-600 hover:bg-indigo-100'
+                sortOrder === "desc"
+                  ? "bg-indigo-600 text-white shadow"
+                  : "text-indigo-600 hover:bg-indigo-100"
               }`}
             >
               <ArrowUpZA size={16} /> Z-A
@@ -178,7 +195,6 @@ const handleStatusChange = async (id, newStatus) => {
         </motion.div>
       </motion.div>
 
-      {/* Search Bar */}
       <motion.div
         className="mb-8"
         initial={{ opacity: 0, y: 20 }}
@@ -194,26 +210,25 @@ const handleStatusChange = async (id, newStatus) => {
         />
       </motion.div>
 
-      {/* Info / Subtitle */}
       <motion.p
         className="text-center text-indigo-700 mb-8 text-lg"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.7, delay: 0.6 }}
       >
-        Manage your forms easily, update them, or delete any outdated ones. Keep your workflow organized!
+        Manage your forms easily, update them, or delete any outdated ones. Keep
+        your workflow organized!
       </motion.p>
 
-      {/* Forms Grid */}
       {loading ? (
         <p className="text-center text-gray-500 mt-10">Loading forms...</p>
       ) : (
         <AnimatePresence>
           <motion.div
             className={
-              viewMode === 'grid'
-                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
-                : 'flex flex-col gap-4'
+              viewMode === "grid"
+                ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                : "flex flex-col gap-4"
             }
             layout
           >
@@ -227,30 +242,39 @@ const handleStatusChange = async (id, newStatus) => {
                   exit={{ opacity: 0, y: -20 }}
                   transition={{ duration: 0.4 }}
                 >
-                  <FormCard form={form} onDelete={handleDelete} onStatusChange={handleStatusChange} />
+                  <FormCard
+                    form={form}
+                    onDelete={handleDelete}
+                    onStatusChange={handleStatusChange}
+                  />
                 </motion.div>
               ))
-            ) 
-            : (
+            ) : (
               <motion.p
                 className="text-center text-gray-500 col-span-full mt-10 text-lg"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                {searchQuery ? 'No forms match your search.' : 'No forms created yet. Click "Create New Form" to start your first one!'}
+                {searchQuery
+                  ? "No forms match your search."
+                  : 'No forms created yet. Click "Create New Form" to start your first one!'}
               </motion.p>
             )}
           </motion.div>
           {filteredForms.length > 0 && (
             <div className="mt-8 flex flex-col md:flex-row items-center justify-between gap-4 text-indigo-700">
               <p className="text-sm">
-                Showing {(currentPage - 1) * pageSize + 1} - {Math.min(currentPage * pageSize, filteredForms.length)} of {filteredForms.length}
+                Showing {(currentPage - 1) * pageSize + 1} -{" "}
+                {Math.min(currentPage * pageSize, filteredForms.length)} of{" "}
+                {filteredForms.length}
               </p>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(1, prev - 1))
+                  }
                   disabled={currentPage === 1}
                   className="flex items-center gap-1 px-3 py-1 rounded-full bg-white/80 shadow-inner text-indigo-700 disabled:opacity-50"
                 >
@@ -261,7 +285,9 @@ const handleStatusChange = async (id, newStatus) => {
                 </span>
                 <button
                   type="button"
-                  onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                  }
                   disabled={currentPage === totalPages}
                   className="flex items-center gap-1 px-3 py-1 rounded-full bg-white/80 shadow-inner text-indigo-700 disabled:opacity-50"
                 >

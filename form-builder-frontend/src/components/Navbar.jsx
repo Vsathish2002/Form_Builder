@@ -42,18 +42,14 @@ export default function Navbar() {
 
   return (
     <nav className="tailwind-navbar bg-indigo-900 shadow-md fixed w-full top-0 left-0 z-50">
-      {/* Navbar Container */}
       <div className="max-w-7xl mx-auto px-6 h-18 min-h-[4.5rem] flex justify-between items-center">
-        {/* Logo */}
         <div
           onClick={() => navigate("/")}
           className="text-3xl font-extrabold text-indigo-100 cursor-pointer flex items-center gap-2"
         >
-          {/* <PlusCircleIcon className="h-6 w-6" /> */}
           FORMIFY
         </div>
 
-        {/* DESKTOP MENU */}
         <div className="hidden md:flex  items-center space-x-6">
           <Link to="/" className={linkClass("/")}>
             <HomeIcon className="h-5 w-5" /> Home
@@ -137,7 +133,7 @@ export default function Navbar() {
             {/* Mobile Header */}
             <div className="flex justify-between items-center mb-4">
               <div className="text-3xl font-bold flex items-center gap-2">
-                 FORMIFY
+                FORMIFY
               </div>
               <button onClick={toggleMenu}>
                 <XMarkIcon className="h-8 w-8 text-gray-200" />

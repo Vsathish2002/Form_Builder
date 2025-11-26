@@ -1,9 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import {
-  getFormById,
-  getFormResponses,
-  deleteResponse,
-} from "../../api/forms";
+import { getFormById, getFormResponses, deleteResponse } from "../../api/forms";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { io } from "socket.io-client";
@@ -108,7 +104,7 @@ export default function FormResponses() {
   const data = useMemo(() => {
     if (!responses.length || !form) return [];
 
-    const filteredFields = form.fields.filter(
+    const filteredFields = (form.fields?.[0]?.fields || []).filter(
       (f) => !["header", "paragraph"].includes(f.type)
     );
 
@@ -122,7 +118,8 @@ export default function FormResponses() {
         // Handle different data types
         if (val && typeof val === "object" && !Array.isArray(val)) {
           const innerValue = Object.values(val)[0];
-          val = typeof innerValue === "string" ? innerValue : JSON.stringify(val);
+          val =
+            typeof innerValue === "string" ? innerValue : JSON.stringify(val);
         }
 
         // Handle JSON strings (like arrays from checkboxes)
@@ -132,6 +129,22 @@ export default function FormResponses() {
           } catch {
             /* ignore invalid JSON */
           }
+        }
+
+        // For radio and select fields, convert value to label
+        if (field.type === "radio" || field.type === "select") {
+          const option = field.options?.find(opt => opt.value === val);
+          if (option) {
+            val = option.label || option.value;
+          }
+        }
+
+        // For checkbox fields, convert values to labels
+        if (field.type === "checkbox" && Array.isArray(val)) {
+          val = val.map(v => {
+            const option = field.options?.find(opt => opt.value === v);
+            return option ? option.label : v;
+          });
         }
 
         if (Array.isArray(val)) {
@@ -165,7 +178,7 @@ export default function FormResponses() {
   const csvData = useMemo(() => {
     if (!responses.length || !form) return [];
 
-    const filteredFields = form.fields.filter(
+    const filteredFields = (form.fields?.[0]?.fields || []).filter(
       (f) => !["header", "paragraph"].includes(f.type)
     );
 
@@ -174,7 +187,7 @@ export default function FormResponses() {
       filteredFields.forEach((field) => {
         // The response data is stored with field IDs as keys (UUIDs)
         let val = r.responseData?.[field.id] ?? "-";
-        
+
         if (Array.isArray(val)) row[field.label] = val.join(", ");
         else if (typeof val === "string" && val.startsWith("[")) {
           try {
@@ -183,8 +196,7 @@ export default function FormResponses() {
           } catch {
             row[field.label] = val;
           }
-        }
-        else if (typeof val === "string" && val.startsWith("/uploads/"))
+        } else if (typeof val === "string" && val.startsWith("/uploads/"))
           row[field.label] = val.split("/").pop();
         else row[field.label] = val || "-";
       });
@@ -192,11 +204,10 @@ export default function FormResponses() {
     });
   }, [responses, form]);
 
-  /** ---------------- Table Columns ---------------- */
   const columns = useMemo(() => {
     if (!form) return [];
 
-    const filteredFields = form.fields.filter(
+    const filteredFields = (form.fields?.[0]?.fields || []).filter(
       (f) => !["header", "paragraph"].includes(f.type)
     );
 
@@ -204,7 +215,7 @@ export default function FormResponses() {
       columnHelper.accessor("submittedAt", { header: "Submitted At" }),
       ...filteredFields.map((f) =>
         columnHelper.display({
-          id: f.label,
+          id: f.id || f.label,
           header: f.label,
           cell: (info) => info.row.original[f.label],
         })
@@ -253,7 +264,6 @@ export default function FormResponses() {
     return combined.includes(search);
   };
 
-  /** ---------------- React Table Setup ---------------- */
   const table = useReactTable({
     data,
     columns,
@@ -262,14 +272,13 @@ export default function FormResponses() {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-     globalFilterFn, // ✅ fixed here
+    globalFilterFn,
   });
 
-  /** ---------------- Chart Data for checkbox/radio ---------------- */
   const chartFields = useMemo(() => {
     if (!form || !responses.length) return [];
 
-    return form.fields
+    return form.fields?.[0]?.fields
       .filter((f) => ["radio", "checkbox"].includes(f.type))
       .map((field) => {
         const countMap = {};
@@ -293,13 +302,11 @@ export default function FormResponses() {
       });
   }, [form, responses]);
 
-  /** ---------------- Summary ---------------- */
   const totalResponses = responses.length;
   const latestResponseTime = responses.length
     ? new Date(responses[responses.length - 1].createdAt).toLocaleString()
     : "No responses yet";
 
-  /** ---------------- Render ---------------- */
   if (loading)
     return (
       <motion.div
@@ -329,8 +336,6 @@ export default function FormResponses() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
-
-      {/* Back button */}
       <div className="flex justify-end">
         <motion.button
           whileHover={{ scale: 1.05 }}
@@ -342,7 +347,6 @@ export default function FormResponses() {
         </motion.button>
       </div>
 
-      {/* Summary */}
       <div className="grid md:grid-cols-2 gap-4">
         <div className="bg-white p-4 rounded-xl shadow text-center">
           <h2 className="text-lg font-semibold mb-1">Total Responses</h2>
@@ -354,119 +358,119 @@ export default function FormResponses() {
         </div>
       </div>
 
-    {/* -------------------- TABLE SECTION -------------------- */}
-<motion.div className="bg-white rounded-lg shadow-lg overflow-hidden">
-  {/* 🔍 Top Controls: Search + Page Size Selector */}
-  <div className="flex flex-col md:flex-row justify-between items-center p-4 gap-3 border-b border-gray-100">
-    <input
-      value={globalFilter || ""}
-      onChange={(e) => setGlobalFilter(e.target.value)}
-      placeholder="🔍 Search responses..."
-      className="w-full md:w-1/3 px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-    />
+      <motion.div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="flex flex-col md:flex-row justify-between items-center p-4 gap-3 border-b border-gray-100">
+          <input
+            value={globalFilter || ""}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            placeholder="🔍 Search responses..."
+            className="w-full md:w-1/3 px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
 
-    <div className="flex items-center gap-2">
-      <label htmlFor="pageSize" className="text-gray-600 text-sm font-medium">
-        Rows per page:
-      </label>
-      <select
-        id="pageSize"
-        value={table.getState().pagination.pageSize}
-        onChange={(e) => table.setPageSize(Number(e.target.value))}
-        className="border px-2 py-1 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-      >
-        {[5, 10, 25, 50, 100].map((size) => (
-          <option key={size} value={size}>
-            {size}
-          </option>
-        ))}
-      </select>
-    </div>
-  </div>
+          <div className="flex items-center gap-2">
+            <label
+              htmlFor="pageSize"
+              className="text-gray-600 text-sm font-medium"
+            >
+              Rows per page:
+            </label>
+            <select
+              id="pageSize"
+              value={table.getState().pagination.pageSize}
+              onChange={(e) => table.setPageSize(Number(e.target.value))}
+              className="border px-2 py-1 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+              {[5, 10, 25, 50, 100].map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-  {/* 🧾 Table Content */}
-  <div className="overflow-x-auto">
-    <table className="min-w-full text-sm">
-      <thead className="bg-blue-600 text-white">
-        {table.getHeaderGroups().map((headerGroup) => (
-          <tr key={headerGroup.id}>
-            {headerGroup.headers.map((header) => (
-              <th
-                key={header.id}
-                className="px-3 md:px-4 py-3 text-left font-semibold cursor-pointer whitespace-nowrap"
-                onClick={header.column.getToggleSortingHandler()}
-              >
-                {flexRender(
-                  header.column.columnDef.header,
-                  header.getContext()
-                )}
-                <span>
-                  {header.column.getIsSorted() === "asc"
-                    ? " 🔼"
-                    : header.column.getIsSorted() === "desc"
-                    ? " 🔽"
-                    : ""}
-                </span>
-              </th>
-            ))}
-          </tr>
-        ))}
-      </thead>
-      <tbody>
-        {table.getRowModel().rows.map((row) => (
-          <motion.tr
-            key={row.id}
-            className="border-b hover:bg-gray-100 transition"
-          >
-            {row.getVisibleCells().map((cell) => (
-              <td
-                key={cell.id}
-                className="px-3 md:px-4 py-2 text-gray-700 whitespace-nowrap"
-              >
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </td>
-            ))}
-          </motion.tr>
-        ))}
-      </tbody>
-    </table>
-  </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead className="bg-blue-600 text-white">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="px-3 md:px-4 py-3 text-left font-semibold cursor-pointer whitespace-nowrap"
+                      onClick={header.column.getToggleSortingHandler()}
+                    >
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                      <span>
+                        {header.column.getIsSorted() === "asc"
+                          ? " 🔼"
+                          : header.column.getIsSorted() === "desc"
+                          ? " 🔽"
+                          : ""}
+                      </span>
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => (
+                <motion.tr
+                  key={row.id}
+                  className="border-b hover:bg-gray-100 transition"
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className="px-3 md:px-4 py-2 text-gray-700 whitespace-nowrap"
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </td>
+                  ))}
+                </motion.tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-  {/* 🧩 Empty State */}
-  {data.length === 0 && (
-    <p className="mt-4 text-gray-500 text-center">No responses yet.</p>
-  )}
+        {data.length === 0 && (
+          <p className="mt-4 text-gray-500 text-center">No responses yet.</p>
+        )}
 
-  {/* ⏩ Pagination Controls */}
-  <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-gray-100 bg-gray-50">
-    <div className="flex items-center gap-2">
-      <button
-        onClick={() => table.previousPage()}
-        disabled={!table.getCanPreviousPage()}
-        className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-      >
-        ← Previous
-      </button>
-      <button
-        onClick={() => table.nextPage()}
-        disabled={!table.getCanNextPage()}
-        className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
-      >
-        Next →
-      </button>
-    </div>
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-gray-100 bg-gray-50">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              ← Previous
+            </button>
+            <button
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+            >
+              Next →
+            </button>
+          </div>
 
-    <div className="text-sm text-gray-600">
-      Page{" "}
-      <span className="font-semibold">
-        {table.getState().pagination.pageIndex + 1}
-      </span>{" "}
-      of <span className="font-semibold">{table.getPageCount()}</span>
-    </div>
-  </div>
-</motion.div>
+          <div className="text-sm text-gray-600">
+            Page{" "}
+            <span className="font-semibold">
+              {table.getState().pagination.pageIndex + 1}
+            </span>{" "}
+            of <span className="font-semibold">{table.getPageCount()}</span>
+          </div>
+        </div>
+      </motion.div>
 
-      {/* Export CSV */}
       <div className="flex justify-end mt-4">
         <CSVLink
           data={csvData}
@@ -477,7 +481,6 @@ export default function FormResponses() {
         </CSVLink>
       </div>
 
-      {/* Charts */}
       {chartFields.length > 0 && (
         <motion.div
           className="grid md:grid-cols-2 gap-6 mt-8"

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { loginUser } from "../api/auth";
-import { useNavigate, Link } from "react-router-dom"; 
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import { motion } from "framer-motion";
@@ -29,7 +29,6 @@ export default function Login() {
         login(data.user, data.access_token);
         toast.success("✅ Login successful!");
 
-        // ✅ Redirect based on role
         if (data.user.role === "admin") {
           navigate("/admin/dashboard");
         } else {
@@ -47,7 +46,6 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 flex items-center justify-center px-4 py-12">
-
       <motion.form
         onSubmit={handleSubmit}
         className="bg-white shadow-2xl rounded-2xl px-10 py-12 w-full max-w-md space-y-6"
@@ -63,7 +61,6 @@ export default function Login() {
           Sign in to access your dashboard
         </p>
 
-        {/* Email Field */}
         <div className="relative">
           <EnvelopeIcon className="w-5 h-5 text-green-400 absolute left-3 top-3.5 pointer-events-none" />
           <input
@@ -77,7 +74,6 @@ export default function Login() {
           />
         </div>
 
-        {/* Password Field */}
         <div className="relative">
           <LockClosedIcon className="w-5 h-5 text-green-400 absolute left-3 top-3.5 pointer-events-none" />
           <input
@@ -91,7 +87,6 @@ export default function Login() {
           />
         </div>
 
-        {/* Options */}
         <div className="flex items-center justify-between">
           <label className="flex items-center text-gray-600 text-sm">
             <input type="checkbox" className="mr-2 accent-green-600" />
@@ -105,7 +100,6 @@ export default function Login() {
           </Link>
         </div>
 
-        {/* Submit Button */}
         <motion.button
           type="submit"
           disabled={loading}
@@ -115,7 +109,6 @@ export default function Login() {
           {loading ? "Logging in..." : "Login"}
         </motion.button>
 
-        {/* Register Link */}
         <p className="text-center text-gray-600 text-sm pt-1">
           Don&apos;t have an account?{" "}
           <Link to="/register" className="text-green-600 hover:underline">

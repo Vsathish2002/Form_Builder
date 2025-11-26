@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { createForm } from "../../api/forms";
 import { useNavigate } from "react-router-dom";
@@ -48,16 +47,15 @@ export default function CreateForm() {
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen relative flex flex-col items-center justify-start py-12 px-4 md:px-8 overflow-hidden"
       style={{
         backgroundImage: `url("${createPageBg}")`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
       }}
     >
-      {/* Background image opacity overlay */}
       <div className="absolute inset-0 bg-blue-900/85"></div>
 
       <motion.div
@@ -73,14 +71,19 @@ export default function CreateForm() {
           className="!flex !items-center mb-6 !px-3 !py-2 sm:!px-6 sm:!py-3 !bg-gradient-to-r !from-blue-500 !to-indigo-500 !shadow-xl !rounded-full !border-2 !border-blue-300 hover:!from-blue-600 hover:!to-indigo-600 hover:!shadow-2xl !transition-all !duration-300 !no-underline"
         >
           <ArrowLeftIcon className="!w-4 !h-4 sm:!w-6 sm:!h-6 !mr-1 sm:!mr-2 !text-white !drop-shadow-lg" />
-          <span className="!text-white !font-bold !text-sm sm:!text-lg !drop-shadow-lg">Back</span>
+          <span className="!text-white !font-bold !text-sm sm:!text-lg !drop-shadow-lg">
+            Back
+          </span>
         </motion.button>
 
         <motion.h2
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0, transition: { duration: 0.6 } }}
           className="text-4xl md:text-5xl !font-black text-center bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 bg-clip-text text-transparent mb-6 tracking-wide"
-          style={{ fontFamily: 'Playfair Display, Georgia, serif', textShadow: '0 0 20px rgba(59, 130, 246, 0.3)' }}
+          style={{
+            fontFamily: "Playfair Display, Georgia, serif",
+            textShadow: "0 0 20px rgba(59, 130, 246, 0.3)",
+          }}
         >
           Create a New Form
         </motion.h2>

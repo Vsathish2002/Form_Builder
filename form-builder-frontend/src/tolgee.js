@@ -8,7 +8,7 @@ export const tolgee = Tolgee()
   .init({
     apiUrl: "https://app.tolgee.io",
     apiKey: "tgpak_gi2temzwl5uwumldmz2hk5tgoyzwy33bobvge4jsnnvgm3zuhfrq", // paste your key here
-   fallbackLanguage: "en",
+    fallbackLanguage: "en",
     language: "en",
     availableLanguages: ["en", "ta", "ja", "zh", "ar", "ru"],
   });

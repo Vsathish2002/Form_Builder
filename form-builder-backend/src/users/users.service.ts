@@ -61,7 +61,7 @@ export class UsersService {
     });
   }
 
-  // ✅ NEW: Update profile (name/email)
+ 
   async updateUser(id: string, updateData: Partial<User>) {
     const user = await this.userRepo.findOne({
       where: { id },
@@ -73,7 +73,7 @@ export class UsersService {
     user.name = updateData.name ?? user.name;
     user.email = updateData.email ?? user.email;
 
-    // ⭐ NEW FIELDS ⭐
+
     user.gender = updateData.gender ?? user.gender;
     user.address = updateData.address ?? user.address;
     user.phone = updateData.phone ?? user.phone;
@@ -85,7 +85,7 @@ export class UsersService {
     return { message: 'Profile updated', user };
   }
 
-  // For profile email update OTP flow
+ 
   async sendEmailChangeOtp(userId: string, newEmail: string) {
     const existing = await this.findByEmail(newEmail);
     if (existing) throw new BadRequestException('Email already in use');

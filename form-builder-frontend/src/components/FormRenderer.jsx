@@ -1,17 +1,14 @@
 import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import toast from 'react-hot-toast';
+import toast from "react-hot-toast";
 
 export default function FormRenderer({
   form,
   onSubmit,
   submitLabel = "Submit",
 }) {
-  /* ---------------------------------------------
-      INITIAL VALUES
-  --------------------------------------------- */
   const initialValues = {};
-  (form.fields || []).forEach((f) => {
+  (form.fields?.[0]?.fields || []).forEach((f) => {
     initialValues[f.id] = f.type === "checkbox" ? [] : "";
   });
 
@@ -19,18 +16,12 @@ export default function FormRenderer({
   const [filePreviews, setFilePreviews] = useState({});
   const [showModal, setShowModal] = useState(false);
 
-  /* ---------------------------------------------
-      REUSABLE STYLES
-  --------------------------------------------- */
   const glassInput =
     "w-full p-3 bg-white/10 text-white border border-white/20 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none placeholder-gray-300 shadow-inner";
 
   const glassBox =
     "p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-xl shadow";
 
-  /* ---------------------------------------------
-      HANDLE INPUTS
-  --------------------------------------------- */
   const handleChange = (field, value, checked) => {
     if (field.type === "checkbox") {
       const prev = values[field.id] || [];
@@ -54,74 +45,64 @@ export default function FormRenderer({
     }
   };
 
-
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  // REQUIRED FIELD VALIDATION
-  for (const f of form.fields) {
-    if (f.required) {
+    for (const f of (form.fields || [])) {
+      if (f.required) {
+        const val = values[f.id];
+
+        if (
+          ["text", "textarea", "number", "date", "select"].includes(f.type) &&
+          (!val || val.toString().trim() === "")
+        ) {
+          toast.error(`Please fill: ${f.label}`);
+          return;
+        }
+
+        if (f.type === "radio" && !val) {
+          toast.error(`Please select an option for: ${f.label}`);
+          return;
+        }
+
+        if (f.type === "checkbox" && (!val || val.length === 0)) {
+          toast.error(`Please select at least one option for: ${f.label}`);
+          return;
+        }
+
+        if ((f.type === "file" || f.type === "fileUpload") && !val) {
+          toast.error(`Please upload a file for: ${f.label}`);
+          return;
+        }
+      }
+    }
+
+    const formData = new FormData();
+
+    (form.fields || []).forEach((f) => {
       const val = values[f.id];
 
       if (
-        ["text", "textarea", "number", "date", "select"].includes(f.type) &&
-        (!val || val.toString().trim() === "")
+        (f.type === "file" || f.type === "fileUpload") &&
+        val instanceof File
       ) {
-        toast.error(`Please fill: ${f.label}`);
-        return;
+        formData.append(f.id, val, val.name);
+      } else if (Array.isArray(val)) {
+        formData.append(f.id, JSON.stringify(val));
+      } else {
+        formData.append(f.id, val);
       }
+    });
 
-      // Radio
-      if (f.type === "radio" && !val) {
-        toast.error(`Please select an option for: ${f.label}`);
-        return;
-      }
-
-      // Checkbox
-      if (f.type === "checkbox" && (!val || val.length === 0)) {
-        toast.error(`Please select at least one option for: ${f.label}`);
-        return;
-      }
-
-      // File upload
-      if ((f.type === "file" || f.type === "fileUpload") && !val) {
-        toast.error(`Please upload a file for: ${f.label}`);
-        return;
-      }
+    try {
+      if (onSubmit) await onSubmit(formData);
+      setShowModal(true);
+    } catch (err) {
+      console.error("Form submission failed:", err);
+      toast.error("Submission failed. Please try again.");
     }
-  }
+  };
 
-  // If validation passes → proceed
-  const formData = new FormData();
-
-  form.fields.forEach((f) => {
-    const val = values[f.id];
-
-    if (
-      (f.type === "file" || f.type === "fileUpload") &&
-      val instanceof File
-    ) {
-      formData.append(f.id, val, val.name);
-    } else if (Array.isArray(val)) {
-      formData.append(f.id, JSON.stringify(val));
-    } else {
-      formData.append(f.id, val);
-    }
-  });
-
-  try {
-    if (onSubmit) await onSubmit(formData);
-    setShowModal(true);
-  } catch (err) {
-    console.error("Form submission failed:", err);
-    toast.error("Submission failed. Please try again.");
-  }
-};
-
-
-  /* ---------------------------------------------
-      OPTION NORMALIZER
-  --------------------------------------------- */
   const normalizeOptions = (options) =>
     (options || []).map((opt, i) => {
       if (typeof opt === "object") {
@@ -134,12 +115,8 @@ export default function FormRenderer({
       return { key: i, value: opt, label: opt };
     });
 
-  /* ---------------------------------------------
-      RENDER EACH FIELD
-  --------------------------------------------- */
   const renderField = (field) => {
     switch (field.type) {
-      /* ---------- HEADERS ---------- */
       case "header": {
         const size = {
           h1: "text-4xl font-extrabold",
@@ -157,17 +134,17 @@ export default function FormRenderer({
           : "h3";
 
         return (
-          <Tag className={`${size[level]} text-indigo-50 drop-shadow-sm  text-center `}>
+          <Tag
+            className={`${size[level]} text-indigo-50 drop-shadow-sm  text-center `}
+          >
             {field.label}
           </Tag>
         );
       }
 
-      /* ---------- PARAGRAPH ---------- */
       case "paragraph":
         return <p className="text-gray-300 text-base">{field.label}</p>;
 
-      /* ---------- INPUTS ---------- */
       case "text":
         return (
           <input
@@ -210,13 +187,12 @@ export default function FormRenderer({
           />
         );
 
-      /* ---------- SELECT ---------- */
       case "select": {
         const opts = normalizeOptions(field.options);
         return (
           <select
             className={glassInput + " text-white bg-white/10"}
-            style={{ colorScheme: "dark" }} // prevents white dropdown
+            style={{ colorScheme: "dark" }}
             value={values[field.id]}
             onChange={(e) => handleChange(field, e.target.value)}
           >
@@ -237,7 +213,6 @@ export default function FormRenderer({
         );
       }
 
-      /* ---------- RADIO ---------- */
       case "radio": {
         const opts = normalizeOptions(field.options);
         return (
@@ -262,7 +237,6 @@ export default function FormRenderer({
         );
       }
 
-      /* ---------- CHECKBOX ---------- */
       case "checkbox": {
         const opts = normalizeOptions(field.options);
         return (
@@ -288,7 +262,6 @@ export default function FormRenderer({
         );
       }
 
-      /* ---------- FILE ---------- */
       case "file":
       case "fileUpload":
         return (
@@ -312,9 +285,6 @@ export default function FormRenderer({
     }
   };
 
-  /* ---------------------------------------------
-      FORM UI
-  --------------------------------------------- */
   return (
     <div className="relative w-full flex justify-center items-center px-4">
       <form
@@ -322,9 +292,8 @@ export default function FormRenderer({
         className="w-full max-w-2xl bg-white/10 border border-white/20 backdrop-blur-2xl 
                    rounded-3xl px-8 py-10 shadow-2xl text-white"
       >
-        {/* FIELDS */}
         <div className="space-y-7">
-          {form.fields.map((field) => (
+          {(form.fields || []).map((field) => (
             <div key={field.id} className={glassBox}>
               {!["header", "paragraph"].includes(field.type) && (
                 <label className="block mb-2 font-medium text-indigo-200">
@@ -339,13 +308,12 @@ export default function FormRenderer({
           ))}
         </div>
 
-        {/* BUTTONS */}
         <div className="flex flex-col sm:flex-row justify-end mt-10 gap-4">
           <button
             type="button"
             onClick={() => {
               const reset = {};
-              form.fields.forEach((f) => {
+              (form.fields || []).forEach((f) => {
                 reset[f.id] = f.type === "checkbox" ? [] : "";
               });
               setValues(reset);
@@ -365,7 +333,6 @@ export default function FormRenderer({
         </div>
       </form>
 
-      {/* SUCCESS MODAL */}
       <AnimatePresence>
         {showModal && (
           <motion.div

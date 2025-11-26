@@ -13,14 +13,12 @@ export class AuthService {
     private emailService: EmailService,
   ) { }
 
-  // Register user
   async register(
     name: string,
     email: string,
     password: string,
-    role: string = 'user', // default role
+    role: string = 'user',
   ): Promise<User> {
-    // Validate password strength: at least 6 characters, 1 uppercase, 1 lowercase, 1 number
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/;
     if (!passwordRegex.test(password)) {
       throw new BadRequestException('Password must be at least 6 characters long and contain at least one uppercase letter, one lowercase letter, and one number');
@@ -29,12 +27,11 @@ export class AuthService {
     const existing = await this.usersService.findByEmail(email);
     if (existing) throw new ConflictException('Email already exists');
 
-    // Call createUser method from UsersService
     const user = await this.usersService.createUser(name, email, password, role);
     return user;
   }
 
-  // Validate user credentials
+
   async validateUser(email: string, password: string): Promise<User> {
     const user = await this.usersService.findByEmail(email);
     if (!user) throw new UnauthorizedException('Invalid credentials');
@@ -63,7 +60,7 @@ export class AuthService {
     return { message: 'OTP sent to your email' };
   }
 
-  // Verify OTP
+
   async verifyOtp(email: string, otp: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user || !user.resetToken || !user.resetTokenExpiry) {
@@ -82,9 +79,8 @@ export class AuthService {
     return { message: 'OTP verified successfully' };
   }
 
-  // Reset password
+
   async resetPassword(email: string, otp: string, newPassword: string) {
-    // Validate password strength: at least 6 characters, 1 uppercase, 1 lowercase, 1 number
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/;
     if (!passwordRegex.test(newPassword)) {
       throw new BadRequestException('Password must be at least 6 characters long and contain at least one uppercase letter, one lowercase letter, and one number');
@@ -104,22 +100,20 @@ export class AuthService {
       throw new BadRequestException('Invalid OTP');
     }
 
-    // Hash the new password
+
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update password and clear reset token
+
     await this.usersService.updateUserPassword(user.id, hashedPassword);
     await this.usersService.clearResetToken(user.id);
 
     return { message: 'Password reset successfully' };
   }
 
-  // ✅ 1. Send OTP before registration
   async sendRegisterOtp(email: string) {
     const existing = await this.usersService.findByEmail(email);
     if (existing) throw new ConflictException('Email already registered');
 
-    // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const hashedOtp = await bcrypt.hash(otp, 10);
 
@@ -135,7 +129,6 @@ export class AuthService {
     return { message: 'OTP sent for registration verification' };
   }
 
-  // ✅ 2. Verify OTP and create user
   async verifyRegisterOtp(
     name: string,
     email: string,
@@ -153,11 +146,10 @@ export class AuthService {
     const isValid = await bcrypt.compare(otp, pending.otp);
     if (!isValid) throw new BadRequestException('Invalid OTP');
 
-    // ✅ Create user now
+
     const user = await this.register(name, email, password, 'user');
     delete (global as any).pendingOtps[email];
 
-    // Auto login after registration
     const loginResult = await this.login(user);
     return {
       message: 'Registration successful',
@@ -167,11 +159,9 @@ export class AuthService {
   }
 
 
-  // Login user and return JWT
+
   async login(user: User) {
     const payload = { email: user.email, sub: user.id, role: user.role.name };
-
-    // Ensure expiresIn is a number
     const expiresIn = parseInt(process.env.JWT_EXPIRATION || '86400', 10);
 
     return {
@@ -184,8 +174,6 @@ export class AuthService {
         name: user.name,
         email: user.email,
         role: user.role.name,
-
-        // ADD ALL NEW FIELDS
         gender: user.gender,
         dob: user.dob,
         address: user.address,

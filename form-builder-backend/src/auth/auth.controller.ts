@@ -42,11 +42,10 @@ export class AuthController {
         user: loginResult.user,
       };
     } catch (error) {
-      // Handle duplicate registration
       if (
         error.message.includes('exists') ||
         error.message.includes('duplicate') ||
-        error.code === '23505' // for Postgres unique constraint
+        error.code === '23505'
       ) {
         throw new HttpException('User already registered', HttpStatus.CONFLICT);
       }
@@ -76,7 +75,7 @@ export class AuthController {
       return await this.authService.verifyRegisterOtp(
         body.name,
         body.email,
-        body.password, 
+        body.password,
         body.otp,
       );
     } catch (error) {

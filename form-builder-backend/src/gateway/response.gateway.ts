@@ -44,7 +44,7 @@ export class ResponseGateway implements OnGatewayConnection, OnGatewayDisconnect
   handleFormOpened(@MessageBody() data: { formId: string }) {
     const { formId } = data;
     this.logger.log(`Form opened: ${formId}`);
-    // Notify the dashboard
+ 
     this.server.to(`form-${formId}`).emit('formFilling', { formId });
   }
 

@@ -17,7 +17,6 @@ import hero from "../assets/heroimg.png";
 
 import { motion } from "framer-motion";
 
-// Motion Variants
 const fromBottom = (delay = 0) => ({
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.8, delay } },
@@ -66,11 +65,9 @@ export default function Home() {
   );
 }
 
-// -------- Hero Section --------
 function Hero({ user, navigate }) {
   return (
     <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 via-white to-blue-100">
-      {/* ✨ Background animated lights */}
       <motion.div
         className="absolute inset-0 pointer-events-none"
         animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
@@ -83,7 +80,6 @@ function Hero({ user, navigate }) {
       />
 
       <div className="container mx-auto px-6 py-20 md:py-28 grid md:grid-cols-2 gap-12 items-center relative z-10">
-        {/* ---- Left Text Content ---- */}
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -91,19 +87,16 @@ function Hero({ user, navigate }) {
           variants={fromLeft(0.1)}
           className="space-y-8"
         >
-          {/* Gradient Heading */}
           <h1 className="text-5xl md:text-6xl font-extrabold leading-tight text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-sky-500 drop-shadow-sm">
             Effortless Online Form Builder
           </h1>
 
-          {/* Subtext */}
           <p className="text-gray-600 text-lg md:text-xl max-w-md leading-relaxed">
             Create, share, and analyze surveys, polls, and quizzes in minutes
             with beautiful, responsive forms that work seamlessly across every
             device — all powered by live WebSocket updates.
           </p>
 
-          {/* Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 pt-2">
             {user ? (
               <>
@@ -164,7 +157,6 @@ function Hero({ user, navigate }) {
             )}
           </div>
 
-          {/* 🔹 Live Status Tag */}
           <motion.div
             className="flex items-center gap-2 mt-4 text-sm font-medium text-gray-500"
             animate={{ opacity: [0.8, 1, 0.8] }}
@@ -175,7 +167,6 @@ function Hero({ user, navigate }) {
           </motion.div>
         </motion.div>
 
-        {/* ---- Right Image Section ---- */}
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -183,7 +174,6 @@ function Hero({ user, navigate }) {
           variants={fromRight(0.2)}
           className="relative flex justify-center"
         >
-          {/* Floating Image */}
           <motion.img
             src={hero}
             alt="Form builder illustration"
@@ -194,14 +184,12 @@ function Hero({ user, navigate }) {
             transition={{ repeat: Infinity, duration: 6, ease: "easeInOut" }}
           />
 
-          {/* Glowing gradient behind image */}
           <motion.div
             className="pointer-events-none absolute -inset-12 rounded-[3rem] opacity-40 blur-3xl bg-gradient-to-tr from-blue-400 via-sky-300 to-indigo-300"
             animate={{ opacity: [0.25, 0.5, 0.25] }}
             transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
           />
 
-          {/* Floating highlights */}
           <motion.div
             className="absolute top-8 left-6 bg-gradient-to-r from-blue-500 to-sky-400 text-white text-xs px-3 py-1 rounded-full shadow-lg"
             animate={{ y: [0, -5, 0] }}
@@ -222,7 +210,6 @@ function Hero({ user, navigate }) {
   );
 }
 
-// -------- Trust & Badges Section --------
 function TrustBar() {
   const items = [
     {
@@ -249,7 +236,6 @@ function TrustBar() {
 
   return (
     <section className="relative py-12 bg-gradient-to-b from-blue-50 to-blue-100 overflow-hidden">
-      {/* Animated background blur lights */}
       <motion.div
         className="absolute inset-0 pointer-events-none"
         animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
@@ -272,7 +258,6 @@ function TrustBar() {
             whileHover={{ y: -6, scale: 1.05 }}
             className="relative flex items-center gap-3 bg-white p-5 rounded-2xl shadow-lg hover:shadow-2xl transition w-72"
           >
-            {/* Animated icon with glow */}
             <motion.div
               animate={{ scale: [1, 1.15, 1], opacity: [1, 0.8, 1] }}
               transition={{
@@ -286,12 +271,10 @@ function TrustBar() {
               <it.icon className="h-6 w-6" />
             </motion.div>
 
-            {/* Text content */}
             <span className="text-gray-700 font-medium text-sm leading-snug">
               {it.text}
             </span>
 
-            {/* Animated glow ring behind each card */}
             <motion.div
               className={`absolute inset-0 rounded-2xl bg-gradient-to-r ${it.gradient} opacity-20 blur-xl -z-10`}
               animate={{ opacity: [0.15, 0.35, 0.15] }}
@@ -304,7 +287,6 @@ function TrustBar() {
   );
 }
 
-// -------- Features Section --------
 function Features() {
   const items = [
     {
@@ -331,7 +313,7 @@ function Features() {
       Icon: BoltIcon,
       title: "Instant Updates",
       desc: "See responses appear live as users submit forms.",
-    }, // ⚡ NEW FEATURE
+    },
     {
       Icon: ChartBarIcon,
       title: "Real-time Analytics",
@@ -385,7 +367,6 @@ function Features() {
   );
 }
 
-// -------- How It Works Section --------
 function HowItWorks() {
   const steps = [
     {
@@ -413,7 +394,6 @@ function HowItWorks() {
 
   return (
     <section className="relative py-20 bg-gradient-to-b from-blue-50 via-white to-blue-100 overflow-hidden">
-      {/* Soft animated background lights */}
       <motion.div
         className="absolute inset-0 pointer-events-none"
         animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
@@ -426,7 +406,6 @@ function HowItWorks() {
       />
 
       <div className="container mx-auto px-6 relative z-10">
-        {/* Section Title */}
         <motion.h2
           initial="hidden"
           whileInView="visible"
@@ -437,9 +416,7 @@ function HowItWorks() {
           How It Works
         </motion.h2>
 
-        {/* Steps Grid */}
         <div className="relative grid sm:grid-cols-3 gap-10">
-          {/* Connecting line between steps */}
           <div className="hidden sm:block absolute top-1/2 left-0 right-0 h-1 bg-gradient-to-r from-blue-300 via-sky-400 to-blue-300 transform -translate-y-1/2 rounded-full" />
 
           {steps.map((s, idx) => {
@@ -461,7 +438,6 @@ function HowItWorks() {
                 transition={{ type: "spring", stiffness: 260, damping: 18 }}
                 className="relative flex flex-col items-center bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-500"
               >
-                {/* Floating Glow */}
                 <motion.div
                   className={`absolute -inset-2 rounded-2xl bg-gradient-to-r ${s.color} opacity-20 blur-2xl -z-10`}
                   animate={{ opacity: [0.15, 0.35, 0.15] }}
@@ -472,12 +448,11 @@ function HowItWorks() {
                   }}
                 />
 
-                {/* Step Circle with Icon */}
                 <div
                   className={`relative flex items-center justify-center h-16 w-16 rounded-full bg-gradient-to-r ${s.color} shadow-lg mb-5`}
                 >
                   <s.icon className="h-7 w-7 text-white" />
-                  {/* Floating number badge */}
+
                   <motion.div
                     className="absolute -top-3 -right-3 bg-white text-blue-600 h-6 w-6 rounded-full flex items-center justify-center font-bold text-sm shadow"
                     animate={{ y: [0, -4, 0] }}
@@ -492,10 +467,8 @@ function HowItWorks() {
                   </motion.div>
                 </div>
 
-                {/* Title */}
                 <h4 className="text-lg font-bold text-blue-700">{s.title}</h4>
 
-                {/* Description */}
                 <p className="text-gray-600 mt-3 text-center leading-relaxed">
                   {s.desc}
                 </p>
@@ -508,17 +481,16 @@ function HowItWorks() {
   );
 }
 
-// -------- Call To Action --------
 function CTA({ navigate }) {
-  const { user } = useAuth(); // ✅ Get current user state
+  const { user } = useAuth();
 
   const handleCTA = () => {
     if (!user) {
-      navigate("/register"); // not logged in → go to register
+      navigate("/register");
     } else if (user.role === "admin") {
-      navigate("/admin/dashboard"); // admin → dashboard
+      navigate("/admin/dashboard");
     } else {
-      navigate("/my-forms"); // normal user → my forms
+      navigate("/my-forms");
     }
   };
 

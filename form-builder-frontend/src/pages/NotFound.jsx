@@ -12,7 +12,8 @@ export default function NotFound() {
           Page Not Found
         </h2>
         <p className="text-lg text-gray-500 mb-8 max-w-md mx-auto">
-          The page you're looking for doesn't exist. It might have been moved, deleted, or you entered the wrong URL.
+          The page you're looking for doesn't exist. It might have been moved,
+          deleted, or you entered the wrong URL.
         </p>
         <Link
           to="/"

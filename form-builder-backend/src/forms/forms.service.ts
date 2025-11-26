@@ -43,8 +43,11 @@ export class FormsService {
       status: dto.status ?? 'Active',
     });
 
-    const fieldEntities = this.fieldsRepo.create(
-      (dto.fields || []).map((f) => ({
+    const savedForm = await this.formsRepo.save(form);
+
+    if (dto.fields && dto.fields.length > 0) {
+      const fieldDefinitions = dto.fields.map((f) => ({
+        id: uuidv4(),
         label: f.label,
         type: this.normalizeFieldType(f.type),
         required: f.required ?? false,
@@ -53,12 +56,17 @@ export class FormsService {
         validation: f.validation || null,
         extraValue: f.extraValue ?? undefined,
         subtype: f.subtype ?? undefined,
-        form,
-      })),
-    );
+      }));
 
-    form.fields = await this.fieldsRepo.save(fieldEntities);
-    return this.formsRepo.save(form);
+      const formFieldEntity = this.fieldsRepo.create({
+        form: savedForm,
+        fields: fieldDefinitions,
+      });
+
+      savedForm.fields = [await this.fieldsRepo.save(formFieldEntity)];
+    }
+
+    return savedForm;
   }
 
   // --- 📋 Get All Forms ---
@@ -121,64 +129,38 @@ export class FormsService {
     form.isPublic = dto.isPublic ?? form.isPublic;
     form.status = dto.status ?? form.status;
 
-    const incomingFields = dto.fields || [];
-    const existingFields = form.fields || [];
+    if (dto.fields && dto.fields.length > 0) {
+      const fieldDefinitions = dto.fields.map((f) => ({
+        id: f.id || uuidv4(),
+        label: f.label,
+        type: this.normalizeFieldType(f.type),
+        required: f.required ?? false,
+        options: f.options || [],
+        order: f.order || 0,
+        validation: f.validation || null,
+        extraValue: f.extraValue ?? undefined,
+        subtype: f.subtype ?? undefined,
+      }));
 
-    const existingMap = new Map();
-    existingFields.forEach((ef) => existingMap.set(ef.id, ef));
-
-    const updatedFields: FormField[] = [];
-
-    for (const incoming of incomingFields) {
-      if (!incoming?.id || !incoming?.label) continue; // ✅ Skip invalid field entries
-
-      const existing = existingMap.get(incoming.id);
-
-      if (existing) {
-        existing.label = incoming.label;
-        existing.type = this.normalizeFieldType(incoming.type);
-        existing.required = incoming.required ?? false;
-        existing.options = incoming.options || [];
-        existing.order = incoming.order || 0;
-        existing.validation = incoming.validation || null;
-        existing.extraValue = incoming.extraValue ?? undefined;
-        existing.subtype = incoming.subtype ?? undefined;
-
-        updatedFields.push(existing);
-        existingMap.delete(incoming.id);
+      if (form.fields && form.fields.length > 0) {
+        // Update existing FormField record
+        form.fields[0].fields = fieldDefinitions;
+        await this.fieldsRepo.save(form.fields[0]);
       } else {
-        const newField = this.fieldsRepo.create({
-          label: incoming.label,
-          type: this.normalizeFieldType(incoming.type),
-          required: incoming.required ?? false,
-          options: incoming.options || [],
-          order: incoming.order || 0,
-          validation: incoming.validation || null,
-          extraValue: incoming.extraValue ?? undefined,
-          subtype: incoming.subtype ?? undefined,
+        // Create new FormField record
+        const formFieldEntity = this.fieldsRepo.create({
           form,
+          fields: fieldDefinitions,
         });
-        updatedFields.push(newField);
+        form.fields = [await this.fieldsRepo.save(formFieldEntity)];
       }
     }
 
-    // ✅ Delete old fields only if there are any to delete
-    const toDelete = Array.from(existingMap.values());
-    if (toDelete.length > 0) {
-      await this.fieldsRepo.remove(toDelete);
-    }
-
-    // ✅ Save updated fields only if there are any valid ones
-    if (updatedFields.length > 0) {
-      form.fields = await this.fieldsRepo.save(updatedFields);
-    }
-
-    // ✅ Finally, save the form
     return await this.formsRepo.save(form);
   }
 
 
-  // --- 🗑 Delete Form ---
+ 
   async deleteForm(id: string, user: User): Promise<void> {
     const form = await this.formsRepo.findOne({ where: { id }, relations: ['owner'] });
     if (!form) throw new NotFoundException('Form not found');
@@ -187,7 +169,6 @@ export class FormsService {
     await this.formsRepo.delete(id);
   }
 
-  // --- 📤 Submit Form with Files ---
 
   async submitResponseWithFiles(
     slug: string,
@@ -216,7 +197,6 @@ export class FormsService {
     });
     await this.responsesRepo.save(newResponse);
 
-    //Broadcast real-time update
     this.responseGateway.broadcastNewResponse({
       formId: form.id,
       formTitle: form.title,
@@ -229,11 +209,10 @@ export class FormsService {
       })),
     });
 
-    // 5️⃣ Return confirmation
     return { message: 'Response saved successfully', id: newResponse.id };
   }
 
-  // --- 📊 Get All Responses ---
+
   async getFormResponses(formId: string, user: User): Promise<FormResponse[]> {
     const form = await this.formsRepo.findOne({
       where: { id: formId },
@@ -246,23 +225,23 @@ export class FormsService {
       throw new NotFoundException('Form not found');
     }
 
-    // ✅ Removed 'relations' since FormResponse now stores JSON data
+
     return this.responsesRepo.find({
       where: { form: { id: formId } },
-      order: { createdAt: 'ASC' }, // optional: keeps responses in order
+      order: { createdAt: 'ASC' }, 
     });
   }
 
 
-  // --- 📁 Get User Forms ---
+
   async getUserForms(user: User): Promise<Form[]> {
     return this.formsRepo.find({
       where: { owner: { id: user.id } },
       relations: ['fields'],
     });
   }
-z
-  // --- 🗑 Delete Response ---
+
+
   async deleteResponse(responseId: string, user: User): Promise<void> {
     const response = await this.responsesRepo.findOne({
       where: { id: responseId },
@@ -274,7 +253,7 @@ z
     await this.responsesRepo.delete(responseId);
   }
 
-  // --- 🧾 Generate QR Code ---
+  
   async generateFormQrCode(formId: string, user: User): Promise<string> {
     const form = await this.formsRepo.findOne({ where: { id: formId }, relations: ['owner'] });
     if (!form) throw new NotFoundException('Form not found');

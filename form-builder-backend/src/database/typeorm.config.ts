@@ -11,13 +11,14 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
   port: parseInt(process.env.DB_PORT || '5432', 10),
   username: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASS || '2002',
-  database: process.env.DB_NAME || 'formbuilderly',
+  // database: process.env.DB_NAME || 'formbuilderly',
+  database: process.env.DB_NAME || 'Formify',
   entities: [
     User,
     Role,
     Form,
     FormField,
-    FormResponse, //5 entities
+    FormResponse, //5 entities = tables only
   ],
   synchronize: true,
 };

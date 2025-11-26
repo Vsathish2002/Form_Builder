@@ -39,7 +39,7 @@ import {
 export class FormsController {
   constructor(private formsService: FormsService) { }
 
-  // ✅ Create a new form
+
   @UseGuards(JwtAuthGuard)
   @Post()
   @ApiOperation({ summary: 'Create a new form (supports dynamic drag & drop fields)' })
@@ -58,7 +58,7 @@ export class FormsController {
     }
   }
 
-  // ✅ Get all forms for logged-in user
+
   @UseGuards(JwtAuthGuard)
   @Get()
   @ApiOperation({ summary: 'Get all forms created by the authenticated user' })
@@ -72,7 +72,7 @@ export class FormsController {
     }
   }
 
-  // ✅ Get form by slug (public)
+
   @Get('slug/:slug')
   @ApiOperation({ summary: 'Get form by slug (public access)' })
   @ApiResponse({ status: 200, description: 'Form details fetched successfully' })
@@ -84,7 +84,7 @@ export class FormsController {
     }
   }
 
-  // ✅ Get form by ID
+
   @UseGuards(JwtAuthGuard)
   @Get('id/:id')
   @ApiOperation({ summary: 'Get a specific form by ID (authenticated)' })
@@ -98,7 +98,7 @@ export class FormsController {
     }
   }
 
-  // ✅ Update form
+
   @UseGuards(JwtAuthGuard)
   @Put(':id')
   @ApiOperation({ summary: 'Update form details or structure' })
@@ -112,7 +112,7 @@ export class FormsController {
     }
   }
 
-  // ✅ Delete form
+
   @UseGuards(JwtAuthGuard)
   @Delete(':id')
   @ApiOperation({ summary: 'Delete form by ID' })
@@ -125,8 +125,6 @@ export class FormsController {
       throw new HttpException('Failed to delete form', HttpStatus.BAD_REQUEST);
     }
   }
-
-  // ✅ Submit public response with file upload
   @Post('public/:slug/submit')
   @UseInterceptors(
     AnyFilesInterceptor({
@@ -171,7 +169,7 @@ export class FormsController {
     }
   }
 
-  // ✅ Get all responses for a form
+
   @UseGuards(JwtAuthGuard)
   @Get(':id/responses')
   @ApiOperation({ summary: 'Get all submitted responses for a specific form' })
@@ -184,7 +182,7 @@ export class FormsController {
     }
   }
 
-  // ✅ ADMIN: Get all forms from all users for admn dashboard
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @Get('admin/all')
@@ -199,7 +197,7 @@ export class FormsController {
   }
 
 
-  // ✅ Get forms by current user 
+
   @UseGuards(JwtAuthGuard)
   @Get('user/me')
   @ApiOperation({ summary: 'Get all forms created by the current user' })
@@ -212,7 +210,7 @@ export class FormsController {
     }
   }
 
-  // ✅ Delete a specific response
+
   @UseGuards(JwtAuthGuard)
   @Delete('responses/:responseId')
   @ApiOperation({ summary: 'Delete a specific form response' })
@@ -225,7 +223,7 @@ export class FormsController {
     }
   }
 
-  // ✅ Generate QR code for a form
+
   @UseGuards(JwtAuthGuard)
   @Get(':id/qrcode')
   @ApiOperation({ summary: 'Generate a QR code for public form access' })

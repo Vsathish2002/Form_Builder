@@ -67,7 +67,7 @@ describe('FormsService', () => {
     };
   }
 
-  // ✅ 1. createForm
+
   describe('createForm', () => {
     it('should create form successfully', async () => {
       const dto = { title: 'Form 1', fields: [{ label: 'Name', type: 'text' }] };
@@ -85,7 +85,7 @@ describe('FormsService', () => {
     });
   });
 
-  // ✅ 2. findAll
+
   describe('findAll', () => {
     it('should return all forms for admin', async () => {
       const forms = [mockForm];
@@ -104,7 +104,7 @@ describe('FormsService', () => {
     });
   });
 
-  // ✅ 3. findOne
+
   describe('findOne', () => {
     it('should return form by slug', async () => {
       formsRepo.findOne.mockResolvedValue(mockForm);
@@ -123,7 +123,7 @@ describe('FormsService', () => {
     });
   });
 
-  // ✅ 4. findById
+
   describe('findById', () => {
     it('should return form if owner', async () => {
       formsRepo.findOne.mockResolvedValue(mockForm);
@@ -143,7 +143,7 @@ describe('FormsService', () => {
     });
   });
 
-  // ✅ 5. updateForm
+
   describe('updateForm', () => {
     it('should update and save form successfully', async () => {
       const dto = { title: 'Updated', fields: [{ id: '1', label: 'New Field', type: 'text' }] };
@@ -164,7 +164,7 @@ describe('FormsService', () => {
     });
   });
 
-  // ✅ 6. deleteForm
+
   describe('deleteForm', () => {
     it('should delete form if owner', async () => {
       formsRepo.findOne.mockResolvedValue(mockForm);
@@ -179,7 +179,7 @@ describe('FormsService', () => {
     });
   });
 
-  // ✅ 7. submitResponseWithFiles
+
   describe('submitResponseWithFiles', () => {
     it('should submit response successfully', async () => {
       const slug = 'mock-slug';
@@ -205,7 +205,7 @@ describe('FormsService', () => {
     });
   });
 
-  // ✅ 8. getFormResponses
+
   describe('getFormResponses', () => {
     it('should return responses for owner', async () => {
       formsRepo.findOne.mockResolvedValue(mockForm);
@@ -221,7 +221,7 @@ describe('FormsService', () => {
     });
   });
 
-  // ✅ 9. getUserForms
+
   describe('getUserForms', () => {
     it('should return forms for user', async () => {
       formsRepo.find.mockResolvedValue([mockForm]);
@@ -230,7 +230,7 @@ describe('FormsService', () => {
     });
   });
 
-  // ✅ 10. deleteResponse
+
   describe('deleteResponse', () => {
     it('should delete response if owner', async () => {
       const response = { id: 'r1', form: { owner: mockUser } };
@@ -245,7 +245,7 @@ describe('FormsService', () => {
     });
   });
 
-  // ✅ 11. generateFormQrCode
+  
   describe('generateFormQrCode', () => {
     it('should return QR code URL', async () => {
       formsRepo.findOne.mockResolvedValue(mockForm);

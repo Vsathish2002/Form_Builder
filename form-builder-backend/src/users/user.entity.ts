@@ -25,7 +25,7 @@ export class User {
   gender: string;
 
   @Column({ type: 'date', nullable: true })
-  dob: string; // ✅ Added
+  dob: string; 
 
   @Column({ type: 'text', nullable: true })
   address: string;

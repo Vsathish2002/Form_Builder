@@ -52,7 +52,10 @@ export default function UserDashboard() {
           })
         );
 
-        const totalResponses = responsesArray.reduce((sum, len) => sum + len, 0);
+        const totalResponses = responsesArray.reduce(
+          (sum, len) => sum + len,
+          0
+        );
         setFormResponses(responsesMap);
 
         const active = userForms.filter((f) => f.status === "Active").length;
@@ -66,7 +69,7 @@ export default function UserDashboard() {
 
         // ✅ WebSocket for real-time updates
         const socket = io("http://localhost:4000", {
-        // const socket = io("http://192.168.0.105:4000", {
+          // const socket = io("http://192.168.0.105:4000", {
           transports: ["websocket"],
           reconnection: true,
         });
@@ -155,7 +158,7 @@ export default function UserDashboard() {
         >
           My Dashboard
         </motion.h1>
-{/* 
+        {/* 
         <motion.div whileHover={{ scale: 1.05 }}>
           <Link
             to="/create"
@@ -217,81 +220,81 @@ export default function UserDashboard() {
         ))}
       </div>
       <motion.div
-          whileInView={{ opacity: 1, y: 0 }}
-          initial={{ opacity: 0, y: 40 }}
-          transition={{ duration: 0.7 }}
-          className="bg-white rounded-xl shadow-md p-6 lg:col-span-2"
-        >
-          <div className="flex flex-col sm:flex-row justify-between items-center mb-5 gap-3">
-            <h2 className="text-xl font-bold text-gray-700">
-              📋 Forms Summary Table
-            </h2>
+        whileInView={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 40 }}
+        transition={{ duration: 0.7 }}
+        className="bg-white rounded-xl shadow-md p-6 lg:col-span-2"
+      >
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-5 gap-3">
+          <h2 className="text-xl font-bold text-gray-700">
+            📋 Forms Summary Table
+          </h2>
 
-            {/* Search */}
-            <div className="relative w-full sm:w-64">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                size={18}
-              />
-              <input
-                type="text"
-                placeholder="Search form by title..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base"
-              />
-            </div>
+          {/* Search */}
+          <div className="relative w-full sm:w-64">
+            <Search
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              size={18}
+            />
+            <input
+              type="text"
+              placeholder="Search form by title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm sm:text-base"
+            />
           </div>
+        </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm sm:text-base">
-              <thead className="bg-gray-100 text-gray-700">
-                <tr>
-                  <th className="p-3 text-left">Form Title</th>
-                  <th className="p-3 text-center">Status</th>
-                  <th className="p-3 text-center">Responses</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredForms.length > 0 ? (
-                  filteredForms.map((form, i) => (
-                    <tr
-                      key={form.id}
-                      className={`border-t ${
-                        i % 2 === 0 ? "bg-white" : "bg-gray-50"
-                      } hover:bg-indigo-50 transition`}
-                    >
-                      <td className="p-3">{form.title}</td>
-                      <td className="p-3 text-center">
-                        {form.status === "Active" ? (
-                          <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">
-                            Active
-                          </span>
-                        ) : (
-                          <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-semibold">
-                            Inactive
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-3 text-center font-semibold text-indigo-600">
-                        {formResponses[form.id] || 0}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="3"
-                      className="text-center p-5 text-gray-500 font-medium"
-                    >
-                      No forms found.
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm sm:text-base">
+            <thead className="bg-gray-100 text-gray-700">
+              <tr>
+                <th className="p-3 text-left">Form Title</th>
+                <th className="p-3 text-center">Status</th>
+                <th className="p-3 text-center">Responses</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredForms.length > 0 ? (
+                filteredForms.map((form, i) => (
+                  <tr
+                    key={form.id}
+                    className={`border-t ${
+                      i % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    } hover:bg-indigo-50 transition`}
+                  >
+                    <td className="p-3">{form.title}</td>
+                    <td className="p-3 text-center">
+                      {form.status === "Active" ? (
+                        <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-semibold">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="bg-yellow-100 text-yellow-700 px-2 py-1 rounded text-xs font-semibold">
+                          Inactive
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3 text-center font-semibold text-indigo-600">
+                      {formResponses[form.id] || 0}
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </motion.div>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="3"
+                    className="text-center p-5 text-gray-500 font-medium"
+                  >
+                    No forms found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </motion.div>
 
       {/* Charts and Table */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -346,9 +349,7 @@ export default function UserDashboard() {
         </motion.div>
 
         {/* ✅ Updated Forms Table with Search and Real Counts */}
-   
       </div>
     </div>
   );
 }
- 

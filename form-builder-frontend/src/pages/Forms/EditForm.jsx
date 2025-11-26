@@ -23,13 +23,12 @@ export default function EditForm() {
   const navigate = useNavigate();
   const { token } = useAuth();
 
-  /** ===================== LOAD FORM ===================== */
   useEffect(() => {
     const fetchForm = async () => {
       try {
         const data = await getFormById(token, id);
 
-        const fieldsWithId = (data.fields || []).map((f, i) => {
+        const fieldsWithId = (data.fields?.[0]?.fields || []).map((f, i) => {
           let parsedOptions = f.options;
           if (typeof parsedOptions === "string") {
             try {
@@ -42,7 +41,7 @@ export default function EditForm() {
           return {
             id: f.id || `field-${i}`,
             label: f.label,
-            /** 🔥 Convert DB → Builder format */
+
             type:
               f.type === "radio"
                 ? "radio-group"
@@ -79,7 +78,6 @@ export default function EditForm() {
     fetchForm();
   }, [id, token]);
 
-  /** ================== HANDLE FIELDS UPDATE ================== */
   const handleFieldsUpdate = (newFields) => {
     const updated = newFields.map((f, i) => ({
       id: f.id || `field-${i}`,
@@ -89,7 +87,6 @@ export default function EditForm() {
     setForm((prev) => ({ ...prev, fields: updated }));
   };
 
-  /** ================== SAVE FORM ================== */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -112,7 +109,8 @@ export default function EditForm() {
 
       // Create a more reliable ID mapping using both label and type
       const idMap = {};
-      form.fields.forEach((f) => {
+      const currentFields = form.fields || [];
+      currentFields.forEach((f) => {
         const key = `${f.label}-${f.type}`;
         idMap[key] = f.id;
       });
@@ -124,7 +122,7 @@ export default function EditForm() {
         fields: parsed.map((f, i) => {
           // Try multiple strategies to find the correct ID
           const labelTypeKey = `${f.label}-${f.type}`;
-          const existingField = form.fields.find((old) => old.id === f.id);
+          const existingField = currentFields.find((old) => old.id === f.id);
 
           let fieldId = f.id;
           if (!fieldId || !form.fields.find((old) => old.id === fieldId)) {

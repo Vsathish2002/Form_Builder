@@ -31,7 +31,10 @@ export default function AdminLayout() {
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 relative overflow-hidden">
       {/* Sidebar */}
-      <AdminSidebar onClose={() => setSidebarOpen(false)} isOpen={sidebarOpen} />
+      <AdminSidebar
+        onClose={() => setSidebarOpen(false)}
+        isOpen={sidebarOpen}
+      />
 
       {/* Main Content */}
       <div

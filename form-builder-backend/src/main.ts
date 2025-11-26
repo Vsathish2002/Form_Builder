@@ -6,11 +6,11 @@ import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as dotenv from 'dotenv';
 
-// Load environment variables
+
 dotenv.config();
 
 async function bootstrap() {
-  // ✅ Use NestExpressApplication for static asset serving
+  
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // ✅ Enable CORS for React frontend (Form Builder UI)
@@ -23,7 +23,7 @@ async function bootstrap() {
   // ✅ Helmet adds extra security headers
   app.use(helmet());
 
-  // ✅ Serve static assets (uploads folder)
+
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads', // Access via http://localhost:4000/uploads/filename.png
   });

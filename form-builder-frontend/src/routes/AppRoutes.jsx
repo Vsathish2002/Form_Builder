@@ -61,11 +61,10 @@ export default function AppRoutes() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="users" element={<ManageUsers />} />
         <Route path="forms" element={<ManageForms />} />
-       
+
         <Route index element={<Navigate to="dashboard" />} />
       </Route>
 
-      
       <Route
         path="/user/dashboard"
         element={
@@ -122,8 +121,7 @@ export default function AppRoutes() {
           </UserRoute>
         }
       />
- 
-      
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

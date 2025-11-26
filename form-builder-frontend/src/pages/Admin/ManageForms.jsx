@@ -73,14 +73,19 @@ export default function ManageForms() {
         </h2>
         <p className="text-gray-500 text-sm">
           Total Forms:{" "}
-          <span className="font-semibold text-indigo-600">{filteredForms.length}</span>
+          <span className="font-semibold text-indigo-600">
+            {filteredForms.length}
+          </span>
         </p>
       </div>
 
       {/* Search Bar */}
       <div className="mb-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+          <Search
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            size={20}
+          />
           <input
             type="text"
             aria-label="Search forms by title or owner email"
@@ -109,8 +114,12 @@ export default function ManageForms() {
                 <tr>
                   <th className="p-3 text-left w-[40%] md:w-[35%]">Title</th>
                   <th className="p-3 text-left w-[30%] md:w-[25%]">Owner</th>
-                  <th className="p-3 text-center w-[15%] md:w-[20%]">Created</th>
-                  <th className="p-3 text-center w-[15%] md:w-[20%]">Actions</th>
+                  <th className="p-3 text-center w-[15%] md:w-[20%]">
+                    Created
+                  </th>
+                  <th className="p-3 text-center w-[15%] md:w-[20%]">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -122,27 +131,41 @@ export default function ManageForms() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2, delay: index * 0.03 }}
-                      className={`${index % 2 === 0 ? "bg-white" : "bg-gray-50"} border-t hover:bg-indigo-50 transition-colors duration-200`}
+                      className={`${
+                        index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      } border-t hover:bg-indigo-50 transition-colors duration-200`}
                     >
                       {/* Title */}
                       <td className="p-3 truncate">
                         <div className="flex items-center gap-2">
-                          <FileText size={18} className="text-indigo-600 flex-shrink-0" />
-                          <span className="font-semibold text-gray-800 truncate">{f.title}</span>
+                          <FileText
+                            size={18}
+                            className="text-indigo-600 flex-shrink-0"
+                          />
+                          <span className="font-semibold text-gray-800 truncate">
+                            {f.title}
+                          </span>
                         </div>
                       </td>
 
                       {/* Owner */}
                       <td className="p-3 truncate">
                         <div className="flex items-center gap-2 text-gray-700">
-                          <User size={16} className="text-gray-500 flex-shrink-0" />
-                          <span className="truncate">{f.owner?.email || "Unknown"}</span>
+                          <User
+                            size={16}
+                            className="text-gray-500 flex-shrink-0"
+                          />
+                          <span className="truncate">
+                            {f.owner?.email || "Unknown"}
+                          </span>
                         </div>
                       </td>
 
                       {/* Created */}
                       <td className="p-3 text-center text-gray-600 whitespace-nowrap">
-                        {f.createdAt ? new Date(f.createdAt).toLocaleDateString() : "N/A"}
+                        {f.createdAt
+                          ? new Date(f.createdAt).toLocaleDateString()
+                          : "N/A"}
                       </td>
 
                       {/* Actions */}
@@ -151,7 +174,11 @@ export default function ManageForms() {
                           whileTap={{ scale: 0.95 }}
                           onClick={() => handleDelete(f.id)}
                           disabled={deletingId === f.id}
-                          className={`${deletingId === f.id ? "bg-gray-400 cursor-not-allowed" : "bg-red-500 hover:bg-red-600"} text-white px-4 py-1.5 rounded-md text-sm flex items-center gap-1 mx-auto shadow transition`}
+                          className={`${
+                            deletingId === f.id
+                              ? "bg-gray-400 cursor-not-allowed"
+                              : "bg-red-500 hover:bg-red-600"
+                          } text-white px-4 py-1.5 rounded-md text-sm flex items-center gap-1 mx-auto shadow transition`}
                         >
                           <Trash2 size={14} />
                           {deletingId === f.id ? "Deleting..." : "Delete"}
@@ -183,12 +210,17 @@ export default function ManageForms() {
               <User size={14} /> {f.owner?.email || "Unknown"}
             </div>
             <div className="text-xs text-gray-500">
-              Created: {f.createdAt ? new Date(f.createdAt).toLocaleDateString() : "N/A"}
+              Created:{" "}
+              {f.createdAt ? new Date(f.createdAt).toLocaleDateString() : "N/A"}
             </div>
             <button
               onClick={() => handleDelete(f.id)}
               disabled={deletingId === f.id}
-              className={`${deletingId === f.id ? "bg-gray-400" : "bg-red-500 hover:bg-red-600"} text-white text-sm rounded-md px-3 py-1 mt-2 w-full`}
+              className={`${
+                deletingId === f.id
+                  ? "bg-gray-400"
+                  : "bg-red-500 hover:bg-red-600"
+              } text-white text-sm rounded-md px-3 py-1 mt-2 w-full`}
             >
               {deletingId === f.id ? "Deleting..." : "Delete"}
             </button>

@@ -13,12 +13,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    // Fetch full user from DB (always up-to-date)
+
     const user = await this.usersService.findByEmail(payload.email);
     if (!user) {
       throw new UnauthorizedException('User not found');
     }
 
-    return user; // ✅ attaches full user object to req.user
+    return user;
   }
 }

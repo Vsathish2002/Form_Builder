@@ -8,7 +8,10 @@ export default function OtpModal({ email, open, onClose, onVerify, onResend }) {
     if (!open) return;
     setOtp("");
     setTimer(600);
-    const interval = setInterval(() => setTimer((t) => (t > 0 ? t - 1 : 0)), 1000);
+    const interval = setInterval(
+      () => setTimer((t) => (t > 0 ? t - 1 : 0)),
+      1000
+    );
     return () => clearInterval(interval);
   }, [open]);
 
@@ -32,7 +35,8 @@ export default function OtpModal({ email, open, onClose, onVerify, onResend }) {
         />
 
         <p className="text-xs text-gray-400 mb-3">
-          Time left: {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, "0")}
+          Time left: {Math.floor(timer / 60)}:
+          {String(timer % 60).padStart(2, "0")}
         </p>
 
         <div className="flex justify-between mb-2">

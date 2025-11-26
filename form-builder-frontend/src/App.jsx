@@ -7,9 +7,7 @@ import { Toaster } from "react-hot-toast";
 
 import VoiceNavigation from "../src/components/VoiceNavigation";
 
-
 function App() {
-
   const location = useLocation();
 
   const isPublicFormPage = location.pathname.startsWith("/public/");
@@ -27,7 +25,9 @@ function App() {
 
       {!hideNavbar && <Navbar />}
 
-      <main className={`flex-1 w-full ${removePadding ? "" : "pt-14 sm:pt-12"}`}>
+      <main
+        className={`flex-1 w-full ${removePadding ? "" : "pt-14 sm:pt-12"}`}
+      >
         <AppRoutes />
       </main>
 

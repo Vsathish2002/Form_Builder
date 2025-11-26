@@ -16,7 +16,7 @@ describe('UsersController', () => {
     verifyEmailChangeOtp: jest.fn(),
   };
 
-  // ✅ Disable guards for testing
+
   const mockJwtGuard = { canActivate: jest.fn(() => true) };
   const mockRolesGuard = { canActivate: jest.fn(() => true) };
 
