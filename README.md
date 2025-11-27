@@ -328,15 +328,12 @@ npm run build
 - Ensure all dependencies are installed
 - Verify database schema is up to date
 
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 👥 Author
 
 **Sathish** - *Full Stack Developer*
-- GitHub: [@your-username]
-- Email: your.email@example.com
+- GitHub: [Vsathish2002]
+- Email: vsathish22120@gmail.com
 
 ## 🙏 Acknowledgments
 
