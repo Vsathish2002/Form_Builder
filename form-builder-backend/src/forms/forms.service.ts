@@ -27,7 +27,20 @@ export class FormsService {
     const map: Record<string, FieldType> = {
       'checkbox-group': 'checkbox',
       'radio-group': 'radio',
-      Paragraph: 'paragraph',
+      'Paragraph': 'paragraph',
+      'Header': 'header',
+      'Text': 'text',
+      'TextArea': 'textarea',
+      'Number': 'number',
+      'Date': 'date',
+      'Select': 'select',
+      'Email': 'text', // Email as text type
+      'Phone': 'text', // Phone as text type
+      'URL': 'text',   // URL as text type
+      'Hidden': 'text', // Hidden as text type
+      'section': 'section',
+      'page': 'page',
+      'autocomplete': 'autocomplete',
     };
     return (map[type] || type) as FieldType;
   }
@@ -46,17 +59,38 @@ export class FormsService {
     const savedForm = await this.formsRepo.save(form);
 
     if (dto.fields && dto.fields.length > 0) {
-      const fieldDefinitions = dto.fields.map((f) => ({
-        id: uuidv4(),
-        label: f.label,
-        type: this.normalizeFieldType(f.type),
-        required: f.required ?? false,
-        options: f.options || [],
-        order: f.order || 0,
-        validation: f.validation || null,
-        extraValue: f.extraValue ?? undefined,
-        subtype: f.subtype ?? undefined,
-      }));
+      const fieldDefinitions = dto.fields.map((f) => {
+        // Clean up options to prevent empty values
+        const cleanOptions = (f.options || []).map((opt: any, index: number) => {
+          if (typeof opt === 'object' && opt !== null) {
+            return {
+              ...opt,
+              value: opt.value && opt.value.toString().trim() !== '' 
+                ? opt.value 
+                : opt.label && opt.label.toString().trim() !== ''
+                  ? opt.label 
+                  : `option-${index}`,
+              label: opt.label || opt.value || `Option ${index + 1}`
+            };
+          } else {
+            return opt && opt.toString().trim() !== '' 
+              ? opt 
+              : `option-${index}`;
+          }
+        });
+
+        return {
+          id: uuidv4(),
+          label: f.label,
+          type: this.normalizeFieldType(f.type),
+          required: f.required ?? false,
+          options: cleanOptions,
+          order: f.order || 0,
+          validation: f.validation || null,
+          extraValue: f.extraValue ?? undefined,
+          subtype: f.subtype ?? undefined,
+        };
+      });
 
       const formFieldEntity = this.fieldsRepo.create({
         form: savedForm,
@@ -130,17 +164,38 @@ export class FormsService {
     form.status = dto.status ?? form.status;
 
     if (dto.fields && dto.fields.length > 0) {
-      const fieldDefinitions = dto.fields.map((f) => ({
-        id: f.id || uuidv4(),
-        label: f.label,
-        type: this.normalizeFieldType(f.type),
-        required: f.required ?? false,
-        options: f.options || [],
-        order: f.order || 0,
-        validation: f.validation || null,
-        extraValue: f.extraValue ?? undefined,
-        subtype: f.subtype ?? undefined,
-      }));
+      const fieldDefinitions = dto.fields.map((f) => {
+        // Clean up options to prevent empty values
+        const cleanOptions = (f.options || []).map((opt: any, index: number) => {
+          if (typeof opt === 'object' && opt !== null) {
+            return {
+              ...opt,
+              value: opt.value && opt.value.toString().trim() !== '' 
+                ? opt.value 
+                : opt.label && opt.label.toString().trim() !== ''
+                  ? opt.label 
+                  : `option-${index}`,
+              label: opt.label || opt.value || `Option ${index + 1}`
+            };
+          } else {
+            return opt && opt.toString().trim() !== '' 
+              ? opt 
+              : `option-${index}`;
+          }
+        });
+
+        return {
+          id: f.id || uuidv4(),
+          label: f.label,
+          type: this.normalizeFieldType(f.type),
+          required: f.required ?? false,
+          options: cleanOptions,
+          order: f.order || 0,
+          validation: f.validation || null,
+          extraValue: f.extraValue ?? undefined,
+          subtype: f.subtype ?? undefined,
+        };
+      });
 
       if (form.fields && form.fields.length > 0) {
         // Update existing FormField record

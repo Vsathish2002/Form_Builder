@@ -25,9 +25,22 @@ export default function FormRenderer({
   const handleChange = (field, value, checked) => {
     if (field.type === "checkbox") {
       const prev = values[field.id] || [];
-      const updated = checked
-        ? [...prev, value]
-        : prev.filter((v) => v !== value);
+      let updated;
+      if (checked) {
+        // Only add non-empty values and prevent duplicates
+        if (value && value.toString().trim() !== "") {
+          // Check if value already exists
+          if (!prev.includes(value)) {
+            updated = [...prev, value];
+          } else {
+            updated = prev; // Don't add duplicates
+          }
+        } else {
+          updated = prev; // Don't add empty values
+        }
+      } else {
+        updated = prev.filter((v) => v !== value);
+      }
       setValues({ ...values, [field.id]: updated });
     } else {
       setValues({ ...values, [field.id]: value });
@@ -106,13 +119,33 @@ export default function FormRenderer({
   const normalizeOptions = (options) =>
     (options || []).map((opt, i) => {
       if (typeof opt === "object") {
-        return {
-          key: i,
-          value: opt.value ?? opt.label,
-          label: opt.label ?? opt.value,
+        const baseValue = opt.value ?? opt.label;
+        // Ensure we never have empty values
+        const safeValue = baseValue && baseValue.toString().trim() !== "" 
+          ? baseValue 
+          : `option-${i}`;
+          
+        const normalized = {
+          key: `${safeValue}-${i}` || `opt-${i}`,
+          value: safeValue,
+          label: opt.label || safeValue,
         };
+        
+        return normalized;
       }
-      return { key: i, value: opt, label: opt };
+      
+      const baseValue = opt;
+      const safeValue = baseValue && baseValue.toString().trim() !== "" 
+        ? baseValue 
+        : `option-${i}`;
+        
+      const normalized = { 
+        key: `${safeValue}-${i}` || `opt-${i}`, 
+        value: safeValue, 
+        label: baseValue || safeValue
+      };
+      
+      return normalized;
     });
 
   const renderField = (field) => {
@@ -248,6 +281,7 @@ export default function FormRenderer({
               >
                 <input
                   type="checkbox"
+                  name={field.id}
                   value={opt.value}
                   checked={(values[field.id] || []).includes(opt.value)}
                   onChange={(e) =>
