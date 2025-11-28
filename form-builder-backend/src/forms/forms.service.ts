@@ -11,6 +11,7 @@ import { User } from '../users/user.entity';
 import { v4 as uuidv4 } from 'uuid';
 import { QrCodeService } from '../qrcode/qrcode.service';
 import { ResponseGateway } from '../gateway/response.gateway';
+import { EmailService } from '../auth/email.service';
 
 @Injectable()
 export class FormsService {
@@ -20,6 +21,7 @@ export class FormsService {
     @InjectRepository(FormField) private fieldsRepo: Repository<FormField>,
     private qrCodeService: QrCodeService,
     private responseGateway: ResponseGateway,
+    private emailService: EmailService,
   ) { }
 
   // --- 🧩 Normalize frontend field types for DB enum ---
@@ -163,6 +165,8 @@ export class FormsService {
     form.isPublic = dto.isPublic ?? form.isPublic;
     form.status = dto.status ?? form.status;
 
+    // ✅ Only update fields if they are explicitly provided (not empty array)
+    // This prevents clearing fields when only updating status
     if (dto.fields && dto.fields.length > 0) {
       const fieldDefinitions = dto.fields.map((f) => {
         // Clean up options to prevent empty values
@@ -183,7 +187,6 @@ export class FormsService {
               : `option-${index}`;
           }
         });
-
         return {
           id: f.id || uuidv4(),
           label: f.label,
@@ -210,6 +213,8 @@ export class FormsService {
         form.fields = [await this.fieldsRepo.save(formFieldEntity)];
       }
     }
+    // If dto.fields is not provided or is empty, DO NOT modify existing fields
+    // This preserves form fields when only updating status
 
     return await this.formsRepo.save(form);
   }
@@ -222,7 +227,7 @@ export class FormsService {
     if (form.owner?.id !== user.id && user.role.name !== 'admin')
       throw new NotFoundException('Form not found');
     await this.formsRepo.delete(id);
-  }
+  } 
 
 
   async submitResponseWithFiles(
@@ -232,7 +237,7 @@ export class FormsService {
   ) {
     const form = await this.formsRepo.findOne({
       where: { slug },
-      relations: ['fields'],
+      relations: ['fields', 'owner'],
     });
     if (!form) throw new BadRequestException('Form not found');
 
@@ -252,6 +257,23 @@ export class FormsService {
     });
     await this.responsesRepo.save(newResponse);
 
+    // 📧 Send email notification to form owner
+    try {
+      if (form.owner && form.owner.email) {
+        // Always send email notification for form submissions
+        await this.emailService.sendFormSubmissionNotification(
+          form.owner.email,
+          form.title,
+          form.id,
+          new Date()
+        );
+        console.log('Email notification sent successfully');
+      }
+    } catch (emailError) {
+      console.error('Failed to send email notification:', emailError);
+      // Continue with the response even if email fails
+    }
+
     this.responseGateway.broadcastNewResponse({
       formId: form.id,
       formTitle: form.title,
@@ -269,7 +291,7 @@ export class FormsService {
 
 
   async getFormResponses(formId: string, user: User): Promise<FormResponse[]> {
-    const form = await this.formsRepo.findOne({
+    const form = await this.formsRepo.findOne({ 
       where: { id: formId },
       relations: ['owner'],
     });

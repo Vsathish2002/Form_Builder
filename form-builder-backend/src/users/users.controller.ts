@@ -38,6 +38,18 @@ export class UsersController {
     return this.usersService.updateUser(id, body);
   }
 
+  @Put('notification-preferences/:id')
+  async updateNotificationPreferences(@Param('id') id: string, @Body() body: any, @Request() req) {
+    if (req.user.id !== id && req.user.role.name !== 'admin') {
+      throw new ForbiddenException('You can only update your own notification preferences.');
+    }
+    const { emailNotifications } = body;
+    if (typeof emailNotifications !== 'boolean') {
+      throw new BadRequestException('emailNotifications must be a boolean value');
+    }
+    return this.usersService.updateUser(id, { emailNotifications });
+  }
+
 
   @Post('request-email-otp/:id')
   async requestEmailOtp(@Param('id') id: string, @Body() body: any) {

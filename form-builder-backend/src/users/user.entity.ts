@@ -36,6 +36,9 @@ export class User {
   @Column({ type: 'text', nullable: true })
   bio: string;
 
+  @Column({ type: 'boolean', default: true })
+  emailNotifications: boolean;
+
   @ManyToOne(() => Role, { eager: true })
   role: Role;
 }

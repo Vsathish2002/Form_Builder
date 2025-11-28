@@ -7,6 +7,7 @@ import { FormField } from './entities/formField.entity';
 import { FormResponse } from './entities/formResponse.entity';
 import { QrcodeModule } from '../qrcode/qrcode.module';
 import { GatewayModule } from '../gateway/gateway.module';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { GatewayModule } from '../gateway/gateway.module';
     ]),
     QrcodeModule,
     GatewayModule,
+    AuthModule,
   ],
   controllers: [FormsController],
   providers: [FormsService],

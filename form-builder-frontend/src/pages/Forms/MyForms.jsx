@@ -56,14 +56,18 @@ export default function MyForms() {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      const form = forms.find((f) => f.id === id);
+      // Get the full form data with fields to preserve them
+      const response = await fetch(`http://localhost:4000/forms/id/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const fullFormData = await response.json();
 
       await updateForm(token, id, {
         status: newStatus,
-        title: form.title,
-        description: form.description,
-        isPublic: form.isPublic,
-        fields: form.fields || [],
+        title: fullFormData.title,
+        description: fullFormData.description,
+        isPublic: fullFormData.isPublic,
+        fields: fullFormData.fields?.[0]?.fields || [], // Preserve existing fields
       });
 
       setForms(

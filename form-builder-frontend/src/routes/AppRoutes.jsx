@@ -19,6 +19,7 @@ import FormResponses from "../pages/Forms/FormResponses";
 import PublicForm from "../pages/Forms/PublicForm";
 import MyForms from "../pages/Forms/MyForms";
 import ProfilePage from "../pages/ProfilePage";
+import Settings from "../pages/Settings";
 import NotFound from "../pages/NotFound";
 
 function AdminRoute({ children }) {
@@ -118,6 +119,14 @@ export default function AppRoutes() {
         element={
           <UserRoute>
             <ProfilePage />
+          </UserRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <UserRoute>
+            <Settings />
           </UserRoute>
         }
       />

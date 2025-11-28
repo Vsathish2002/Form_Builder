@@ -87,80 +87,64 @@ export default function EditForm() {
     setForm((prev) => ({ ...prev, fields: updated }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
+  const handleSubmit = async () => {
     if (!form.title.trim()) {
       toast.error("Form title is required!");
       return;
     }
 
     setSaving(true);
-
     try {
+      // Get current form data from FormBuilder
       const fb = window.jQuery("#fb-editor").data("formBuilder");
-      if (!fb) {
-        toast.error("Form builder not loaded.");
-        return;
+      let currentFields = form.fields || [];
+      
+      if (fb) {
+        try {
+          const liveData = fb.actions.getData("json");
+          const parsed = JSON.parse(liveData);
+          
+          // Convert FormBuilder format to our format
+          currentFields = parsed.map((f, i) => {
+            let options = [];
+            if (["select", "radio-group", "checkbox-group"].includes(f.type)) {
+              options = (f.values || [])
+                .map((opt) => {
+                  const label = (opt.label || "").trim();
+                  const value = opt.value && String(opt.value).startsWith("option-")
+                    ? label
+                    : (opt.value || label).trim();
+                  return label ? { label, value } : null;
+                })
+                .filter(Boolean);
+            }
+
+            return {
+              id: f.id || `field-${i}`,
+              name: f.name || f.id || `field-${i}`,
+              label: f.label || "",
+              type: f.type,
+              required: !!f.required,
+              options,
+              order: i,
+              validation: f.validation || null,
+              subtype: f.subtype || (f.type === "header" ? "h3" : undefined),
+            };
+          });
+        } catch (err) {
+          console.warn("Could not get live FormBuilder data, using stored fields:", err);
+        }
       }
-
-      const liveData = fb.actions.getData("json");
-      const parsed = JSON.parse(liveData);
-
-      // Create a more reliable ID mapping using both label and type
-      const idMap = {};
-      const currentFields = form.fields || [];
-      currentFields.forEach((f) => {
-        const key = `${f.label}-${f.type}`;
-        idMap[key] = f.id;
-      });
 
       const payload = {
         title: form.title,
         description: form.description,
         isPublic: form.isPublic,
-        fields: parsed.map((f, i) => {
-          // Try multiple strategies to find the correct ID
-          const labelTypeKey = `${f.label}-${f.type}`;
-          const existingField = currentFields.find((old) => old.id === f.id);
-
-          let fieldId = f.id;
-          if (!fieldId || !form.fields.find((old) => old.id === fieldId)) {
-            fieldId =
-              idMap[labelTypeKey] ||
-              existingField?.id ||
-              `field-${Date.now()}-${i}`;
-          }
-
-          return {
-            id: fieldId,
-            label: f.label,
-            /** 🔥 Convert Builder → DB format */
-            type:
-              f.type === "radio-group"
-                ? "radio"
-                : f.type === "checkbox-group"
-                ? "checkbox"
-                : f.type,
-            required: !!f.required,
-            order: i,
-            options: ["select", "radio-group", "checkbox-group"].includes(
-              f.type
-            )
-              ? (f.values || []).map((opt) => ({
-                  label: opt.label?.trim() || "",
-                  value: opt.value?.trim() || "",
-                }))
-              : null,
-            validation: f.validation || null,
-            className: f.className || "",
-          };
-        }),
+        fields: currentFields,
       };
 
       await updateForm(token, form.id, payload);
-
-      // toast.success("Form updated successfully!");
+      toast.success("Form updated successfully!");
       setTimeout(() => navigate("/my-forms"), 1200);
     } catch (err) {
       toast.error("Could not save form.");

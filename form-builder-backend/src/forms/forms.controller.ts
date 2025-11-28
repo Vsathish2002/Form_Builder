@@ -58,7 +58,6 @@ export class FormsController {
     }
   }
 
-
   @UseGuards(JwtAuthGuard)
   @Get()
   @ApiOperation({ summary: 'Get all forms created by the authenticated user' })
@@ -147,7 +146,7 @@ export class FormsController {
         files: { type: 'string', format: 'binary', description: 'Optional uploaded files' },
       },
     },
-  })
+  }) 
   async submitPublic(
     @Param('slug') slug: string,
     @UploadedFiles() uploadedFiles: Express.Multer.File[],
@@ -168,8 +167,6 @@ export class FormsController {
       );
     }
   }
-
-
   @UseGuards(JwtAuthGuard)
   @Get(':id/responses')
   @ApiOperation({ summary: 'Get all submitted responses for a specific form' })
@@ -181,7 +178,6 @@ export class FormsController {
       throw new HttpException('Failed to fetch responses', HttpStatus.BAD_REQUEST);
     }
   }
-
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
@@ -196,8 +192,6 @@ export class FormsController {
     }
   }
 
-
-
   @UseGuards(JwtAuthGuard)
   @Get('user/me')
   @ApiOperation({ summary: 'Get all forms created by the current user' })
@@ -210,7 +204,6 @@ export class FormsController {
     }
   }
 
-
   @UseGuards(JwtAuthGuard)
   @Delete('responses/:responseId')
   @ApiOperation({ summary: 'Delete a specific form response' })
@@ -222,7 +215,6 @@ export class FormsController {
       throw new HttpException('Failed to delete response', HttpStatus.BAD_REQUEST);
     }
   }
-
 
   @UseGuards(JwtAuthGuard)
   @Get(':id/qrcode')

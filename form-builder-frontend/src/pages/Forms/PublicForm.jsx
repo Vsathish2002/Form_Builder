@@ -17,6 +17,41 @@ export default function PublicForm() {
   const [showSummary, setShowSummary] = useState(false);
   const [showResponseData, setShowResponseData] = useState(false);
 
+  // Helper function to get display label from option value
+  const getOptionLabel = (field, value) => {
+    if (!value || !field.options) return value;
+    
+    const option = field.options.find(opt => {
+      if (typeof opt === "object") {
+        return opt.value === value || opt.label === value;
+      }
+      return opt === value;
+    });
+    
+    if (option) {
+      return typeof option === "object" ? option.label || option.value : option;
+    }
+    
+    return value;
+  };
+
+  // Helper function to format response value for display
+  const formatResponseValue = (field, value) => {
+    if (!value) return "—";
+    
+    if (Array.isArray(value)) {
+      // For checkboxes, map each value to its label
+      return value.map(val => getOptionLabel(field, val)).join(", ");
+    }
+    
+    // For radio/select, map value to its label
+    if (["radio", "select"].includes(field.type)) {
+      return getOptionLabel(field, value);
+    }
+    
+    return value;
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -50,7 +85,7 @@ export default function PublicForm() {
       }
     })();
   }, [slug]);
-
+ 
   useEffect(() => {
     if (!form) return;
     const socket = io("http://localhost:4000", { transports: ["websocket"] });
@@ -68,7 +103,7 @@ export default function PublicForm() {
       socket.emit("formSubmitting", { formId: form.id });
       socket.disconnect();
 
-      await submitPublicResponse(slug, formData);
+      await submitPublicResponse(slug, formData); 
 
       const responseData = {};
       for (let [key, value] of formData.entries()) {
@@ -170,9 +205,7 @@ export default function PublicForm() {
                   >
                     <p className="text-gray-300 text-sm">{field.label}</p>
                     <p className="text-white font-semibold mt-1">
-                      {Array.isArray(savedData[field.id])
-                        ? savedData[field.id].join(", ")
-                        : savedData[field.id] || "—"}
+                      {formatResponseValue(field, savedData[field.id])}
                     </p>
                   </div>
                 ))}
