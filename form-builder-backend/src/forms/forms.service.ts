@@ -67,16 +67,16 @@ export class FormsService {
           if (typeof opt === 'object' && opt !== null) {
             return {
               ...opt,
-              value: opt.value && opt.value.toString().trim() !== '' 
-                ? opt.value 
+              value: opt.value && opt.value.toString().trim() !== ''
+                ? opt.value
                 : opt.label && opt.label.toString().trim() !== ''
-                  ? opt.label 
+                  ? opt.label
                   : `option-${index}`,
               label: opt.label || opt.value || `Option ${index + 1}`
             };
           } else {
-            return opt && opt.toString().trim() !== '' 
-              ? opt 
+            return opt && opt.toString().trim() !== ''
+              ? opt
               : `option-${index}`;
           }
         });
@@ -91,7 +91,7 @@ export class FormsService {
           validation: f.validation || null,
           extraValue: f.extraValue ?? undefined,
           subtype: f.subtype ?? undefined,
-        };
+        };   
       });
 
       const formFieldEntity = this.fieldsRepo.create({
@@ -115,7 +115,6 @@ export class FormsService {
       relations: ['fields', 'owner'],
     });
   }
-  // -------
   // 👑 ADMIN: Get all forms from all users //new for admin_dashboard
   async findAllAdmin(): Promise<Form[]> {
     return this.formsRepo.find({
@@ -123,7 +122,6 @@ export class FormsService {
       order: { createdAt: 'DESC' },
     });
   }
-// -------------------
 
   // --- 🔍 Find Form by Slug ---
   async findOne(slug: string): Promise<Form> {
@@ -174,16 +172,16 @@ export class FormsService {
           if (typeof opt === 'object' && opt !== null) {
             return {
               ...opt,
-              value: opt.value && opt.value.toString().trim() !== '' 
-                ? opt.value 
+              value: opt.value && opt.value.toString().trim() !== ''
+                ? opt.value
                 : opt.label && opt.label.toString().trim() !== ''
-                  ? opt.label 
+                  ? opt.label
                   : `option-${index}`,
               label: opt.label || opt.value || `Option ${index + 1}`
             };
           } else {
-            return opt && opt.toString().trim() !== '' 
-              ? opt 
+            return opt && opt.toString().trim() !== ''
+              ? opt
               : `option-${index}`;
           }
         });
@@ -219,17 +217,13 @@ export class FormsService {
     return await this.formsRepo.save(form);
   }
 
-
- 
   async deleteForm(id: string, user: User): Promise<void> {
     const form = await this.formsRepo.findOne({ where: { id }, relations: ['owner'] });
     if (!form) throw new NotFoundException('Form not found');
     if (form.owner?.id !== user.id && user.role.name !== 'admin')
       throw new NotFoundException('Form not found');
     await this.formsRepo.delete(id);
-  } 
-
-
+  }
   async submitResponseWithFiles(
     slug: string,
     formData: Record<string, any>,
@@ -291,7 +285,7 @@ export class FormsService {
 
 
   async getFormResponses(formId: string, user: User): Promise<FormResponse[]> {
-    const form = await this.formsRepo.findOne({ 
+    const form = await this.formsRepo.findOne({
       where: { id: formId },
       relations: ['owner'],
     });
@@ -305,7 +299,7 @@ export class FormsService {
 
     return this.responsesRepo.find({
       where: { form: { id: formId } },
-      order: { createdAt: 'ASC' }, 
+      order: { createdAt: 'ASC' },
     });
   }
 
@@ -330,7 +324,7 @@ export class FormsService {
     await this.responsesRepo.delete(responseId);
   }
 
-  
+
   async generateFormQrCode(formId: string, user: User): Promise<string> {
     const form = await this.formsRepo.findOne({ where: { id: formId }, relations: ['owner'] });
     if (!form) throw new NotFoundException('Form not found');
@@ -340,7 +334,7 @@ export class FormsService {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
     const formUrl = `${frontendUrl}/public/${form.slug}`;
     return this.qrCodeService.generateQrCode(formUrl);
-  // "qrCode": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+    // "qrCode": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
   }
 
 }

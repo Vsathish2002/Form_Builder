@@ -3,16 +3,12 @@
   const API_URL = 'http://localhost:4000';
   // const API_URL = ' http://192.168.0.105:4000';
 
-
-
   export const getForms = async (token) => {
     const res = await axios.get(`${API_URL}/forms`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return res.data;
   };
-
-
 
   export const getFormById = async (token, id) => {
     const res = await axios.get(`${API_URL}/forms/id/${id}`, {
@@ -26,7 +22,6 @@
     const res = await axios.get(`${API_URL}/forms/slug/${slug}`);
     return res.data;
   };
-
 
   export const createForm = async (token, form) => {
     const res = await axios.post(`${API_URL}/forms`, form, {
@@ -50,7 +45,6 @@
     });
     return res.data;
   };  
-
 
   export const getFormResponses = async (token, id) => {
     const res = await axios.get(`${API_URL}/forms/${id}/responses`, {
