@@ -31,7 +31,6 @@ export class AuthService {
     return user;
   }
 
-
   async validateUser(email: string, password: string): Promise<User> {
     const user = await this.usersService.findByEmail(email);
     if (!user) throw new UnauthorizedException('Invalid credentials');
@@ -60,7 +59,6 @@ export class AuthService {
     return { message: 'OTP sent to your email' };
   }
 
-
   async verifyOtp(email: string, otp: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user || !user.resetToken || !user.resetTokenExpiry) {
@@ -78,7 +76,6 @@ export class AuthService {
 
     return { message: 'OTP verified successfully' };
   }
-
 
   async resetPassword(email: string, otp: string, newPassword: string) {
     const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{6,}$/;
@@ -100,7 +97,6 @@ export class AuthService {
       throw new BadRequestException('Invalid OTP');
     }
 
-
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
 
@@ -119,7 +115,6 @@ export class AuthService {
 
     const expiry = new Date();
     expiry.setMinutes(expiry.getMinutes() + 10);
-
 
     (global as any).pendingOtps = (global as any).pendingOtps || {};
     (global as any).pendingOtps[email] = { otp: hashedOtp, expiry };
@@ -157,8 +152,6 @@ export class AuthService {
       user: loginResult.user,
     };
   }
-
-
 
   async login(user: User) {
     const payload = { email: user.email, sub: user.id, role: user.role.name };

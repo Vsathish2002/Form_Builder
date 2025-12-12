@@ -20,35 +20,35 @@ export default function PublicForm() {
   // Helper function to get display label from option value
   const getOptionLabel = (field, value) => {
     if (!value || !field.options) return value;
-    
-    const option = field.options.find(opt => {
+
+    const option = field.options.find((opt) => {
       if (typeof opt === "object") {
         return opt.value === value || opt.label === value;
       }
       return opt === value;
     });
-    
+
     if (option) {
       return typeof option === "object" ? option.label || option.value : option;
     }
-    
+
     return value;
   };
 
   // Helper function to format response value for display
   const formatResponseValue = (field, value) => {
     if (!value) return "—";
-    
+
     if (Array.isArray(value)) {
       // For checkboxes, map each value to its label
-      return value.map(val => getOptionLabel(field, val)).join(", ");
+      return value.map((val) => getOptionLabel(field, val)).jo33in(", ");
     }
-    
+
     // For radio/select, map value to its label
     if (["radio", "select"].includes(field.type)) {
       return getOptionLabel(field, value);
     }
-    
+
     return value;
   };
 
@@ -71,9 +71,9 @@ export default function PublicForm() {
           ...f,
         }));
 
-        setForm({ 
-          ...data, 
-          fields: fieldsWithId 
+        setForm({
+          ...data,
+          fields: fieldsWithId,
         });
         setStatus({ loading: false, error: null, success: false });
       } catch {
@@ -85,7 +85,7 @@ export default function PublicForm() {
       }
     })();
   }, [slug]);
- 
+
   useEffect(() => {
     if (!form) return;
     const socket = io("http://localhost:4000", { transports: ["websocket"] });
@@ -103,7 +103,7 @@ export default function PublicForm() {
       socket.emit("formSubmitting", { formId: form.id });
       socket.disconnect();
 
-      await submitPublicResponse(slug, formData); 
+      await submitPublicResponse(slug, formData);
 
       const responseData = {};
       for (let [key, value] of formData.entries()) {
@@ -197,18 +197,44 @@ export default function PublicForm() {
             <div className="space-y-5">
               {(form.fields || [])
                 .filter((f) => !["header", "paragraph"].includes(f.type))
-                .map((field, idx) => (
-                  <div
-                    key={idx}
-                    className="p-4 bg-[rgba(255,255,255,0.05)] border border-white/10 
-                                  rounded-xl shadow hover:shadow-lg transition"
-                  >
-                    <p className="text-gray-300 text-sm">{field.label}</p>
-                    <p className="text-white font-semibold mt-1">
-                      {formatResponseValue(field, savedData[field.id])}
-                    </p>
-                  </div>
-                ))}
+                .map((field, idx) => {
+                  // ⭐ Handle GROUP FIELDS
+                  if (field.type === "group") {
+                    return (
+                      <div
+                        key={idx}
+                        className="p-4 bg-[rgba(255,255,255,0.05)] border border-white/10 rounded-xl"
+                      >
+                        <h3 className="text-indigo-300 font-semibold mb-3">
+                          {field.label}
+                        </h3>
+
+                        {field.fields.map((sub) => (
+                          <div className="mb-3" key={sub.id}>
+                            <p className="text-gray-300 text-sm">{sub.label}</p>
+                            <p className="text-white font-semibold mt-1">
+                              {savedData[sub.id] || "—"}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }
+
+                  // ⭐ Normal fields (existing logic)
+                  return (
+                    <div
+                      key={idx}
+                      className="p-4 bg-[rgba(255,255,255,0.05)] border border-white/10 
+                      rounded-xl shadow hover:shadow-lg transition"
+                    >
+                      <p className="text-gray-300 text-sm">{field.label}</p>
+                      <p className="text-white font-semibold mt-1">
+                        {formatResponseValue(field, savedData[field.id])}
+                      </p>
+                    </div>
+                  );
+                })}
             </div>
           )}
 

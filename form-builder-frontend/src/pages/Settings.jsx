@@ -213,16 +213,7 @@ export default function Settings() {
                                 </div>
                               </div>
                               
-                              <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
-                                <h3 className="font-semibold text-orange-800 mb-3">💬 Live Chat</h3>
-                                <p className="text-orange-700 mb-4">Chat with our support team in real-time.</p>
-                                <div className="bg-white rounded-lg p-4 border border-orange-100">
-                                  <p className="text-gray-700 font-medium">Available: Monday - Friday, 9 AM - 6 PM EST</p>
-                                  <button className="mt-3 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600">
-                                    Start Live Chat
-                                  </button>
-                                </div>
-                              </div>
+                           
                               
                               <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-6">
                                 <h3 className="font-semibold text-indigo-800 mb-3">🐛 Bug Reports</h3>

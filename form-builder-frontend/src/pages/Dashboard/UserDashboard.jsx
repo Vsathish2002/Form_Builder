@@ -260,9 +260,8 @@ export default function UserDashboard() {
                 filteredForms.map((form, i) => (
                   <tr
                     key={form.id}
-                    className={`border-t ${
-                      i % 2 === 0 ? "bg-white" : "bg-gray-50"
-                    } hover:bg-indigo-50 transition`}
+                    className={`border-t ${i % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      } hover:bg-indigo-50 transition`}
                   >
                     <td className="p-3">{form.title}</td>
                     <td className="p-3 text-center">

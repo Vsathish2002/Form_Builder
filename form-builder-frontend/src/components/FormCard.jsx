@@ -50,11 +50,11 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
     const socket = io("http://192.168.0.105:4000", {
       transports: ["websocket"],
       reconnection: true,
-    });
+    }); 
 
     socket.on("connect", () => {
       socket.emit("joinFormRoom", form.id);
-    });
+    }); 
 
     socket.on("formFilling", (data) => {
       if (data.formId === form.id) {
@@ -472,7 +472,6 @@ export default function FormCard({ form, onDelete, onStatusChange }) {
                                 </a>
                               );
                             }
-
                             return (
                               <motion.tr
                                 key={i}

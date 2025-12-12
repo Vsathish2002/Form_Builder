@@ -6,23 +6,18 @@ import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import * as dotenv from 'dotenv';
 
-
 dotenv.config();
 
 async function bootstrap() {
-  
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-
-  // ✅ Enable CORS for React frontend (Form Builder UI)
   app.enableCors({
-    // origin: process.env.FRONTEND_URL || 'http://localhost:5173', // your React frontend
-    origin: process.env.FRONTEND_URL || 'http://192.168.0.105:5173', // your React frontend
-    credentials: true, // allow cookies, tokens, etc.
+    origin: process.env.FRONTEND_URL || 'http://localhost:5173', // your React frontend
+    // origin: process.env.FRONTEND_URL || 'http://192.168.0.105:5173', // your React frontend
+    credentials: true,
   });
 
   // ✅ Helmet adds extra security headers
   app.use(helmet());
-
 
   app.useStaticAssets(join(__dirname, '..', 'uploads'), {
     prefix: '/uploads', // Access via http://localhost:4000/uploads/filename.png

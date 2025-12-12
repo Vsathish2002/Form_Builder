@@ -146,7 +146,7 @@ export class FormsController {
         files: { type: 'string', format: 'binary', description: 'Optional uploaded files' },
       },
     },
-  }) 
+  })
   async submitPublic(
     @Param('slug') slug: string,
     @UploadedFiles() uploadedFiles: Express.Multer.File[],

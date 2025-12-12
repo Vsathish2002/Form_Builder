@@ -61,7 +61,7 @@ export class UsersService {
     });
   }
 
- 
+
   async updateUser(id: string, updateData: Partial<User>) {
     const user = await this.userRepo.findOne({
       where: { id },
@@ -85,7 +85,7 @@ export class UsersService {
     return { message: 'Profile updated', user };
   }
 
- 
+
   async sendEmailChangeOtp(userId: string, newEmail: string) {
     const existing = await this.findByEmail(newEmail);
     if (existing) throw new BadRequestException('Email already in use');

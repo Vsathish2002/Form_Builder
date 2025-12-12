@@ -38,26 +38,23 @@ export default function Navbar() {
   };
 
   const linkClass = (path) =>
-    `relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 group ${
-      location.pathname === path
-        ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/25"
-        : "text-gray-700 hover:text-indigo-600 hover:bg-indigo-50"
+    `relative flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 group ${location.pathname === path
+      ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/25"
+      : "text-gray-700 hover:text-indigo-600 hover:bg-indigo-50"
     }`;
 
   const mobileLinkClass = (path) =>
-    `flex items-center gap-4 text-lg font-medium transition-all duration-300 ${
-      location.pathname === path
-        ? "text-indigo-400 bg-indigo-500/10 px-4 py-3 rounded-xl border-l-4 border-indigo-400"
-        : "text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-xl"
+    `flex items-center gap-4 text-lg font-medium transition-all duration-300 ${location.pathname === path
+      ? "text-indigo-400 bg-indigo-500/10 px-4 py-3 rounded-xl border-l-4 border-indigo-400"
+      : "text-gray-300 hover:text-white hover:bg-white/10 px-4 py-3 rounded-xl"
     }`;
 
   return (
-    <motion.nav 
-      className={`tailwind-navbar fixed w-full top-0 left-0 z-50 transition-all duration-300 ${
-        scrolled 
-          ? 'bg-white/95 backdrop-blur-xl shadow-lg border-b border-gray-200/50' 
+    <motion.nav
+      className={`tailwind-navbar fixed w-full top-0 left-0 z-50 transition-all duration-300 ${scrolled
+          ? 'bg-white/95 backdrop-blur-xl shadow-lg border-b border-gray-200/50'
           : 'bg-white shadow-sm border-b border-gray-100'
-      }`}
+        }`}
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.5 }}
@@ -170,9 +167,9 @@ export default function Navbar() {
                   <span>Login</span>
                   <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10" />
                 </Link>
-                <Link 
-                  to="/register" 
-                  className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-2 rounded-xl font-semibold hover:shadow-lg hover:shadow-indigo-500/25 transition-all duration-300"
+                <Link
+                  to="/register"
+                  className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-2 rounded-xl font-semibold hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-300 transform hover:scale-105"
                 >
                   Get Started
                 </Link>
@@ -360,7 +357,7 @@ export default function Navbar() {
                     <Link
                       to="/register"
                       onClick={toggleMenu}
-                      className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white px-6 py-4 rounded-2xl font-semibold hover:shadow-lg hover:shadow-indigo-500/25 transition-all duration-300 flex items-center justify-center gap-3"
+                      className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-6 py-4 rounded-2xl font-semibold hover:shadow-lg hover:shadow-emerald-500/25 transition-all duration-300 flex items-center justify-center gap-3 transform hover:scale-105"
                     >
                       <Sparkles className="h-5 w-5" />
                       <span>Get Started</span>

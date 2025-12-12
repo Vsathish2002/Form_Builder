@@ -6,7 +6,7 @@ import {
   Unique,
 } from 'typeorm';
 import { Form } from './form.entity';
-
+ 
 export type FieldType =
   | 'text'
   | 'textarea'
@@ -20,7 +20,8 @@ export type FieldType =
   | 'file'
   | 'paragraph'
   | 'page'
-  | 'autocomplete';
+  | 'autocomplete'
+  | 'group';
 
 export interface FieldDefinition {
   id: string;

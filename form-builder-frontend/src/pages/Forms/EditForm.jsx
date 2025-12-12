@@ -46,14 +46,14 @@ export default function EditForm() {
               f.type === "radio"
                 ? "radio-group"
                 : f.type === "checkbox"
-                ? "checkbox-group"
-                : f.type,
+                  ? "checkbox-group"
+                  : f.type,
             required: !!f.required,
             options: Array.isArray(parsedOptions)
               ? parsedOptions.map((opt) => ({
-                  label: opt.label || "",
-                  value: opt.value || "",
-                }))
+                label: opt.label || "",
+                value: opt.value || "",
+              }))
               : [],
             order: f.order || i,
             validation: f.validation || null,
@@ -98,12 +98,12 @@ export default function EditForm() {
       // Get current form data from FormBuilder
       const fb = window.jQuery("#fb-editor").data("formBuilder");
       let currentFields = form.fields || [];
-      
+
       if (fb) {
         try {
           const liveData = fb.actions.getData("json");
           const parsed = JSON.parse(liveData);
-          
+
           // Convert FormBuilder format to our format
           currentFields = parsed.map((f, i) => {
             let options = [];

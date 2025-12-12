@@ -1,6 +1,6 @@
-
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Role } from '../roles/role.entity';
+
 @Entity()
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -12,7 +12,7 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column()
+  @Column({ nullable: true })
   password: string;
 
   @Column({ type: 'varchar', nullable: true })
@@ -25,7 +25,7 @@ export class User {
   gender: string;
 
   @Column({ type: 'date', nullable: true })
-  dob: string; 
+  dob: string;
 
   @Column({ type: 'text', nullable: true })
   address: string;

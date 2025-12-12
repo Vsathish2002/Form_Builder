@@ -25,4 +25,4 @@ import { RolesModule } from '../roles/roles.module';
   providers: [AuthService, EmailService, JwtStrategy],
   exports: [AuthService, EmailService],
 })
-export class AuthModule {}
+export class AuthModule { }

@@ -94,6 +94,12 @@ export default function FormRenderer({
 
     (form.fields || []).forEach((f) => {
       const val = values[f.id];
+      if (f.type === "group") {
+        f.fields.forEach((sub) => {
+          formData.append(sub.id, values[sub.id] || "");
+        });
+        return;
+      }
 
       if (
         (f.type === "file" || f.type === "fileUpload") &&
@@ -121,30 +127,30 @@ export default function FormRenderer({
       if (typeof opt === "object") {
         const baseValue = opt.value ?? opt.label;
         // Ensure we never have empty values
-        const safeValue = baseValue && baseValue.toString().trim() !== "" 
-          ? baseValue 
+        const safeValue = baseValue && baseValue.toString().trim() !== ""
+          ? baseValue
           : `option-${i}`;
-          
+
         const normalized = {
           key: `${safeValue}-${i}` || `opt-${i}`,
           value: safeValue,
           label: opt.label || safeValue,
         };
-        
+
         return normalized;
       }
-      
+
       const baseValue = opt;
-      const safeValue = baseValue && baseValue.toString().trim() !== "" 
-        ? baseValue 
+      const safeValue = baseValue && baseValue.toString().trim() !== ""
+        ? baseValue
         : `option-${i}`;
-        
-      const normalized = { 
-        key: `${safeValue}-${i}` || `opt-${i}`, 
-        value: safeValue, 
+
+      const normalized = {
+        key: `${safeValue}-${i}` || `opt-${i}`,
+        value: safeValue,
         label: baseValue || safeValue
       };
-      
+
       return normalized;
     });
 
@@ -177,6 +183,42 @@ export default function FormRenderer({
 
       case "paragraph":
         return <p className="text-gray-300 text-base">{field.label}</p>;
+
+      case "group":
+        return (
+          <div className="space-y-4">
+            <h4 className="text-indigo-200">{field.label}</h4>
+
+            {field.fields.map((sub) => (
+              <div key={sub.id}>
+                <label className="block mb-1">{sub.label}</label>
+
+                {sub.type === "text" && (
+                  <input
+                    type="text"
+                    className={glassInput}
+                    value={values[sub.id] || ""}
+                    onChange={(e) =>
+                      setValues({ ...values, [sub.id]: e.target.value })
+                    }
+                  />
+                )}
+
+                {sub.type === "number" && (
+                  <input
+                    type="number"
+                    className={glassInput}
+                    value={values[sub.id] || ""}
+                    onChange={(e) =>
+                      setValues({ ...values, [sub.id]: e.target.value })
+                    }
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        );
+
 
       case "text":
         return (

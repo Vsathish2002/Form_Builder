@@ -9,7 +9,7 @@ import { EmailService } from '../auth/email.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User, Role]), RolesModule],
-  providers: [UsersService,EmailService],
+  providers: [UsersService, EmailService],
   controllers: [UsersController],
   exports: [UsersService],
 })

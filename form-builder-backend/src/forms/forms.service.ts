@@ -43,6 +43,7 @@ export class FormsService {
       'section': 'section',
       'page': 'page',
       'autocomplete': 'autocomplete',
+      'group': 'group',
     };
     return (map[type] || type) as FieldType;
   }
@@ -91,7 +92,7 @@ export class FormsService {
           validation: f.validation || null,
           extraValue: f.extraValue ?? undefined,
           subtype: f.subtype ?? undefined,
-        };   
+        };
       });
 
       const formFieldEntity = this.fieldsRepo.create({

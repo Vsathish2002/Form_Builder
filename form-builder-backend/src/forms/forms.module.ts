@@ -24,4 +24,4 @@ import { AuthModule } from '../auth/auth.module';
   providers: [FormsService],
   exports: [FormsService],
 })
-export class FormsModule {}
+export class FormsModule { }

@@ -153,7 +153,7 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
         "paragraph",
         "section",
         "page",
-        "text",
+        "text", 
         "textarea",
         "number",
         "select",
@@ -161,6 +161,7 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
         "checkbox-group",
         "date",
         "fileUpload",
+      
       ],
       controlConfig: controlPlugins,
 
@@ -251,7 +252,6 @@ export default function FormBuilderWrapper({ fieldsJson = [], onSave }) {
                   : { label: opt, value: opt }
               );
             }
-
             if (f.type === "header" && !f.subtype) field.subtype = "h3";
             return field;
           });

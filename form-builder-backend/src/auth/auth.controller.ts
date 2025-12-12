@@ -19,13 +19,14 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 @ApiTags('Auth (Login Authentication)')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) { }
+  constructor(private authService: AuthService) {}
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
   @ApiResponse({ status: 201, description: 'User registered successfully' })
   @ApiResponse({ status: 409, description: 'User already exists' })
   @ApiResponse({ status: 400, description: 'Invalid registration data' })
+
   async register(@Body() body: RegisterDto) {
     try {
       const user = await this.authService.register(
@@ -34,7 +35,6 @@ export class AuthController {
         body.password,
         body.role,
       );
-
       const loginResult = await this.authService.login(user);
       return {
         message: 'User registered successfully',
@@ -49,7 +49,6 @@ export class AuthController {
       ) {
         throw new HttpException('User already registered', HttpStatus.CONFLICT);
       }
-
       throw new HttpException(
         error.message || 'Registration failed',
         HttpStatus.BAD_REQUEST,

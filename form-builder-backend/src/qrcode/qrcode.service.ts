@@ -7,4 +7,3 @@ export class QrCodeService {
     return QRCode.toDataURL(text);  //qr image create here
   }
 }
- 

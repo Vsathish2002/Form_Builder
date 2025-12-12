@@ -6,7 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { LogOut, Menu, User, X } from "lucide-react";
 
 export default function AdminLayout() {
-  const { user, logout } = useAuth();
+  const { user, logout, setUser } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 1024);
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 1024);
   const [editOpen, setEditOpen] = useState(false);
@@ -22,10 +22,35 @@ export default function AdminLayout() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (newName.trim() === "") return alert("Name cannot be empty.");
-    user.name = newName; // local update
-    setEditOpen(false);
+
+    try {
+      const response = await fetch(`http://localhost:4000/users/update/${user.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ name: newName }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Update the user context with the new name
+        const updatedUser = { ...user, name: newName };
+        setUser(updatedUser);
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        setEditOpen(false);
+        alert("Name updated successfully!");
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.message || "Failed to update name"}`);
+      }
+    } catch (error) {
+      console.error("Error updating name:", error);
+      alert("An error occurred while updating the name.");
+    } 
   };
 
   return (

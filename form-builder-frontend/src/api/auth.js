@@ -33,7 +33,6 @@ export async function verifyOtp(email, otp) {
   }
 }
 
-
 export async function resetPassword(email, otp, newPassword) {
   try {
     const res = await axios.post(`${BASE_URL}/reset-password`, { email, otp, newPassword });
